@@ -35,44 +35,40 @@ const RelatorioIA = ({ relatorio, onClose, dadosProcesso }: RelatorioIAProps) =>
     
     // Gerar conteúdo do relatório para download
     const conteudoRelatorio = `
-RELATÓRIO JURÍDICO MILITAR - ANÁLISE IA
-${dadosProcesso?.numero ? `Processo: ${dadosProcesso.numero}` : ''}
-${dadosProcesso?.nome ? `Investigado: ${dadosProcesso.nome}` : ''}
-${dadosProcesso?.unidade ? `Unidade: ${dadosProcesso.unidade}` : ''}
-${dadosProcesso?.data ? `Data: ${dadosProcesso.data}` : ''}
-Gerado em: ${new Date().toLocaleString('pt-BR')}
+${relatorio.cabecalho}
 
 ========================================
 
-DESCRIÇÃO SUCINTA
-${relatorio.descricao_sucinta}
+I – DAS PRELIMINARES
+${relatorio.das_preliminares}
 
 ========================================
 
-FUNDAMENTAÇÃO LEGAL
-${relatorio.fundamentacao_legal}
+II – DOS FATOS
+${relatorio.dos_fatos}
 
 ========================================
 
-CONCLUSÃO
-${relatorio.conclusao}
+III – DAS DILIGÊNCIAS
+${relatorio.das_diligencias}
 
 ========================================
 
-TIPIFICAÇÃO PENAL
-${relatorio.tipificacao_penal}
+IV – DA FUNDAMENTAÇÃO
+${relatorio.da_fundamentacao}
 
 ========================================
 
-PROVIDÊNCIAS SUGERIDAS
-${relatorio.providencias_sugeridas}
+V – DA CONCLUSÃO
+${relatorio.da_conclusao}
 
 ========================================
 
-OBSERVAÇÃO: Este relatório foi gerado com auxílio de Inteligência Artificial 
+OBSERVAÇÃO TÉCNICA: Este relatório foi gerado com auxílio de Inteligência Artificial 
 e deve ser revisado por autoridade competente antes da utilização oficial.
 
 Sistema NOBILIS-IA - Plataforma Inteligente de Análise Jurídica Militar
+Gerado em: ${new Date().toLocaleString('pt-BR')}
     `;
 
     // Criar e baixar arquivo
@@ -196,92 +192,104 @@ Sistema NOBILIS-IA - Plataforma Inteligente de Análise Jurídica Militar
                 </Card>
               )}
 
-              {/* Descrição Sucinta */}
-              <div className="section mb-6">
-                <h2 className="text-lg font-bold text-blue-600 mb-3 flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  DESCRIÇÃO SUCINTA
-                </h2>
-                <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {relatorio.descricao_sucinta}
-                  </p>
-                </div>
-              </div>
+                             {/* Cabeçalho */}
+               <div className="section mb-6">
+                 <div className="bg-slate-100 p-6 rounded-lg border-l-4 border-slate-600">
+                   <pre className="text-gray-800 leading-relaxed whitespace-pre-wrap font-mono text-sm">
+                     {relatorio.cabecalho}
+                   </pre>
+                 </div>
+               </div>
 
-              <Separator className="my-6" />
+               <Separator className="my-6" />
 
-              {/* Fundamentação Legal */}
-              <div className="section mb-6">
-                <h2 className="text-lg font-bold text-purple-600 mb-3 flex items-center gap-2">
-                  <Scale className="h-5 w-5" />
-                  FUNDAMENTAÇÃO LEGAL
-                </h2>
-                <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {relatorio.fundamentacao_legal}
-                  </p>
-                </div>
-              </div>
+               {/* I - Das Preliminares */}
+               <div className="section mb-6">
+                 <h2 className="text-lg font-bold text-blue-600 mb-3 flex items-center gap-2">
+                   <FileText className="h-5 w-5" />
+                   I – DAS PRELIMINARES
+                 </h2>
+                 <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                     {relatorio.das_preliminares}
+                   </p>
+                 </div>
+               </div>
 
-              <Separator className="my-6" />
+               <Separator className="my-6" />
 
-              {/* Conclusão */}
-              <div className="section mb-6">
-                <h2 className="text-lg font-bold text-green-600 mb-3 flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5" />
-                  CONCLUSÃO
-                </h2>
-                <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {relatorio.conclusao}
-                  </p>
-                </div>
-              </div>
+               {/* II - Dos Fatos */}
+               <div className="section mb-6">
+                 <h2 className="text-lg font-bold text-purple-600 mb-3 flex items-center gap-2">
+                   <AlertTriangle className="h-5 w-5" />
+                   II – DOS FATOS
+                 </h2>
+                 <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                     {relatorio.dos_fatos}
+                   </p>
+                 </div>
+               </div>
 
-              <Separator className="my-6" />
+               <Separator className="my-6" />
 
-              {/* Tipificação Penal */}
-              <div className="section mb-6">
-                <h2 className="text-lg font-bold text-red-600 mb-3 flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5" />
-                  TIPIFICAÇÃO PENAL
-                </h2>
-                <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {relatorio.tipificacao_penal}
-                  </p>
-                </div>
-              </div>
+               {/* III - Das Diligências */}
+               <div className="section mb-6">
+                 <h2 className="text-lg font-bold text-indigo-600 mb-3 flex items-center gap-2">
+                   <CheckCircle className="h-5 w-5" />
+                   III – DAS DILIGÊNCIAS
+                 </h2>
+                 <div className="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500">
+                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                     {relatorio.das_diligencias}
+                   </p>
+                 </div>
+               </div>
 
-              <Separator className="my-6" />
+               <Separator className="my-6" />
 
-              {/* Providências Sugeridas */}
-              <div className="section mb-6">
-                <h2 className="text-lg font-bold text-orange-600 mb-3 flex items-center gap-2">
-                  <Brain className="h-5 w-5" />
-                  PROVIDÊNCIAS SUGERIDAS
-                </h2>
-                <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-500">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {relatorio.providencias_sugeridas}
-                  </p>
-                </div>
-              </div>
+               {/* IV - Da Fundamentação */}
+               <div className="section mb-6">
+                 <h2 className="text-lg font-bold text-green-600 mb-3 flex items-center gap-2">
+                   <Scale className="h-5 w-5" />
+                   IV – DA FUNDAMENTAÇÃO
+                 </h2>
+                 <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                     {relatorio.da_fundamentacao}
+                   </p>
+                 </div>
+               </div>
+
+               <Separator className="my-6" />
+
+               {/* V - Da Conclusão */}
+               <div className="section mb-6">
+                 <h2 className="text-lg font-bold text-red-600 mb-3 flex items-center gap-2">
+                   <Brain className="h-5 w-5" />
+                   V – DA CONCLUSÃO
+                 </h2>
+                 <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                     {relatorio.da_conclusao}
+                   </p>
+                 </div>
+               </div>
 
               {/* Aviso Legal */}
               <Card className="bg-yellow-50 border-yellow-200">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="h-5 w-5 text-yellow-600 mt-1" />
-                    <div>
-                      <h4 className="font-semibold text-yellow-800">Aviso Importante</h4>
-                      <p className="text-yellow-700 text-sm mt-1">
-                        Este relatório foi gerado com auxílio de Inteligência Artificial e deve ser 
-                        revisado por autoridade competente antes da utilização oficial. O conteúdo 
-                        serve como orientação técnica e não substitui a análise jurídica especializada.
-                      </p>
-                    </div>
+                                      <div>
+                    <h4 className="font-semibold text-yellow-800">Observação Técnica</h4>
+                    <p className="text-yellow-700 text-sm mt-1">
+                      Este Relatório de Investigação Preliminar foi gerado com auxílio de Inteligência Artificial 
+                      especializada em legislação militar. Deve ser revisado por autoridade competente antes da 
+                      utilização oficial. O conteúdo segue rigorosamente os padrões da PM-PE e serve como 
+                      ferramenta técnica de apoio à decisão administrativa.
+                    </p>
+                  </div>
                   </div>
                 </CardContent>
               </Card>
