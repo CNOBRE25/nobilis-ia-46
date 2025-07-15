@@ -243,6 +243,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      verify_user_credentials: {
+        Args: { user_email: string; user_password: string }
+        Returns: {
+          user_id: string
+          user_role: string
+          user_name: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "lawyer" | "client"
