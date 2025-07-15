@@ -82,33 +82,33 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-sm bg-white/95 backdrop-blur-sm border-white/20">
-          <CardHeader className="text-center pb-4">
-            <div className="flex justify-center mb-3">
-              <Shield className="h-10 w-10 text-blue-600" />
+      <div className="min-h-screen bg-gradient-to-br from-primary/20 via-primary/10 to-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-card/95 backdrop-blur-sm border shadow-lg">
+          <CardHeader className="text-center pb-3">
+            <div className="flex justify-center mb-2">
+              <Shield className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="text-xl font-bold text-gray-900">Cadastro de Encarregado</CardTitle>
-            <CardDescription className="text-gray-600 text-sm">
+            <CardTitle className="text-lg font-bold text-foreground">Cadastro de Encarregado</CardTitle>
+            <CardDescription className="text-muted-foreground text-xs">
               Preencha os dados para solicitar acesso
             </CardDescription>
           </CardHeader>
           
           <CardContent className="pt-0">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-2.5">
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">E-mail *</FormLabel>
+                      <FormLabel className="text-xs font-medium text-foreground">E-mail *</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="email"
                           placeholder="Digite seu e-mail"
-                          className="h-9"
+                          className="h-8 text-sm"
                         />
                       </FormControl>
                       <FormMessage />
@@ -121,20 +121,20 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">Senha *</FormLabel>
+                      <FormLabel className="text-xs font-medium text-foreground">Senha *</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             {...field}
                             type={showPassword ? "text" : "password"}
                             placeholder="Digite sua senha"
-                            className="h-9"
+                            className="h-8 text-sm"
                           />
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="absolute right-0 top-0 h-full px-3"
+                            className="absolute right-0 top-0 h-full px-2"
                             onClick={() => setShowPassword(!showPassword)}
                           >
                             {showPassword ? (
@@ -155,20 +155,20 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">Confirmar Senha *</FormLabel>
+                      <FormLabel className="text-xs font-medium text-foreground">Confirmar Senha *</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             {...field}
                             type={showConfirmPassword ? "text" : "password"}
                             placeholder="Confirme sua senha"
-                            className="h-9"
+                            className="h-8 text-sm"
                           />
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="absolute right-0 top-0 h-full px-3"
+                            className="absolute right-0 top-0 h-full px-2"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           >
                             {showConfirmPassword ? (
@@ -189,13 +189,13 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
                   name="nomeCompleto"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">Nome Completo *</FormLabel>
+                      <FormLabel className="text-xs font-medium text-foreground">Nome Completo *</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="text"
                           placeholder="Nome completo"
-                          className="h-9"
+                          className="h-8 text-sm"
                         />
                       </FormControl>
                       <FormMessage />
@@ -208,13 +208,13 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
                   name="matricula"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">Matrícula *</FormLabel>
+                      <FormLabel className="text-xs font-medium text-foreground">Matrícula *</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="text"
                           placeholder="Número da matrícula"
-                          className="h-9"
+                          className="h-8 text-sm"
                         />
                       </FormControl>
                       <FormMessage />
@@ -227,10 +227,10 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
                   name="cargoFuncao"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">Cargo/Função *</FormLabel>
+                      <FormLabel className="text-xs font-medium text-foreground">Cargo/Função *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="h-9">
+                          <SelectTrigger className="h-8 text-sm">
                             <SelectValue placeholder="Selecione seu cargo" />
                           </SelectTrigger>
                         </FormControl>
@@ -245,20 +245,20 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
                   )}
                 />
 
-                <div className="space-y-3 pt-3">
+                <div className="space-y-2.5 pt-2">
                   <div className="flex items-start space-x-2">
                     <Checkbox
                       id="termos"
                       checked={aceitouTermos}
                       onCheckedChange={(checked) => setAceitouTermos(checked as boolean)}
                     />
-                    <div className="text-sm">
-                      <label htmlFor="termos" className="cursor-pointer text-gray-800 font-medium">
+                    <div className="text-xs">
+                      <label htmlFor="termos" className="cursor-pointer text-foreground font-medium">
                         Aceito os{" "}
                         <button
                           type="button"
                           onClick={() => setShowTerms(true)}
-                          className="text-blue-700 hover:text-blue-900 underline font-semibold hover:bg-blue-50 px-1 py-0.5 rounded transition-colors"
+                          className="text-primary hover:text-primary/80 underline font-semibold hover:bg-primary/10 px-1 py-0.5 rounded transition-colors"
                         >
                           termos de uso
                         </button>{" "}
@@ -268,28 +268,28 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
                   </div>
 
                   {form.formState.errors.root && (
-                    <p className="text-sm text-red-600">{form.formState.errors.root.message}</p>
+                    <p className="text-xs text-destructive">{form.formState.errors.root.message}</p>
                   )}
 
-                  <Alert className="bg-blue-50 border-blue-200">
-                    <AlertTriangle className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-800 text-sm">
+                  <Alert className="bg-primary/5 border-primary/20">
+                    <AlertTriangle className="h-3 w-3 text-primary" />
+                    <AlertDescription className="text-foreground text-xs">
                       <strong>Importante:</strong> Após o cadastro, aguarde a autorização do administrador para validar seu acesso.
                     </AlertDescription>
                   </Alert>
                 </div>
 
-                <div className="space-y-2 pt-3">
+                <div className="space-y-2 pt-2">
                   <Button 
                     type="submit" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 h-9"
+                    className="w-full h-8 text-sm"
                     disabled={!aceitouTermos || form.formState.isSubmitting}
                   >
                     {form.formState.isSubmitting ? (
                       "Enviando..."
                     ) : (
                       <>
-                        <UserPlus className="h-4 w-4 mr-2" />
+                        <UserPlus className="h-3 w-3 mr-2" />
                         Solicitar Cadastro
                       </>
                     )}
@@ -298,7 +298,7 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    className="w-full h-9"
+                    className="w-full h-8 text-sm"
                     onClick={onBack}
                   >
                     Voltar ao Login
