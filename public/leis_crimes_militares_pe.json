@@ -1,0 +1,182 @@
+{
+  "leis": [
+    {
+      "id": "cpm_001",
+      "numero": "DECRETO-LEI Nº 1.001",
+      "ano": "1969",
+      "titulo": "Código Penal Militar",
+      "ementa": "Código Penal Militar aplicável às Polícias Militares e Bombeiros Militares de Pernambuco",
+      "categoria": "Penal Militar",
+      "dataPublicacao": "1969-10-21",
+      "status": "vigente",
+      "orgao": "PM/BM PE",
+      "artigos": [
+        "Art. 149 - Deserção",
+        "Art. 163 - Insubordinação",
+        "Art. 187 - Abandono de posto",
+        "Art. 205 - Desacato a superior",
+        "Art. 244 - Embriaguez em serviço"
+      ]
+    },
+    {
+      "id": "cpm_002", 
+      "numero": "DECRETO-LEI Nº 1.002",
+      "ano": "1969",
+      "titulo": "Código de Processo Penal Militar",
+      "ementa": "Regula o processo penal militar aplicável às corporações militares estaduais de PE",
+      "categoria": "Processual Militar",
+      "dataPublicacao": "1969-10-21",
+      "status": "vigente",
+      "orgao": "PM/BM PE"
+    },
+    {
+      "id": "rdpm_001",
+      "numero": "DECRETO Nº 11.817",
+      "ano": "1986",
+      "titulo": "Regulamento Disciplinar da Polícia Militar de PE",
+      "ementa": "Estabelece as normas disciplinares aplicáveis aos militares estaduais de Pernambuco",
+      "categoria": "Disciplinar",
+      "dataPublicacao": "1986-01-31",
+      "status": "vigente", 
+      "orgao": "PMPE"
+    },
+    {
+      "id": "lei_pe_001",
+      "numero": "LEI Nº 6.425",
+      "ano": "1972",
+      "titulo": "Estatuto dos Policiais Militares de PE",
+      "ementa": "Dispõe sobre o Estatuto dos Policiais Militares do Estado de Pernambuco",
+      "categoria": "Estatuto",
+      "dataPublicacao": "1972-04-04",
+      "status": "vigente",
+      "orgao": "PMPE"
+    },
+    {
+      "id": "lei_pe_002",
+      "numero": "LEI Nº 11.812",
+      "ano": "2000",
+      "titulo": "Estatuto dos Bombeiros Militares de PE",
+      "ementa": "Dispõe sobre o Estatuto dos Bombeiros Militares do Estado de Pernambuco",
+      "categoria": "Estatuto",
+      "dataPublicacao": "2000-02-13",
+      "status": "vigente",
+      "orgao": "CBMPE"
+    }
+  ],
+  "crimes_militares": [
+    {
+      "crime": "Deserção",
+      "artigo": "187 CPM",
+      "descricao": "Ausentar-se o militar, sem licença, da unidade em que serve, ou do lugar em que deve permanecer, por mais de oito dias",
+      "pena": "Detenção de seis meses a dois anos; se oficial, a pena é agravada",
+      "categoria": "Contra o serviço militar",
+      "observacoes": "Crime próprio militar - não se aplica a civis"
+    },
+    {
+      "crime": "Insubordinação",
+      "artigo": "163 CPM", 
+      "descricao": "Desobedecer a ordem legal de superior hierárquico ou resistir ao cumprimento de ordem legal",
+      "pena": "Detenção de três meses a dois anos",
+      "categoria": "Contra a autoridade ou disciplina militar",
+      "observacoes": "Pode ser agravada conforme as circunstâncias"
+    },
+    {
+      "crime": "Abandono de posto",
+      "artigo": "195 CPM",
+      "descricao": "Abandonar, sem ordem superior, o posto ou lugar de serviço que lhe tenha sido designado, ou o serviço que lhe cumpria",
+      "pena": "Detenção de três meses a um ano",
+      "categoria": "Contra o serviço militar",
+      "observacoes": "Em tempo de guerra a pena é agravada"
+    },
+    {
+      "crime": "Desacato a superior",
+      "artigo": "160 CPM",
+      "descricao": "Desacatar superior diante de outrem, por palavras, gestos ou vias de fato",
+      "pena": "Detenção de seis meses a dois anos",
+      "categoria": "Contra a autoridade militar",
+      "observacoes": "Agravado se praticado em presença da tropa"
+    },
+    {
+      "crime": "Embriaguez em serviço",
+      "artigo": "202 CPM",
+      "descricao": "Embriagar-se o militar, quando em serviço, ou apresentar-se embriagado para prestá-lo",
+      "pena": "Detenção de seis meses a dois anos",
+      "categoria": "Contra o serviço militar",
+      "observacoes": "Pode resultar em exclusão das fileiras"
+    },
+    {
+      "crime": "Violência contra inferior",
+      "artigo": "175 CPM",
+      "descricao": "Praticar violência contra inferior hierárquico",
+      "pena": "Detenção de três meses a um ano",
+      "categoria": "Contra a pessoa",
+      "observacoes": "Se resultar lesão corporal, a pena é agravada"
+    },
+    {
+      "crime": "Dormir em serviço",
+      "artigo": "203 CPM",
+      "descricao": "Dormir o militar, quando em serviço, como oficial de quarto ou de ronda, ou em situação equivalente, ou, não sendo oficial, em serviço de sentinela, vigia, plantão às comunicações e outros dessa natureza",
+      "pena": "Detenção de três meses a um ano",
+      "categoria": "Contra o serviço militar",
+      "observacoes": "Considerado grave falta disciplinar"
+    },
+    {
+      "crime": "Motim",
+      "artigo": "149 CPM",
+      "descricao": "Aliciar militares, ou promover, ou facilitar reunião de militares, ou influir para que coletivamente faltem ao cumprimento de seus deveres, ou pratiquem violência contra superior",
+      "pena": "Reclusão de quatro a oito anos",
+      "categoria": "Contra a autoridade militar",
+      "observacoes": "Crime grave contra a hierarquia militar"
+    },
+    {
+      "crime": "Covardia",
+      "artigo": "364 CPM",
+      "descricao": "Fugir ou abandonar o posto, em presença do inimigo, ou deixar de cumprir ordem recebida, por covardia",
+      "pena": "Reclusão de dois a oito anos",
+      "categoria": "Crimes em tempo de guerra",
+      "observacoes": "Aplicável apenas em situações de guerra"
+    },
+    {
+      "crime": "Peculato",
+      "artigo": "303 CPM",
+      "descricao": "Apropriar-se de dinheiro ou qualquer utilidade que, no exercício do cargo, recebeu por título não criminoso",
+      "pena": "Reclusão de dois a doze anos e multa",
+      "categoria": "Contra a administração militar",
+      "observacoes": "Crime contra o patrimônio militar"
+    }
+  ],
+  "regulamentos_pe": [
+    {
+      "nome": "RDPM - Regulamento Disciplinar da PM/PE",
+      "descricao": "Estabelece as transgressões disciplinares e respectivas punições para militares estaduais",
+      "transgressoes_graves": [
+        "Faltar com a verdade",
+        "Deixar de comunicar infração disciplinar",
+        "Simular doença para esquivar-se ao cumprimento do dever",
+        "Dormir em serviço de natureza operacional"
+      ]
+    },
+    {
+      "nome": "Normas Gerais de Ação da PMPE",
+      "descricao": "Regula o emprego operacional da Polícia Militar de Pernambuco",
+      "areas_atuacao": [
+        "Policiamento ostensivo preventivo",
+        "Preservação da ordem pública", 
+        "Policiamento de trânsito",
+        "Policiamento ambiental"
+      ]
+    }
+  ],
+  "jurisprudencia": [
+    {
+      "tribunal": "STJ",
+      "ementa": "A competência para processar e julgar militar por crime previsto no Código Penal Militar é da Justiça Militar Estadual",
+      "ano": "2020"
+    },
+    {
+      "tribunal": "STF", 
+      "ementa": "O foro militar é determinado pela qualidade do agente e pela natureza do delito, sendo indispensável que o crime seja tipificado na lei penal militar",
+      "ano": "2019"
+    }
+  ]
+} 

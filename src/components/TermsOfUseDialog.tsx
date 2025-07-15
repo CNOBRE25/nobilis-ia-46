@@ -19,7 +19,7 @@ const TermsOfUseDialog = ({ open, onOpenChange }: TermsOfUseDialogProps) => {
             <DialogTitle className="text-xl font-bold">Termos de Uso - NOBILIS-IA</DialogTitle>
           </div>
           <DialogDescription>
-            Plataforma Inteligente para Análise de Pareceres Jurídicos
+            Bem Vindo, Encarregado! Sistema para Análise de Pareceres Jurídicos
           </DialogDescription>
         </DialogHeader>
         
