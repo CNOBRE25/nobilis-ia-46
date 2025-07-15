@@ -1,0 +1,166 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Sistema de design unificado com tema de IA - Cores Suaves */
+
+@layer base {
+  :root {
+    --background: 224 24% 4%;
+    --foreground: 210 30% 95%;
+
+    --card: 224 20% 8%;
+    --card-foreground: 210 25% 92%;
+
+    --popover: 224 20% 8%;
+    --popover-foreground: 210 25% 92%;
+
+    --primary: 200 50% 55%;
+    --primary-foreground: 224 24% 4%;
+
+    --secondary: 224 20% 12%;
+    --secondary-foreground: 210 25% 88%;
+
+    --muted: 224 20% 12%;
+    --muted-foreground: 210 20% 65%;
+
+    --accent: 200 40% 50%;
+    --accent-foreground: 224 24% 4%;
+
+    --destructive: 0 60% 55%;
+    --destructive-foreground: 210 25% 95%;
+
+    --border: 224 20% 16%;
+    --input: 224 20% 16%;
+    --ring: 200 50% 55%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 224 20% 8%;
+    --sidebar-foreground: 210 25% 92%;
+    --sidebar-primary: 200 50% 55%;
+    --sidebar-primary-foreground: 224 24% 4%;
+    --sidebar-accent: 224 20% 12%;
+    --sidebar-accent-foreground: 210 25% 88%;
+    --sidebar-border: 224 20% 16%;
+    --sidebar-ring: 200 50% 55%;
+
+    /* Cores específicas do tema IA - Mais suaves */
+    --ai-cyan: 180 40% 60%;
+    --ai-blue: 200 45% 65%;
+    --ai-purple: 260 40% 70%;
+    --ai-green: 140 35% 55%;
+    --ai-orange: 25 50% 60%;
+    --ai-red: 0 45% 65%;
+    --ai-yellow: 48 50% 65%;
+  }
+
+  .dark {
+    --background: 224 24% 4%;
+    --foreground: 210 30% 95%;
+
+    --card: 224 20% 8%;
+    --card-foreground: 210 25% 92%;
+
+    --popover: 224 20% 8%;
+    --popover-foreground: 210 25% 92%;
+
+    --primary: 200 50% 55%;
+    --primary-foreground: 224 24% 4%;
+
+    --secondary: 224 20% 12%;
+    --secondary-foreground: 210 25% 88%;
+
+    --muted: 224 20% 12%;
+    --muted-foreground: 210 20% 65%;
+
+    --accent: 200 40% 50%;
+    --accent-foreground: 224 24% 4%;
+
+    --destructive: 0 60% 55%;
+    --destructive-foreground: 210 25% 95%;
+
+    --border: 224 20% 16%;
+    --input: 224 20% 16%;
+    --ring: 200 50% 55%;
+
+    --sidebar-background: 224 20% 8%;
+    --sidebar-foreground: 210 25% 92%;
+    --sidebar-primary: 200 50% 55%;
+    --sidebar-primary-foreground: 224 24% 4%;
+    --sidebar-accent: 224 20% 12%;
+    --sidebar-accent-foreground: 210 25% 88%;
+    --sidebar-border: 224 20% 16%;
+    --sidebar-ring: 200 50% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  }
+
+  /* Utilities suaves para tema IA */
+  .ai-gradient {
+    background: linear-gradient(135deg, 
+      hsl(224 24% 4%) 0%, 
+      hsl(224 20% 6%) 25%, 
+      hsl(200 25% 8%) 75%, 
+      hsl(224 24% 4%) 100%);
+  }
+
+  .ai-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/60 shadow-lg;
+  }
+
+  .ai-button-primary {
+    @apply bg-gradient-to-r from-primary/90 to-accent/90 hover:from-primary hover:to-accent text-primary-foreground shadow-md;
+  }
+
+  .ai-button-secondary {
+    @apply bg-secondary/80 hover:bg-secondary text-secondary-foreground border border-border/60 backdrop-blur-sm shadow-md;
+  }
+
+  .ai-glow {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.2);
+  }
+
+  .ai-glow-soft {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.15);
+  }
+}
+
+/* Animações suaves */
+@keyframes ai-pulse-soft {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes ai-float-soft {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.ai-pulse-soft {
+  animation: ai-pulse-soft 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.ai-float-soft {
+  animation: ai-float-soft 4s ease-in-out infinite;
+}
