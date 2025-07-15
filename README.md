@@ -1,73 +1,211 @@
-# Welcome to your Lovable project
+# 🏛️ NOBILIS-IA - Sistema de Gestão Jurídica
 
-## Project info
+**Sistema inteligente para gestão de processos jurídicos e análise de pareceres.**
 
-**URL**: https://lovable.dev/projects/8f378f7f-b4f0-4166-949c-e271ecd1dc0b
+## 📋 **OVERVIEW**
 
-## How can I edit this code?
+O NOBILIS-IA é uma plataforma completa para gestão jurídica que integra:
+- 🔐 Sistema de autenticação seguro
+- 👥 Gestão de usuários com diferentes roles (Admin, Advogado, Cliente)
+- 📊 Dashboard com estatísticas e métricas
+- 🤖 Análise de processos com IA
+- 📋 Gestão de processos e pareceres
+- 📚 Biblioteca de legislação
+- 🔍 Sistema de auditoria completo
 
-There are several ways of editing your application.
+## 🚨 **IMPORTANTE - SEGURANÇA**
 
-**Use Lovable**
+⚠️ **ESTE SISTEMA CONTÉM VULNERABILIDADES CRÍTICAS DE SEGURANÇA QUE DEVEM SER CORRIGIDAS ANTES DO DEPLOY EM PRODUÇÃO**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8f378f7f-b4f0-4166-949c-e271ecd1dc0b) and start prompting.
+Consulte os arquivos:
+- `security-checklist.md` - Lista completa de vulnerabilidades
+- `deploy-guide.md` - Guia de deploy seguro
 
-Changes made via Lovable will be committed automatically to this repo.
+### Principais Riscos Identificados:
+- Credenciais hardcoded no código
+- Senhas em texto plano no banco
+- Sistema de autenticação incompleto
+- Falta de variáveis de ambiente
 
-**Use your preferred IDE**
+## 🛠️ **TECNOLOGIAS UTILIZADAS**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**: React 18 + TypeScript
+- **UI/UX**: Tailwind CSS + shadcn/ui
+- **Backend**: Supabase (PostgreSQL)
+- **Autenticação**: Supabase Auth
+- **Build**: Vite
+- **Validação**: Zod
+- **Formulários**: React Hook Form
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 **DESENVOLVIMENTO**
 
-Follow these steps:
+### Pré-requisitos
+- Node.js 18+
+- npm ou yarn
+- Git
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Instalação
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```bash
+# 1. Clone o repositório
+git clone https://github.com/seu-usuario/nobilis-ia.git
+cd nobilis-ia
 
-# Step 3: Install the necessary dependencies.
-npm i
+# 2. Instale as dependências
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 3. Configure as variáveis de ambiente
+cp .env.example .env.local
+# Edite .env.local com suas configurações
+
+# 4. Execute em modo desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Scripts Disponíveis
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run dev          # Servidor de desenvolvimento
+npm run build        # Build para produção
+npm run preview      # Preview da build
+npm run lint         # Verificar código
+npm audit           # Verificar vulnerabilidades
+```
 
-**Use GitHub Codespaces**
+## 🔒 **CONFIGURAÇÃO DE SEGURANÇA**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Variáveis de Ambiente Obrigatórias
 
-## What technologies are used for this project?
+```bash
+# Supabase Configuration
+VITE_SUPABASE_URL=sua_url_supabase
+VITE_SUPABASE_ANON_KEY=sua_chave_anon
 
-This project is built with:
+# App Configuration
+VITE_APP_NAME=NOBILIS-IA
+VITE_APP_ENVIRONMENT=development
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Security
+VITE_ENABLE_AUDIT_LOGS=true
+VITE_SESSION_TIMEOUT=3600
+VITE_MAX_LOGIN_ATTEMPTS=5
+```
 
-## How can I deploy this project?
+### Configuração do Banco de Dados
 
-Simply open [Lovable](https://lovable.dev/projects/8f378f7f-b4f0-4166-949c-e271ecd1dc0b) and click on Share -> Publish.
+O sistema usa Supabase com as seguintes tabelas principais:
+- `users` - Usuários do sistema
+- `clients` - Clientes
+- `processes` - Processos jurídicos
+- `audit_logs` - Logs de auditoria
 
-## Can I connect a custom domain to my Lovable project?
+## 👥 **SISTEMA DE ROLES**
 
-Yes, you can!
+### Tipos de Usuário:
+- **Admin**: Acesso total ao sistema
+- **Lawyer**: Acesso a processos e clientes
+- **Client**: Acesso limitado aos próprios processos
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Permissões:
+- Row Level Security (RLS) implementado
+- Auditoria de todas as ações
+- Controle de acesso baseado em roles
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 📊 **FUNCIONALIDADES**
+
+### Dashboard
+- Estatísticas de processos
+- Métricas de performance
+- Gráficos e relatórios
+
+### Gestão de Processos
+- Cadastro de novos processos
+- Análise automática com IA
+- Geração de pareceres
+- Controle de prazos
+
+### Administração
+- Gestão de usuários
+- Configurações do sistema
+- Relatórios de auditoria
+- Monitoramento de segurança
+
+## 🔐 **AUTENTICAÇÃO**
+
+### Recursos Implementados:
+- Login com email/senha
+- Recuperação de senha
+- Sessões persistentes
+- Logout automático por inatividade
+- Auditoria de login
+
+### Validações:
+- Força de senha (8+ caracteres, maiúscula, minúscula, número, especial)
+- Sanitização de entrada
+- Proteção contra XSS
+- Validação de email
+
+## 📈 **DEPLOY PARA PRODUÇÃO**
+
+### Antes do Deploy:
+1. **Corrigir vulnerabilidades críticas** (ver security-checklist.md)
+2. **Configurar variáveis de ambiente**
+3. **Configurar HTTPS**
+4. **Configurar backup automático**
+5. **Implementar monitoramento**
+
+### Processo de Deploy:
+```bash
+# 1. Auditoria de segurança
+npm audit fix
+
+# 2. Build de produção
+npm run build
+
+# 3. Deploy (exemplo com Nginx)
+sudo cp -r dist/* /var/www/nobilis-ia/
+sudo systemctl restart nginx
+```
+
+## 🚨 **MONITORAMENTO E LOGS**
+
+### Métricas Importantes:
+- Uptime do sistema
+- Tempo de resposta
+- Erros de autenticação
+- Tentativas de login falhadas
+- Uso de recursos
+
+### Logs de Auditoria:
+- Todas as ações são logadas
+- Retenção de 2 anos
+- Logs de segurança detalhados
+- Alertas automáticos
+
+## 📞 **SUPORTE E CONTATOS**
+
+### Documentação:
+- [Security Checklist](security-checklist.md)
+- [Deploy Guide](deploy-guide.md)
+- [Supabase Documentation](https://supabase.com/docs)
+
+### Contatos de Emergência:
+- **Administrador do Sistema**: [email]
+- **Equipe de Desenvolvimento**: [email]
+- **Suporte Técnico**: [email]
+
+## 📄 **LICENÇA**
+
+Este projeto é propriedade privada. Todos os direitos reservados.
+
+---
+
+### 🔗 **Links Úteis**
+
+- **Lovable Project**: https://lovable.dev/projects/8f378f7f-b4f0-4166-949c-e271ecd1dc0b
+- **Supabase Dashboard**: https://ligcnslmsybwzcmjuoli.supabase.co
+- **Documentação Técnica**: [Link para documentação]
+
+---
+
+**⚠️ LEMBRE-SE**: Este sistema contém vulnerabilidades críticas. NÃO faça deploy em produção sem antes corrigir todos os problemas de segurança listados no security-checklist.md!
