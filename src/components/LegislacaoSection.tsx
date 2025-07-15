@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,8 @@ import {
   ExternalLink,
   Calendar,
   Tag,
-  AlertTriangle
+  AlertTriangle,
+  Award
 } from "lucide-react";
 import { 
   Select,
@@ -47,6 +48,35 @@ interface CrimeMapping {
   artigo: string;
   descricao: string;
   pena: string;
+}
+
+interface CrimeMilitar {
+  crime: string;
+  artigo: string;
+  descricao: string;
+  pena: string;
+  categoria: string;
+  observacoes: string;
+}
+
+interface LeiMilitar {
+  id: string;
+  numero: string;
+  ano: string;
+  titulo: string;
+  ementa: string;
+  categoria: string;
+  dataPublicacao: string;
+  status: string;
+  orgao: string;
+  artigos?: string[];
+}
+
+interface LegislacaoMilitarData {
+  leis: LeiMilitar[];
+  crimes_militares: CrimeMilitar[];
+  regulamentos_pe: any[];
+  jurisprudencia: any[];
 }
 
 const crimesMapping: CrimeMapping[] = [
@@ -192,6 +222,56 @@ const LegislacaoSection = () => {
   const [selectedStatus, setSelectedStatus] = useState("todas");
   const [filteredLeis, setFilteredLeis] = useState(mockLeis);
   const [crimeResults, setCrimeResults] = useState<CrimeMapping[]>([]);
+  const [legislacaoMilitar, setLegislacaoMilitar] = useState<LegislacaoMilitarData | null>(null);
+  const [filteredLeisMilitares, setFilteredLeisMilitares] = useState<LeiMilitar[]>([]);
+  const [filteredCrimesMilitares, setFilteredCrimesMilitares] = useState<CrimeMilitar[]>([]);
+
+  useEffect(() => {
+    const loadLegislacaoMilitar = async () => {
+      try {
+        const response = await fetch('/leis_crimes_militares_pe.json');
+        const data: LegislacaoMilitarData = await response.json();
+        setLegislacaoMilitar(data);
+        setFilteredLeisMilitares(data.leis);
+        setFilteredCrimesMilitares(data.crimes_militares);
+      } catch (error) {
+        console.error('Erro ao carregar legislação militar:', error);
+        // Dados de fallback em caso de erro
+        const fallbackData: LegislacaoMilitarData = {
+          leis: [
+            {
+              id: "cpm_001",
+              numero: "DECRETO-LEI Nº 1.001",
+              ano: "1969",
+              titulo: "Código Penal Militar",
+              ementa: "Código Penal Militar aplicável às Polícias Militares e Bombeiros Militares",
+              categoria: "Penal Militar",
+              dataPublicacao: "1969-10-21",
+              status: "vigente",
+              orgao: "PM/BM PE"
+            }
+          ],
+          crimes_militares: [
+            {
+              crime: "Deserção",
+              artigo: "187 CPM",
+              descricao: "Ausentar-se o militar, sem licença, da unidade em que serve",
+              pena: "Detenção de seis meses a dois anos",
+              categoria: "Contra o serviço militar",
+              observacoes: "Crime próprio militar"
+            }
+          ],
+          regulamentos_pe: [],
+          jurisprudencia: []
+        };
+        setLegislacaoMilitar(fallbackData);
+        setFilteredLeisMilitares(fallbackData.leis);
+        setFilteredCrimesMilitares(fallbackData.crimes_militares);
+      }
+    };
+
+    loadLegislacaoMilitar();
+  }, []);
 
   const handleSearch = () => {
     let filtered = mockLeis;
@@ -258,9 +338,23 @@ const LegislacaoSection = () => {
         </CardHeader>
       </Card>
 
-      {/* Filtros de Busca */}
-      <Card className="ai-card">
-        <CardContent className="pt-6">
+      {/* Tabs */}
+      <Tabs defaultValue="geral" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="geral" className="flex items-center">
+            <Scale className="h-4 w-4 mr-2" />
+            Legislação Geral
+          </TabsTrigger>
+          <TabsTrigger value="militar" className="flex items-center">
+            <Award className="h-4 w-4 mr-2" />
+            Legislação Militar PE
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="geral">
+          {/* Filtros de Busca */}
+          <Card className="ai-card">
+            <CardContent className="pt-6">
           <div className="space-y-4">
             <div className="flex gap-4">
               <div className="flex-1">
@@ -488,8 +582,173 @@ const LegislacaoSection = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </TabsContent>
+
+    <TabsContent value="militar">
+      {/* Seção de Legislação Militar */}
+      <Card className="ai-card">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-500/20 rounded-lg">
+              <Award className="h-6 w-6 text-red-400" />
+            </div>
+            <div>
+              <CardTitle className="text-xl text-card-foreground">
+                Legislação Militar - Pernambuco
+              </CardTitle>
+              <CardDescription>
+                Código Penal Militar, Regulamentos e Normas aplicáveis às corporações militares de PE
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Crimes Militares */}
+      <Card className="ai-card border-red-500/30 bg-red-500/10">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Gavel className="h-5 w-5 text-red-400" />
+            <CardTitle className="text-lg text-red-400">
+              Crimes Militares - Código Penal Militar
+            </CardTitle>
+            <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30">
+              {filteredCrimesMilitares.length} crimes catalogados
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[400px] w-full">
+            <div className="space-y-3">
+              {filteredCrimesMilitares.map((crime, index) => (
+                <Card key={index} className="ai-card border-red-500/20">
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-red-400">
+                              {crime.crime}
+                            </h3>
+                            <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-500/30">
+                              {crime.artigo}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {crime.categoria}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-sm font-medium text-card-foreground">Descrição:</p>
+                          <p className="text-sm text-muted-foreground">{crime.descricao}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-card-foreground">Pena:</p>
+                          <p className="text-sm text-orange-400">{crime.pena}</p>
+                        </div>
+                        {crime.observacoes && (
+                          <div>
+                            <p className="text-sm font-medium text-card-foreground">Observações:</p>
+                            <p className="text-sm text-muted-foreground italic">{crime.observacoes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      {/* Leis Militares */}
+      <Card className="ai-card">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg text-card-foreground">
+              Legislação Militar Específica - PE
+            </CardTitle>
+            <Badge variant="outline" className="bg-card text-card-foreground border-border">
+              {filteredLeisMilitares.length} lei(s) militar(es)
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[400px] w-full">
+            <div className="space-y-4">
+              {filteredLeisMilitares.map((lei) => (
+                <Card key={lei.id} className="ai-card border border-border/60">
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-card-foreground">
+                              {lei.numero}
+                            </h3>
+                            <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                              {lei.status.charAt(0).toUpperCase() + lei.status.slice(1)}
+                            </Badge>
+                            <Badge variant="outline" className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+                              {lei.orgao}
+                            </Badge>
+                          </div>
+                          <p className="text-sm font-medium text-primary">
+                            {lei.titulo}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {lei.categoria} • Publicado em {new Date(lei.dataPublicacao).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {lei.ementa}
+                      </p>
+                      {lei.artigos && (
+                        <div>
+                          <p className="text-sm font-medium text-card-foreground mb-2">Principais Artigos:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {lei.artigos.map((artigo, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {artigo}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      {/* Aviso Específico para Legislação Militar */}
+      <Card className="ai-card border-red-500/30 bg-red-500/10">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <Award className="h-5 w-5 text-red-400 mt-1" />
+            <div className="space-y-2">
+              <h4 className="font-semibold text-red-400">Legislação Militar - PE</h4>
+              <p className="text-sm text-red-200/80">
+                Esta seção contém informações sobre crimes militares e legislação específica aplicável às 
+                corporações militares de Pernambuco (PMPE e CBMPE). Sempre consulte o Regulamento Disciplinar 
+                e a Justiça Militar para casos específicos.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </TabsContent>
+
+  </Tabs>
+</div>
+);
 };
 
 export default LegislacaoSection;

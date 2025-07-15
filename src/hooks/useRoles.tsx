@@ -38,45 +38,64 @@ export const useRoles = () => {
       setLoading(true);
       setError(null);
       
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('auth_id', user?.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        setError('Failed to fetch user profile');
-        
-        // Fallback para desenvolvimento - criar perfil temporário
-        if (user?.email) {
-          const tempProfile: UserProfile = {
-            id: user.id,
-            username: user.email.split('@')[0],
-            email: user.email,
-            role: user.email.includes('admin') ? 'admin' : 'lawyer',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            nome_completo: null,
-            matricula: null,
-            cargo_funcao: null,
-            ativo: true
-          };
-          setProfile(tempProfile);
-        }
-      } else if (data) {
+      // For custom auth, use user metadata or email lookup
+      if (user?.user_metadata) {
+        // User data is already in the metadata from custom auth
+        const userData = user.user_metadata;
         setProfile({
-          id: data.id.toString(),
-          username: data.username,
-          email: data.email,
-          role: data.role as UserRole,
-          created_at: data.created_at,
-          updated_at: data.updated_at,
-          nome_completo: data.nome_completo,
-          matricula: data.matricula,
-          cargo_funcao: data.cargo_funcao,
-          ativo: data.ativo
+          id: user.id,
+          username: userData.username || user.email?.split('@')[0] || '',
+          email: user.email || '',
+          role: (userData.role || user.app_metadata?.role) as UserRole,
+          created_at: userData.created_at || user.created_at || new Date().toISOString(),
+          updated_at: userData.updated_at || user.updated_at || new Date().toISOString(),
+          nome_completo: userData.nome_completo,
+          matricula: userData.matricula,
+          cargo_funcao: userData.cargo_funcao,
+          ativo: userData.ativo !== false
         });
+      } else {
+        // Fallback: lookup by email
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', user?.email)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          setError('Failed to fetch user profile');
+          
+          // Create temporary profile for development
+          if (user?.email) {
+            const tempProfile: UserProfile = {
+              id: user.id,
+              username: user.email.split('@')[0],
+              email: user.email,
+              role: user.email.includes('admin') ? 'admin' : 'lawyer',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              nome_completo: null,
+              matricula: null,
+              cargo_funcao: null,
+              ativo: true
+            };
+            setProfile(tempProfile);
+          }
+        } else if (data) {
+          setProfile({
+            id: data.id?.toString() || user?.id || '',
+            username: data.username,
+            email: data.email,
+            role: data.role as UserRole,
+            created_at: data.created_at,
+            updated_at: data.updated_at,
+            nome_completo: data.nome_completo,
+            matricula: data.matricula,
+            cargo_funcao: data.cargo_funcao,
+            ativo: data.ativo
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);

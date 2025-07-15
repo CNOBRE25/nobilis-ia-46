@@ -86,7 +86,7 @@ const Dashboard = ({ user }: DashboardProps) => {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                   NOBILIS-IA
                 </h1>
-                <p className="text-lg text-muted-foreground font-light">PLATAFORMA INTELIGENTE</p>
+                <p className="text-lg text-muted-foreground font-light">BEM VINDO, ENCARREGADO! SISTEMA</p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">

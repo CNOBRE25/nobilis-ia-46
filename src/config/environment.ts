@@ -33,11 +33,12 @@ interface EnvironmentConfig {
 }
 
 // Validate required environment variables
-const validateEnvironmentVariable = (key: string, value: string | undefined): string => {
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`);
+const validateEnvironmentVariable = (key: string, value: string | undefined, defaultValue?: string): string => {
+  if (!value && !defaultValue) {
+    console.warn(`Missing environment variable: ${key}, but continuing with fallback`);
+    return '';
   }
-  return value;
+  return value || defaultValue || '';
 };
 
 // Get boolean environment variable with default
@@ -59,8 +60,8 @@ const getNumberEnv = (key: string, defaultValue: number): number => {
 const loadConfig = (): EnvironmentConfig => {
   const config: EnvironmentConfig = {
     supabase: {
-      url: validateEnvironmentVariable('VITE_SUPABASE_URL', import.meta.env.VITE_SUPABASE_URL),
-      anonKey: validateEnvironmentVariable('VITE_SUPABASE_ANON_KEY', import.meta.env.VITE_SUPABASE_ANON_KEY),
+      url: validateEnvironmentVariable('VITE_SUPABASE_URL', import.meta.env.VITE_SUPABASE_URL, 'https://ligcnslmsybwzcmjuoli.supabase.co'),
+      anonKey: validateEnvironmentVariable('VITE_SUPABASE_ANON_KEY', import.meta.env.VITE_SUPABASE_ANON_KEY, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpZ2Nuc2xtc3lid3pjbWp1b2xpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjE5MjEsImV4cCI6MjA2NzEzNzkyMX0.FI2kjhF7kzpOcpZR5TrKsra1Dh0nE2dJJDewuI8bJkk'),
     },
     
     app: {
