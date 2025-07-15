@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, UserPlus, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useAudit } from "@/hooks/useAudit";
+// import { useAudit } from "@/hooks/useAudit"; // Temporariamente desabilitado
 import { registerSchema, RegisterFormData, sanitizeInput } from "@/utils/validation";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import TermsOfUseDialog from "./TermsOfUseDialog";
@@ -22,7 +22,7 @@ interface RegisterFormProps {
 
 const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
   const { signUp } = useAuth();
-  const { logEvent } = useAudit();
+  // const { logEvent } = useAudit(); // Temporariamente desabilitado
   const [showTerms, setShowTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -72,10 +72,10 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
     const { error } = await signUp(sanitizedData.email, sanitizedData.password, userData);
     
     if (!error) {
-      await logEvent('SIGN_UP_SUCCESS', undefined, {
-        email: sanitizedData.email,
-        cargo: sanitizedData.cargoFuncao
-      });
+      // await logEvent('SIGN_UP_SUCCESS', undefined, {
+      //   email: sanitizedData.email,
+      //   cargo: sanitizedData.cargoFuncao
+      // }); // Temporariamente desabilitado
       onRegisterSuccess();
     }
   };
