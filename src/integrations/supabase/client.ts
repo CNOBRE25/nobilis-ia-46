@@ -2,15 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Use environment variables for production security
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://ligcnslmsybwzcmjuoli.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpZ2Nuc2xtc3lid3pjbWp1b2xpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjE5MjEsImV4cCI6MjA2NzEzNzkyMX0.FI2kjhF7kzpOcpZR5TrKsra1Dh0nE2dJJDewuI8bJkk";
-
-// Validate environment variables
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.error('Missing Supabase environment variables');
-  throw new Error('Supabase configuration is incomplete');
-}
+const SUPABASE_URL = "https://ligcnslmsybwzcmjuoli.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpZ2Nuc2xtc3lid3pjbWp1b2xpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjE5MjEsImV4cCI6MjA2NzEzNzkyMX0.FI2kjhF7kzpOcpZR5TrKsra1Dh0nE2dJJDewuI8bJkk";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -20,11 +13,5 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false, // Security improvement
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'nobilis-ia@1.0.0',
-    },
-  },
+  }
 });
