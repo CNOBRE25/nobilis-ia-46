@@ -35,7 +35,10 @@ interface EnvironmentConfig {
 // Validate required environment variables
 const validateEnvironmentVariable = (key: string, value: string | undefined, defaultValue?: string): string => {
   if (!value && !defaultValue) {
-    console.warn(`Missing environment variable: ${key}, but continuing with fallback`);
+    // Use a safer logging approach for production
+    if (import.meta.env.DEV) {
+      console.warn(`Missing environment variable: ${key}, but continuing with fallback`);
+    }
     return '';
   }
   return value || defaultValue || '';
@@ -87,17 +90,19 @@ const loadConfig = (): EnvironmentConfig => {
   
   // Validate configuration based on environment
   if (config.app.environment === 'production') {
-    // Production-specific validations
-    if (config.security.sessionTimeout > 7200) { // Max 2 hours in production
-      console.warn('Session timeout is too long for production environment');
-    }
-    
-    if (config.security.maxLoginAttempts > 10) {
-      console.warn('Max login attempts is too high for production environment');
-    }
-    
-    if (config.features.enableDebugMode) {
-      console.warn('Debug mode should be disabled in production');
+    // Production-specific validations - only log in development
+    if (import.meta.env.DEV) {
+      if (config.security.sessionTimeout > 7200) { // Max 2 hours in production
+        console.warn('Session timeout is too long for production environment');
+      }
+      
+      if (config.security.maxLoginAttempts > 10) {
+        console.warn('Max login attempts is too high for production environment');
+      }
+      
+      if (config.features.enableDebugMode) {
+        console.warn('Debug mode should be disabled in production');
+      }
     }
   }
   
@@ -127,7 +132,7 @@ export const getCSPConfig = () => {
     scriptSrc: ["'self'", "'unsafe-inline'"],
     styleSrc: ["'self'", "'unsafe-inline'"],
     imgSrc: ["'self'", "data:", "https:"],
-    connectSrc: ["'self'", config.supabase.url],
+    connectSrc: ["'self'", config.supabase.url, "https://api.openai.com"],
     fontSrc: ["'self'"],
     objectSrc: ["'none'"],
     mediaSrc: ["'self'"],

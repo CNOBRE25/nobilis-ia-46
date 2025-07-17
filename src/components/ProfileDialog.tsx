@@ -59,18 +59,15 @@ export default function ProfileDialog({ children, open, onOpenChange }: ProfileD
   const handleUpdateProfile = async (data: ProfileFormData) => {
     setIsLoading(true);
     try {
-      // Por enquanto, apenas simulamos a atualização
-      // Em uma implementação real, você faria uma chamada para a API do Supabase
-      console.log("Dados do perfil para atualizar:", data);
-      
-      // Simular sucesso
-      setIsEditing(false);
-      
-      // Em uma implementação real:
-      // const { error } = await supabase
-      //   .from('users')
-      //   .update(data)
-      //   .eq('auth_id', user?.id);
+      if (import.meta.env.DEV) {
+        console.log("Dados do perfil para atualizar:", data);
+      }
+
+      // Update user profile
+      const { error } = await supabase
+        .from('users')
+        .update(data)
+        .eq('auth_id', user?.id);
       
     } finally {
       setIsLoading(false);

@@ -30,7 +30,9 @@ const AIReportGenerator = ({ onClose }: AIReportGeneratorProps) => {
   };
 
   const handleAbrirProcesso = (id: string) => {
-    console.log("Abrindo processo:", id);
+    if (import.meta.env.DEV) {
+      console.log("Abrindo processo:", id);
+    }
     toast({
       title: "Abrindo Processo",
       description: "Carregando dados do processo..."
@@ -38,7 +40,9 @@ const AIReportGenerator = ({ onClose }: AIReportGeneratorProps) => {
   };
 
   const handleEditarProcesso = (id: string) => {
-    console.log("Editando processo:", id);
+    if (import.meta.env.DEV) {
+      console.log("Editando processo:", id);
+    }
     toast({
       title: "Editando Processo",
       description: "Processo aberto para edição."
@@ -46,7 +50,9 @@ const AIReportGenerator = ({ onClose }: AIReportGeneratorProps) => {
   };
 
   const handleGerarRelatorioIA = (id: string) => {
-    console.log("Gerando relatório IA para processo:", id);
+    if (import.meta.env.DEV) {
+      console.log("Gerando relatório IA para processo:", id);
+    }
     toast({
       title: "Gerando Relatório IA",
       description: "Processando dados com Inteligência Artificial... Isso pode levar alguns minutos."
@@ -62,18 +68,22 @@ const AIReportGenerator = ({ onClose }: AIReportGeneratorProps) => {
   };
 
   const handleFinalizarProcesso = (id: string) => {
-    console.log("Finalizando processo:", id);
+    if (import.meta.env.DEV) {
+      console.log("Finalizando processo:", id);
+    }
     toast({
       title: "Processo Finalizado",
       description: "Processo foi finalizado na unidade."
     });
   };
 
-  const handleSolicitarReabertura = (id: string) => {
-    console.log("Solicitando reabertura do processo:", id);
+  const handleReabrirProcesso = (id: string) => {
+    if (import.meta.env.DEV) {
+      console.log("Solicitando reabertura do processo:", id);
+    }
     toast({
-      title: "Solicitação Enviada",
-      description: "Solicitação de reabertura enviada ao administrador."
+      title: "Processo Reaberto",
+      description: "Processo foi reaberto para nova análise."
     });
   };
 
@@ -173,7 +183,7 @@ const AIReportGenerator = ({ onClose }: AIReportGeneratorProps) => {
                       </p>
                     </div>
                     <Button
-                      onClick={() => handleSolicitarReabertura(processo.id)}
+                      onClick={() => handleReabrirProcesso(processo.id)}
                       className="bg-orange-600 hover:bg-orange-700 text-white"
                     >
                       <FileText className="h-4 w-4 mr-2" />

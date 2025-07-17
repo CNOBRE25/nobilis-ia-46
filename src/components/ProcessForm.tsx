@@ -34,6 +34,14 @@ interface ProcessFormData {
   desfechoFinal: string;
   redistribuicao: string;
   sugestoes: string;
+  // Campos adicionais para investigado
+  nomeInvestigado: string;
+  cargoInvestigado: string;
+  unidadeInvestigado: string;
+  matriculaInvestigado: string;
+  dataAdmissao: Date | null;
+  vitima: string;
+  numeroSigpad: string;
 }
 
 const ProcessForm = ({ onClose }: { onClose: () => void }) => {
@@ -58,7 +66,15 @@ const ProcessForm = ({ onClose }: { onClose: () => void }) => {
     diligenciasRealizadas: {},
     desfechoFinal: "",
     redistribuicao: "",
-    sugestoes: ""
+    sugestoes: "",
+    // Campos adicionais para investigado
+    nomeInvestigado: "",
+    cargoInvestigado: "",
+    unidadeInvestigado: "",
+    matriculaInvestigado: "",
+    dataAdmissao: null,
+    vitima: "",
+    numeroSigpad: ""
   });
 
   const tiposProcesso = [
@@ -166,11 +182,10 @@ const ProcessForm = ({ onClose }: { onClose: () => void }) => {
   };
 
   const handleSave = async () => {
-    // Validação básica
-    if (!formData.numeroProcesso || !formData.tipoProcesso) {
+    if (!formData.numeroProcesso || !formData.descricaoFatos) {
       toast({
-        title: "Erro",
-        description: "Preencha os campos obrigatórios",
+        title: "Dados obrigatórios",
+        description: "Preencha o número do processo e descrição dos fatos.",
         variant: "destructive"
       });
       return;
@@ -179,65 +194,97 @@ const ProcessForm = ({ onClose }: { onClose: () => void }) => {
     setIsLoading(true);
 
     try {
-      // Obter ID do usuário atual
-      const userId = profile?.id || user?.id;
+      // Get current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
 
-      // Preparar dados para inserção
+      // Get user profile to get the internal user ID
+      let internalUserId = null;
+      if (userId) {
+        const { data: userProfile } = await supabase
+          .from('users')
+          .select('id')
+          .eq('auth_id', userId)
+          .single();
+        internalUserId = userProfile?.id;
+      }
+
       const processData = {
-        case_number: formData.numeroProcesso,
-        process_type: formData.tipoProcesso,
-        priority: formData.prioridade,
-        dispatch_number: formData.numeroDespacho || null,
-        received_date: formData.dataRecebimento ? formData.dataRecebimento.toISOString() : null,
-        fact_date: formData.dataFato ? formData.dataFato.toISOString() : null,
-        fact_description: formData.descricaoFatos,
-        modus_operandi: formData.modusOperandi || null,
-        status: 'tramitacao',
-        user_id: userId || null,
-        created_at: new Date().toISOString(),
-        crime_typing: formData.origemProcesso || null,
-        initiation_date: formData.dataDespacho ? formData.dataDespacho.toISOString() : null
+        numero_processo: formData.numeroProcesso,
+        tipo_processo: formData.tipoProcesso as any,
+        prioridade: formData.prioridade as any,
+        numero_despacho: formData.numeroDespacho || null,
+        data_despacho: formData.dataDespacho ? formData.dataDespacho.toISOString() : null,
+        data_recebimento: formData.dataRecebimento ? formData.dataRecebimento.toISOString() : null,
+        data_fato: formData.dataFato ? formData.dataFato.toISOString() : null,
+        origem_processo: formData.origemProcesso || null,
+        descricao_fatos: sanitizeText(formData.descricaoFatos),
+        modus_operandi: formData.modusOperandi ? sanitizeText(formData.modusOperandi) : null,
+        diligencias_realizadas: formData.diligenciasRealizadas,
+        desfecho_final: formData.desfechoFinal ? sanitizeText(formData.desfechoFinal) : null,
+        redistribuicao: formData.redistribuicao || null,
+        sugestoes: formData.sugestoes ? sanitizeText(formData.sugestoes) : null,
+        status: 'tramitacao' as any,
+        user_id: internalUserId,
+        nome_investigado: formData.nomeInvestigado || null,
+        cargo_investigado: formData.cargoInvestigado || null,
+        unidade_investigado: formData.unidadeInvestigado || null,
+        matricula_investigado: formData.matriculaInvestigado || null,
+        data_admissao: formData.dataAdmissao ? formData.dataAdmissao.toISOString().split('T')[0] : null,
+        vitima: formData.vitima || null,
+        numero_sigpad: formData.numeroSigpad || null,
+        crime_typing: formData.origemProcesso || null
       };
 
-      console.log("Salvando processo:", processData);
+      if (import.meta.env.DEV) {
+        console.log("Salvando processo:", processData);
+      }
 
-      // Tentar salvar no Supabase
+      // Try to save to Supabase first
       const { data, error } = await supabase
-        .from('cases')
+        .from('processos')
         .insert([processData])
-        .select();
+        .select()
+        .single();
 
       if (error) {
-        console.error("Erro ao salvar processo:", error);
+        if (import.meta.env.DEV) {
+          console.error("Erro ao salvar processo:", error);
+        }
+        // Fallback to local storage
+        const processosLocais = JSON.parse(localStorage.getItem('processos') || '[]');
+        processosLocais.push(processData);
+        localStorage.setItem('processos', JSON.stringify(processosLocais));
         
-        // Se falhar no Supabase, simular salvamento local
+        if (import.meta.env.DEV) {
+          console.log("Processo salvo localmente:", {
+            id: processData.id,
+            numero: processData.numero_processo
+          });
+        }
+
         toast({
-          title: "Processo Salvo",
-          description: `Processo ${formData.numeroProcesso} salvo localmente com sucesso!`,
-        });
-        
-        // Log para auditoria
-        console.log("Processo salvo localmente:", {
-          ...processData,
-          savedAt: new Date().toISOString(),
-          savedBy: user?.email || 'usuário atual'
+          title: "Processo salvo!",
+          description: "Processo salvo localmente (modo offline).",
         });
       } else {
-        console.log("Processo salvo no banco:", data);
+        if (import.meta.env.DEV) {
+          console.log("Processo salvo no banco:", data);
+        }
         toast({
-          title: "Sucesso!",
-          description: `Processo ${formData.numeroProcesso} salvo no banco de dados com sucesso!`,
+          title: "Processo salvo!",
+          description: "Processo salvo com sucesso no sistema.",
         });
       }
 
-      // Fechar formulário após salvar
       onClose();
-
     } catch (error) {
-      console.error("Erro inesperado ao salvar processo:", error);
+      if (import.meta.env.DEV) {
+        console.error("Erro inesperado ao salvar processo:", error);
+      }
       toast({
         title: "Erro",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
+        description: "Erro ao salvar processo. Tente novamente.",
         variant: "destructive"
       });
     } finally {
@@ -307,7 +354,9 @@ Relatório gerado automaticamente pelo NOBILIS-IA em ${format(new Date(), "dd/MM
       });
 
     } catch (error) {
-      console.error("Erro ao gerar relatório:", error);
+      if (import.meta.env.DEV) {
+        console.error("Erro ao gerar relatório:", error);
+      }
       toast({
         title: "Erro",
         description: "Erro ao gerar relatório. Tente novamente.",
@@ -355,7 +404,9 @@ Relatório gerado automaticamente pelo NOBILIS-IA em ${format(new Date(), "dd/MM
       });
 
     } catch (error) {
-      console.error("Erro ao gerar análise jurídica:", error);
+      if (import.meta.env.DEV) {
+        console.error("Erro ao gerar análise jurídica:", error);
+      }
       toast({
         title: "Erro na Análise",
         description: "Erro ao gerar análise jurídica. Tente novamente.",

@@ -63,8 +63,10 @@ export const useRoles = () => {
           .single();
 
         if (error) {
-          console.error('Error fetching user profile:', error);
-          setError('Failed to fetch user profile');
+          if (import.meta.env.DEV) {
+            console.error('Error fetching user profile:', error);
+          }
+          setError('Erro ao carregar perfil do usuário');
           
           // Create temporary profile for development
           if (user?.email) {
@@ -98,8 +100,10 @@ export const useRoles = () => {
         }
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
-      setError('Failed to fetch user profile');
+      if (import.meta.env.DEV) {
+        console.error('Error fetching user profile:', error);
+      }
+      setError('Erro ao carregar perfil do usuário');
     } finally {
       setLoading(false);
     }

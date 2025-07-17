@@ -32,13 +32,6 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  define: {
-    // Prevent console logs in production
-    ...(mode === 'production' && {
-      'console.log': 'undefined',
-      'console.warn': 'undefined',
-    }),
-  },
   // Security headers
   preview: {
     headers: {
@@ -46,7 +39,7 @@ export default defineConfig(({ mode }) => ({
       'X-Content-Type-Options': 'nosniff',
       'X-XSS-Protection': '1; mode=block',
       'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://ligcnslmsybwzcmjuoli.supabase.co",
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://ligcnslmsybwzcmjuoli.supabase.co https://api.openai.com",
     },
   },
 }));

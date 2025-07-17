@@ -137,6 +137,17 @@
 }
 
 /* Animações suaves */
+@keyframes ai-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
 @keyframes ai-pulse-soft {
   0%, 100% {
     opacity: 1;
@@ -155,6 +166,10 @@
   50% {
     transform: translateY(-5px);
   }
+}
+
+.ai-pulse {
+  animation: ai-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .ai-pulse-soft {
