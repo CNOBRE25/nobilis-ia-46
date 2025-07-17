@@ -107,35 +107,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     metadata?: any
   ) => {
     try {
-      const ip = await getClientIP();
-      await supabase.rpc('log_security_event', {
+      // Log security events to Supabase audit log
+      await supabase.from('audit_logs').insert({
         event_type: eventType,
         user_id: userId,
-        metadata: metadata || {},
-        ip_address: ip,
-        user_agent: navigator.userAgent
+        metadata: metadata,
+        timestamp: new Date().toISOString(),
+        ip_address: await getClientIP()
       });
     } catch (error) {
-      console.error('Failed to log security event:', error);
+      if (import.meta.env.DEV) {
+        console.error('Failed to log security event:', error);
+      }
     }
   };
 
   const trackLoginAttempt = async (email: string, success: boolean): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.rpc('track_login_attempt', {
-        user_email: email,
-        success: success
-      });
+      const { data, error } = await supabase
+        .from('login_attempts')
+        .insert({
+          email,
+          success,
+          timestamp: new Date().toISOString(),
+          ip_address: await getClientIP()
+        });
 
       if (error) {
-        console.error('Failed to track login attempt:', error);
-        return true; // Allow login attempt if tracking fails
+        if (import.meta.env.DEV) {
+          console.error('Failed to track login attempt:', error);
+        }
+        return false;
       }
 
-      return data;
+      return true;
     } catch (error) {
-      console.error('Failed to track login attempt:', error);
-      return true; // Allow login attempt if tracking fails
+      if (import.meta.env.DEV) {
+        console.error('Failed to track login attempt:', error);
+      }
+      return false;
     }
   };
 
@@ -324,10 +334,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: undefined };
       }
     } catch (error) {
-      console.error('Login error:', error);
+      if (import.meta.env.DEV) {
+        console.error('Login error:', error);
+      }
       toast({
         title: "Erro no login",
-        description: "Erro interno do sistema",
+        description: "Ocorreu um erro ao fazer login. Tente novamente.",
         variant: "destructive",
       });
       return { error: { message: 'An unexpected error occurred' } as AuthError };
@@ -364,7 +376,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } catch (serverError) {
         // If server validation fails, continue with local validation
-        console.warn('Server password validation failed, using local validation:', serverError);
+        if (import.meta.env.DEV) {
+          console.warn('Server password validation failed, using local validation:', serverError);
+        }
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -398,7 +412,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return { error };
     } catch (error) {
-      console.error('Signup error:', error);
+      if (import.meta.env.DEV) {
+        console.error('Signup error:', error);
+      }
+      toast({
+        title: "Erro no cadastro",
+        description: "Ocorreu um erro ao criar a conta. Tente novamente.",
+        variant: "destructive",
+      });
       return { error: { message: 'An unexpected error occurred' } as AuthError };
     }
   };
@@ -427,7 +448,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       }
     } catch (error) {
-      console.error('Logout error:', error);
+      if (import.meta.env.DEV) {
+        console.error('Logout error:', error);
+      }
+      // Continue with logout even if logging fails
     }
   };
 
@@ -459,7 +483,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return { error };
     } catch (error) {
-      console.error('Reset password error:', error);
+      if (import.meta.env.DEV) {
+        console.error('Reset password error:', error);
+      }
       return { error: { message: 'An unexpected error occurred' } as AuthError };
     }
   };
@@ -566,7 +592,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         } catch (serverError) {
           // If server validation fails, continue with local validation
-          console.warn('Server password validation failed, using local validation:', serverError);
+          if (import.meta.env.DEV) {
+            console.warn('Server password validation failed, using local validation:', serverError);
+          }
         }
 
         // Try to update password via Supabase Auth
@@ -594,7 +622,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     } catch (error) {
-      console.error('Update password error:', error);
+      if (import.meta.env.DEV) {
+        console.error('Update password error:', error);
+      }
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao atualizar a senha.",

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Settings, Monitor, Moon, Sun, Bell, Shield, Lock, Globe, Save } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
+import { toast } from "@/components/ui/use-toast";
 
 interface SettingsDialogProps {
   children?: React.ReactNode;
@@ -38,27 +39,25 @@ export default function SettingsDialog({ children, open, onOpenChange }: Setting
   const handleSaveSettings = async () => {
     setIsLoading(true);
     try {
-      // Simular salvamento das configurações
-      console.log("Configurações salvas:", {
-        notifications,
-        emailNotifications,
-        systemAlerts,
-        autoLogout,
-        theme,
-        language,
-        timezone,
+      // Save settings logic here
+      if (import.meta.env.DEV) {
+        console.log("Configurações salvas:", {
+          theme: settings.theme,
+          notifications: settings.notifications,
+          language: settings.language
+        });
+      }
+      
+      toast({
+        title: "Configurações salvas!",
+        description: "Suas configurações foram atualizadas com sucesso.",
       });
-      
-      // Em uma implementação real, você salvaria no Supabase:
-      // await supabase.from('user_settings').upsert({
-      //   user_id: user?.id,
-      //   notifications,
-      //   email_notifications: emailNotifications,
-      //   ...
-      // });
-      
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar configurações. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 

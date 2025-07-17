@@ -225,48 +225,25 @@ const LegislacaoSection = () => {
   const [legislacaoMilitar, setLegislacaoMilitar] = useState<LegislacaoMilitarData | null>(null);
   const [filteredLeisMilitares, setFilteredLeisMilitares] = useState<LeiMilitar[]>([]);
   const [filteredCrimesMilitares, setFilteredCrimesMilitares] = useState<CrimeMilitar[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadLegislacaoMilitar = async () => {
       try {
+        setLoading(true);
         const response = await fetch('/leis_crimes_militares_pe.json');
         const data: LegislacaoMilitarData = await response.json();
         setLegislacaoMilitar(data);
         setFilteredLeisMilitares(data.leis);
         setFilteredCrimesMilitares(data.crimes_militares);
       } catch (error) {
-        console.error('Erro ao carregar legislação militar:', error);
-        // Dados de fallback em caso de erro
-        const fallbackData: LegislacaoMilitarData = {
-          leis: [
-            {
-              id: "cpm_001",
-              numero: "DECRETO-LEI Nº 1.001",
-              ano: "1969",
-              titulo: "Código Penal Militar",
-              ementa: "Código Penal Militar aplicável às Polícias Militares e Bombeiros Militares",
-              categoria: "Penal Militar",
-              dataPublicacao: "1969-10-21",
-              status: "vigente",
-              orgao: "PM/BM PE"
-            }
-          ],
-          crimes_militares: [
-            {
-              crime: "Deserção",
-              artigo: "187 CPM",
-              descricao: "Ausentar-se o militar, sem licença, da unidade em que serve",
-              pena: "Detenção de seis meses a dois anos",
-              categoria: "Contra o serviço militar",
-              observacoes: "Crime próprio militar"
-            }
-          ],
-          regulamentos_pe: [],
-          jurisprudencia: []
-        };
-        setLegislacaoMilitar(fallbackData);
-        setFilteredLeisMilitares(fallbackData.leis);
-        setFilteredCrimesMilitares(fallbackData.crimes_militares);
+        if (import.meta.env.DEV) {
+          console.error('Erro ao carregar legislação militar:', error);
+        }
+        setError('Erro ao carregar legislação militar');
+      } finally {
+        setLoading(false);
       }
     };
 

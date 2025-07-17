@@ -85,10 +85,12 @@ const PareceresSection = ({ user }: PareceresProps) => {
         user={user} 
         onClose={() => setShowNovoParecer(false)}
         onSave={(parecer) => {
-          console.log("Novo parecer salvo:", parecer);
+          if (import.meta.env.DEV) {
+            console.log("Novo parecer salvo:", parecer);
+          }
           toast({
-            title: "Parecer criado com sucesso!",
-            description: `Parecer ${parecer.numero_protocolo} foi criado.`,
+            title: "Parecer salvo!",
+            description: "Parecer salvo com sucesso.",
           });
           setShowNovoParecer(false);
         }}

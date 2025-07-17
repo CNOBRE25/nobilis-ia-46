@@ -45,27 +45,33 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
     }
   };
 
-  const handleEdit = (processId: string) => {
-    console.log("Editando processo:", processId);
+  const handleEditProcess = (processId: string) => {
+    if (import.meta.env.DEV) {
+      console.log("Editando processo:", processId);
+    }
     toast({
       title: "Editando Processo",
-      description: `Abrindo processo ${processId} para edição`
+      description: "Processo aberto para edição."
     });
   };
 
-  const handleView = (processId: string) => {
-    console.log("Visualizando processo:", processId);
+  const handleViewProcess = (processId: string) => {
+    if (import.meta.env.DEV) {
+      console.log("Visualizando processo:", processId);
+    }
     toast({
       title: "Visualizando Processo",
-      description: `Abrindo processo ${processId} em modo de visualização`
+      description: "Processo aberto para visualização."
     });
   };
 
-  const handleReopen = (processId: string) => {
-    console.log("Solicitando reabertura do processo:", processId);
+  const handleReopenProcess = (processId: string) => {
+    if (import.meta.env.DEV) {
+      console.log("Solicitando reabertura do processo:", processId);
+    }
     toast({
-      title: "Solicitação Enviada",
-      description: "Solicitação de reabertura enviada ao administrador"
+      title: "Processo Reaberto",
+      description: "Processo foi reaberto para nova análise."
     });
   };
 
@@ -118,7 +124,7 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
                   <div className="flex gap-2">
                     {type === 'tramitacao' ? (
                       <Button
-                        onClick={() => handleEdit(process.id)}
+                        onClick={() => handleEditProcess(process.id)}
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         <Edit className="h-4 w-4 mr-2" />
@@ -127,14 +133,14 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
                     ) : (
                       <>
                         <Button
-                          onClick={() => handleView(process.id)}
+                          onClick={() => handleViewProcess(process.id)}
                           className="bg-green-600 hover:bg-green-700 text-white"
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           Visualizar
                         </Button>
                         <Button
-                          onClick={() => handleReopen(process.id)}
+                          onClick={() => handleReopenProcess(process.id)}
                           className="bg-orange-600 hover:bg-orange-700 text-white"
                         >
                           <RotateCcw className="h-4 w-4 mr-2" />

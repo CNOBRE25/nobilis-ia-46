@@ -112,169 +112,98 @@ INSTRUÇÕES TÉCNICAS:
 - Aplique corretamente as competências (Justiça Militar vs Comum)
 `;
 
-class OpenAIService {
-  private apiKey: string;
+const parsearRelatorio = (response: string): RelatorioIA => {
+  // Extrair seções do relatório oficial
+  const extrairSecao = (texto: string, titulo: string): string => {
+    const regex = new RegExp(`##\\s*${titulo}[\\s\\S]*?\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
+    const match = texto.match(regex);
+    return match ? match[1].trim() : 'Não especificado';
+  };
 
-  constructor() {
-    this.apiKey = OPENAI_API_KEY || '';
-    if (!this.apiKey) {
-      console.warn('OpenAI API Key não configurada. Usando modo de simulação.');
-    }
-  }
+  const extrairCabecalho = (texto: string): string => {
+    const regex = new RegExp(`##\\s*CABECALHO[\\s\\S]*?\\n([\\s\\S]*?)(?=\\n##\\s*I\\s*–|$)`, 'i');
+    const match = texto.match(regex);
+    return match ? match[1].trim() : 'RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR';
+  };
 
-  private formatPrompt(dados: RelatorioDados): string {
-    return PROMPT_TEMPLATE
-      .replace(/\{nome\}/g, dados.nome)
-      .replace(/\{tipo_investigado\}/g, dados.tipo_investigado)
-      .replace(/\{cargo\}/g, dados.cargo)
-      .replace(/\{unidade\}/g, dados.unidade)
-      .replace(/\{data_fato\}/g, dados.data_fato)
-      .replace(/\{descricao\}/g, dados.descricao)
-      .replace(/\{numero_sigpad\}/g, dados.numero_sigpad || 'A ser definido')
-      .replace(/\{numero_despacho\}/g, dados.numero_despacho || 'A ser definido')
-      .replace(/\{data_despacho\}/g, dados.data_despacho || 'A ser definido')
-      .replace(/\{origem\}/g, dados.origem || 'Comunicação inicial')
-      .replace(/\{vitima\}/g, dados.vitima || 'Não especificado')
-      .replace(/\{matricula\}/g, dados.matricula || 'A ser verificado')
-      .replace(/\{data_admissao\}/g, dados.data_admissao || 'A ser verificado');
-  }
+  return {
+    cabecalho: extrairCabecalho(response),
+    das_preliminares: extrairSecao(response, 'I – DAS PRELIMINARES'),
+    dos_fatos: extrairSecao(response, 'II – DOS FATOS'),
+    das_diligencias: extrairSecao(response, 'III – DAS DILIGÊNCIAS'),
+    da_fundamentacao: extrairSecao(response, 'IV – DA FUNDAMENTAÇÃO'),
+    da_conclusao: extrairSecao(response, 'V – DA CONCLUSÃO'),
+    raw_response: response
+  };
+};
 
-  private parseResponse(response: string): RelatorioIA {
-    // Extrair seções do relatório oficial
-    const extrairSecao = (texto: string, titulo: string): string => {
-      const regex = new RegExp(`##\\s*${titulo}[\\s\\S]*?\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
-      const match = texto.match(regex);
-      return match ? match[1].trim() : 'Não especificado';
-    };
-
-    const extrairCabecalho = (texto: string): string => {
-      const regex = new RegExp(`##\\s*CABECALHO[\\s\\S]*?\\n([\\s\\S]*?)(?=\\n##\\s*I\\s*–|$)`, 'i');
-      const match = texto.match(regex);
-      return match ? match[1].trim() : 'RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR';
-    };
-
-    return {
-      cabecalho: extrairCabecalho(response),
-      das_preliminares: extrairSecao(response, 'I – DAS PRELIMINARES'),
-      dos_fatos: extrairSecao(response, 'II – DOS FATOS'),
-      das_diligencias: extrairSecao(response, 'III – DAS DILIGÊNCIAS'),
-      da_fundamentacao: extrairSecao(response, 'IV – DA FUNDAMENTAÇÃO'),
-      da_conclusao: extrairSecao(response, 'V – DA CONCLUSÃO'),
-      raw_response: response
-    };
-  }
-
+export const openaiService = {
   async gerarRelatorioJuridico(dados: RelatorioDados): Promise<RelatorioIA> {
-    // Modo simulação se não houver API key
-    if (!this.apiKey) {
-      return this.gerarRelatorioSimulado(dados);
+    // Check if OpenAI API is configured
+    if (!OPENAI_API_KEY) {
+      if (import.meta.env.DEV) {
+        console.warn('OpenAI API Key não configurada. Usando modo de simulação.');
+      }
+      return gerarRelatorioSimulado(dados);
     }
 
     try {
-      const prompt = this.formatPrompt(dados);
+      const prompt = PROMPT_TEMPLATE
+        .replace(/{nome}/g, dados.nome || 'Não informado')
+        .replace(/{cargo}/g, dados.cargo || 'Não informado')
+        .replace(/{unidade}/g, dados.unidade || 'Não informado')
+        .replace(/{data_fato}/g, dados.data_fato || 'Não informado')
+        .replace(/{tipo_investigado}/g, dados.tipo_investigado || 'Não informado')
+        .replace(/{descricao}/g, dados.descricao || 'Não informado')
+        .replace(/{numero_sigpad}/g, dados.numero_sigpad || 'Não informado')
+        .replace(/{numero_despacho}/g, dados.numero_despacho || 'Não informado')
+        .replace(/{data_despacho}/g, dados.data_despacho || 'Não informado')
+        .replace(/{origem}/g, dados.origem || 'Não informado')
+        .replace(/{vitima}/g, dados.vitima || 'Não informado')
+        .replace(/{matricula}/g, dados.matricula || 'Não informado')
+        .replace(/{data_admissao}/g, dados.data_admissao || 'Não informado');
 
       const response = await fetch(OPENAI_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
-              content: 'Você é um especialista em Direito Militar e análise jurídica de processos disciplinares e penais militares.'
+              content: 'Você é um analista jurídico militar especializado em investigações preliminares da PM-PE.'
             },
             {
               role: 'user',
               content: prompt
             }
           ],
-          temperature: 0.7,
-          max_tokens: 2000
-        })
+          max_tokens: 4000,
+          temperature: 0.3,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`Erro na API OpenAI: ${response.status}`);
+        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      const aiResponse = data.choices[0].message.content;
+      const content = data.choices[0]?.message?.content;
 
-      return this.parseResponse(aiResponse);
+      if (!content) {
+        throw new Error('Resposta vazia da API OpenAI');
+      }
 
+      return parsearRelatorio(content);
     } catch (error) {
-      console.error('Erro ao gerar relatório com IA:', error);
-      // Fallback para modo simulado em caso de erro
-      return this.gerarRelatorioSimulado(dados);
+      if (import.meta.env.DEV) {
+        console.error('Erro ao gerar relatório com IA:', error);
+      }
+      // Fallback para relatório simulado em caso de erro
+      return gerarRelatorioSimulado(dados);
     }
   }
-
-  private gerarRelatorioSimulado(dados: RelatorioDados): RelatorioIA {
-    const dataAtual = new Date().toLocaleDateString('pt-BR');
-    const relatorioSimulado = `
-## CABECALHO
-RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR
-SIGPAD nº: ${dados.numero_sigpad || '2025.01.001'}
-Despacho de Instauração nº: ${dados.numero_despacho || '001/2025'}
-Data do Despacho: ${dados.data_despacho || dataAtual}
-Origem: ${dados.origem || 'Comunicação inicial'}
-Data do Fato: ${dados.data_fato}
-Vítima: ${dados.vitima || 'Estado/Administração Pública'}
-Investigado: ${dados.nome}
-Matrícula: ${dados.matricula || 'A ser verificado'}
-Admissão: ${dados.data_admissao || 'A ser verificado'}
-Lotação Atual: ${dados.unidade}
-
-## I – DAS PRELIMINARES
-Com base nos dados informados, trata-se de ocorrência envolvendo ${dados.nome}, ${dados.cargo}, lotado na ${dados.unidade}, referente aos fatos ocorridos em ${dados.data_fato}. 
-
-A conduta descrita configura possível transgressão disciplinar e/ou crime militar, demandando análise técnica especializada conforme legislação militar vigente (Código Penal Militar - Decreto-Lei nº 1.001/69 e Regulamento Disciplinar da PM-PE - Decreto nº 11.817/86).
-
-Considerando a data do fato (${dados.data_fato}), verifica-se que a apuração encontra-se dentro do prazo prescricional disciplinar (180 dias) e penal conforme legislação aplicável, devendo prosseguir a investigação.
-
-## II – DOS FATOS
-A presente investigação preliminar foi instaurada com a finalidade de apurar os fatos noticiados por meio da ${dados.origem || 'comunicação inicial'}, que relata que, no dia ${dados.data_fato}, o policial militar ${dados.nome}, lotado no(a) ${dados.unidade}, teria ${dados.descricao}.
-
-Os fatos narrados sugerem conduta contrária aos deveres funcionais e ao regulamento disciplinar da corporação, demandando apuração detalhada para esclarecimento das circunstâncias e responsabilidades.
-
-## III – DAS DILIGÊNCIAS
-Foram iniciadas diligências para esclarecimento dos fatos, conforme segue:
-
-1. Oitiva do investigado
-2. Coleta de documentação funcional
-3. Análise de registros disciplinares anteriores
-4. Verificação de testemunhas, se houver
-
-Documentos providenciados:
-- Ficha Funcional do investigado
-- Extrato do SIGPAD
-- Histórico disciplinar
-- Documentos relacionados ao fato
-
-Com base nas diligências realizadas, observou-se que os elementos coletados são suficientes para o prosseguimento da apuração através do procedimento adequado.
-
-## IV – DA FUNDAMENTAÇÃO
-Os elementos fáticos e jurídicos coligidos demonstram a existência de indícios suficientes de materialidade e autoria da conduta investigada. A tipificação preliminar aponta para possível violação dos deveres funcionais previstos no Regulamento Disciplinar da PM-PE.
-
-A legislação aplicável (Código Penal Militar, Regulamento Disciplinar e Estatuto da PM-PE) estabelece competência administrativa para apuração dos fatos, observando-se os princípios do contraditório, ampla defesa e devido processo legal.
-
-O nexo de causalidade entre a conduta e o resultado é evidente, configurando adequação típica conforme o enquadramento legal específico a ser determinado no curso da investigação.
-
-## V – DA CONCLUSÃO
-Considerando os elementos colhidos na presente investigação preliminar, conclui-se pela necessidade de:
-
-INSTAURAÇÃO DE SINDICÂNCIA ADMINISTRATIVA DISCIPLINAR (SAD)
-
-Justificativa: Os fatos apurados configuram possível transgressão disciplinar de natureza leve a média, sendo adequado o procedimento de sindicância para esclarecimento completo das circunstâncias e eventual aplicação de sanção disciplinar, observando-se o princípio da proporcionalidade e os critérios de oportunidade e conveniência da administração pública.
-
-RECIFE, ${dataAtual}
-`;
-
-    return this.parseResponse(relatorioSimulado);
-  }
-}
-
-export const openaiService = new OpenAIService(); 
+}; 
