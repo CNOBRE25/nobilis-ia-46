@@ -18,7 +18,8 @@ import {
   FileText,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  Plus
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -32,10 +33,14 @@ interface NovoParecerProps {
 
 const NovoParecer = ({ user, onClose, onSave }: NovoParecerProps) => {
   const [formData, setFormData] = useState({
-    servidor_nome: "",
-    servidor_matricula: "",
-    categoria_funcional: "",
-    situacao_servico: "em_servico",
+    servidores: [
+      {
+        nome: "",
+        matricula: "",
+        categoria_funcional: "",
+        situacao_servico: "em_servico"
+      }
+    ],
     data_fato: null as Date | null,
     area_direito: "",
     questao_principal: "",
@@ -59,27 +64,73 @@ const NovoParecer = ({ user, onClose, onSave }: NovoParecerProps) => {
     }));
   };
 
+  const handleServidorChange = (index: number, field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      servidores: prev.servidores.map((servidor, i) => 
+        i === index ? { ...servidor, [field]: value } : servidor
+      )
+    }));
+  };
+
+  const addServidor = () => {
+    setFormData(prev => ({
+      ...prev,
+      servidores: [...prev.servidores, {
+        nome: "",
+        matricula: "",
+        categoria_funcional: "",
+        situacao_servico: "em_servico"
+      }]
+    }));
+  };
+
+  const removeServidor = (index: number) => {
+    if (formData.servidores.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        servidores: prev.servidores.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
   const calcularPrescricao = () => {
-    if (!formData.data_fato || !formData.categoria_funcional || !formData.situacao_servico) {
+    if (!formData.data_fato || formData.servidores.length === 0) {
       toast({
         title: "Dados incompletos",
-        description: "Preencha a data do fato, categoria funcional e situação de serviço.",
+        description: "Preencha a data do fato e pelo menos um servidor.",
         variant: "destructive",
       });
       return;
     }
 
-    // Simulação do cálculo de prescrição baseado nas regras
+    // Verificar se todos os servidores têm dados básicos
+    const servidoresIncompletos = formData.servidores.some(s => 
+      !s.nome || !s.categoria_funcional || !s.situacao_servico
+    );
+
+    if (servidoresIncompletos) {
+      toast({
+        title: "Dados incompletos",
+        description: "Preencha nome, categoria funcional e situação de serviço para todos os servidores.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Calcular prescrição baseada no servidor com prazo mais longo (mais restritivo)
     const dataFato = new Date(formData.data_fato);
     let prazoPrescricao = 20; // anos - padrão para crimes comuns
     let legislacaoAplicavel = "Código Penal Brasileiro";
     
-    if (formData.categoria_funcional === 'militar_estadual' || formData.categoria_funcional === 'bombeiro_militar') {
-      if (formData.situacao_servico === 'em_servico') {
-        prazoPrescricao = 8;
-        legislacaoAplicavel = "Código Penal Militar";
+    formData.servidores.forEach(servidor => {
+      if (servidor.categoria_funcional === 'militar_estadual' || servidor.categoria_funcional === 'bombeiro_militar') {
+        if (servidor.situacao_servico === 'em_servico') {
+          prazoPrescricao = Math.min(prazoPrescricao, 8);
+          legislacaoAplicavel = "Código Penal Militar";
+        }
       }
-    }
+    });
 
     const dataPrescricao = new Date(dataFato);
     dataPrescricao.setFullYear(dataPrescricao.getFullYear() + prazoPrescricao);
@@ -88,7 +139,7 @@ const NovoParecer = ({ user, onClose, onSave }: NovoParecerProps) => {
       legislacao: legislacaoAplicavel,
       prazo: prazoPrescricao,
       dataPrescricao: dataPrescricao,
-      fundamentacao: `Baseado na ${legislacaoAplicavel} e na situação de ${formData.situacao_servico}`
+      fundamentacao: `Baseado na ${legislacaoAplicavel} considerando ${formData.servidores.length} servidor(es) envolvido(s)`
     };
 
     setPrescricaoInfo(info);
@@ -114,12 +165,18 @@ const NovoParecer = ({ user, onClose, onSave }: NovoParecerProps) => {
 
     // Simulação da geração com ChatGPT 4-o mini
     setTimeout(() => {
+      const servidoresText = formData.servidores.map((s, i) => 
+        `${i + 1}. ${s.nome} (${s.matricula}) - ${s.categoria_funcional === 'militar_estadual' ? 'Militar Estadual' : s.categoria_funcional === 'bombeiro_militar' ? 'Bombeiro Militar' : s.categoria_funcional === 'policial_civil' ? 'Policial Civil' : 'Servidor Civil'} ${s.situacao_servico === 'em_servico' ? 'em serviço' : 'de folga'}`
+      ).join('\n');
+
       const parecer = `
 PARECER JURÍDICO N° ${user?.orgao || 'Sistema'}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}/2024
 
 I. RELATÓRIO
 
-Trata-se de consulta sobre ${formData.questao_principal.toLowerCase()}, envolvendo ${formData.categoria_funcional === 'militar_estadual' ? 'militar estadual' : formData.categoria_funcional === 'bombeiro_militar' ? 'bombeiro militar' : formData.categoria_funcional === 'policial_civil' ? 'policial civil' : 'servidor civil'} ${formData.situacao_servico === 'em_servico' ? 'em serviço' : 'de folga'}.
+Trata-se de consulta sobre ${formData.questao_principal.toLowerCase()}, envolvendo ${formData.servidores.length} servidor(es):
+
+${servidoresText}
 
 ${formData.caso_descricao}
 
@@ -127,8 +184,8 @@ II. FUNDAMENTAÇÃO JURÍDICA
 
 ${prescricaoInfo ? `Aplicável a ${prescricaoInfo.legislacao}` : 'Aplicável o Código Penal Brasileiro'}, considerando:
 
-1. A natureza ${formData.categoria_funcional.includes('militar') ? 'militar' : 'civil'} da infração;
-2. A situação funcional do servidor (${formData.situacao_servico});
+1. A natureza ${formData.servidores.some(s => s.categoria_funcional.includes('militar')) ? 'militar' : 'civil'} da infração;
+2. A situação funcional dos servidores envolvidos;
 3. O prazo prescricional de ${prescricaoInfo?.prazo || 20} anos.
 
 III. CONCLUSÃO
@@ -157,19 +214,24 @@ Gerado por: NOBILIS-IA v1.0 (ChatGPT 4-o Mini)
   };
 
   const salvarParecer = () => {
-    const novoParece = {
-      id: Date.now().toString(),
+    const novoParecer = {
       numero_protocolo: `${user?.orgao || 'Sistema'}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}-2024`,
-      ...formData,
+      titulo: formData.questao_principal || `Parecer sobre ${formData.servidores[0]?.nome || 'caso'}`,
+      servidores: formData.servidores,
+      data_fato: formData.data_fato,
+      data_prescricao: prescricaoInfo?.dataPrescricao || null,
       conteudo_parecer: parecerGerado,
       status: "rascunho",
-      data_criacao: new Date().toISOString(),
-      data_prescricao: prescricaoInfo?.dataPrescricao || null,
-      usuario_id: user?.id,
-      orgao: user?.orgao,
+      urgencia: formData.urgencia,
+      questao_principal: formData.questao_principal,
+      caso_descricao: formData.caso_descricao,
+      area_direito: formData.area_direito,
+      complexidade: formData.complexidade,
+      tipo_crime: formData.tipo_crime,
+      legislacao_aplicavel: formData.legislacao_aplicavel,
     };
 
-    onSave(novoParece);
+    onSave(novoParecer);
   };
 
   return (
@@ -224,59 +286,96 @@ Gerado por: NOBILIS-IA v1.0 (ChatGPT 4-o Mini)
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Dados do Servidor</CardTitle>
-                <CardDescription>Informações básicas do servidor envolvido</CardDescription>
+                <CardTitle>Dados dos Servidores</CardTitle>
+                <CardDescription>Informações dos servidores envolvidos no caso</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="servidor_nome">Nome Completo</Label>
-                  <Input
-                    id="servidor_nome"
-                    value={formData.servidor_nome}
-                    onChange={(e) => handleInputChange("servidor_nome", e.target.value)}
-                    placeholder="Nome completo do servidor"
-                  />
-                </div>
+                {formData.servidores.map((servidor, index) => (
+                  <div key={index} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-sm text-gray-700">
+                        Servidor {index + 1}
+                      </h4>
+                      {formData.servidores.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeServidor(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          Remover
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor={`servidor_nome_${index}`}>Nome Completo</Label>
+                      <Input
+                        id={`servidor_nome_${index}`}
+                        value={servidor.nome}
+                        onChange={(e) => handleServidorChange(index, "nome", e.target.value)}
+                        placeholder="Nome completo do servidor"
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="servidor_matricula">Matrícula</Label>
-                  <Input
-                    id="servidor_matricula"
-                    value={formData.servidor_matricula}
-                    onChange={(e) => handleInputChange("servidor_matricula", e.target.value)}
-                    placeholder="Número da matrícula"
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor={`servidor_matricula_${index}`}>Matrícula</Label>
+                      <Input
+                        id={`servidor_matricula_${index}`}
+                        value={servidor.matricula}
+                        onChange={(e) => handleServidorChange(index, "matricula", e.target.value)}
+                        placeholder="Número da matrícula"
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="categoria_funcional">Categoria Funcional</Label>
-                  <Select value={formData.categoria_funcional} onValueChange={(value) => handleInputChange("categoria_funcional", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="militar_estadual">Militar Estadual</SelectItem>
-                      <SelectItem value="bombeiro_militar">Bombeiro Militar</SelectItem>
-                      <SelectItem value="policial_civil">Policial Civil</SelectItem>
-                      <SelectItem value="servidor_civil">Servidor Civil</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div>
+                      <Label htmlFor={`categoria_funcional_${index}`}>Categoria Funcional</Label>
+                      <Select 
+                        value={servidor.categoria_funcional} 
+                        onValueChange={(value) => handleServidorChange(index, "categoria_funcional", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a categoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="militar_estadual">Militar Estadual</SelectItem>
+                          <SelectItem value="bombeiro_militar">Bombeiro Militar</SelectItem>
+                          <SelectItem value="policial_civil">Policial Civil</SelectItem>
+                          <SelectItem value="servidor_civil">Servidor Civil</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div>
-                  <Label htmlFor="situacao_servico">Situação de Serviço</Label>
-                  <Select value={formData.situacao_servico} onValueChange={(value) => handleInputChange("situacao_servico", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a situação" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="em_servico">Em Serviço</SelectItem>
-                      <SelectItem value="de_folga">De Folga</SelectItem>
-                      <SelectItem value="licenciado">Licenciado</SelectItem>
-                      <SelectItem value="afastado">Afastado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div>
+                      <Label htmlFor={`situacao_servico_${index}`}>Situação de Serviço</Label>
+                      <Select 
+                        value={servidor.situacao_servico} 
+                        onValueChange={(value) => handleServidorChange(index, "situacao_servico", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a situação" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="em_servico">Em Serviço</SelectItem>
+                          <SelectItem value="de_folga">De Folga</SelectItem>
+                          <SelectItem value="licenciado">Licenciado</SelectItem>
+                          <SelectItem value="afastado">Afastado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                ))}
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addServidor}
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Servidor
+                </Button>
               </CardContent>
             </Card>
 

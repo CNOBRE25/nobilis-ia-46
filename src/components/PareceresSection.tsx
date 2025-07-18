@@ -13,21 +13,36 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
-  Eye
+  Eye,
+  Loader2
 } from "lucide-react";
 import NovoParecer from "@/components/NovoParecer";
 import { useToast } from "@/hooks/use-toast";
+import { usePareceres } from "@/hooks/usePareceres";
 
 interface PareceresProps {
   user: any;
 }
 
 const PareceresSection = ({ user }: PareceresProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
   const [showNovoParecer, setShowNovoParecer] = useState(false);
   const { toast } = useToast();
-
-  const pareceres = [];
+  
+  const {
+    pareceres,
+    filteredPareceres,
+    pareceresPrescricao,
+    loading,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    saveParecer,
+    updateParecer,
+    deleteParecer,
+    loadPareceres,
+    isPrescricaoProxima
+  } = usePareceres(user);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -65,34 +80,28 @@ const PareceresSection = ({ user }: PareceresProps) => {
     return <Badge variant="outline" className={config.color}>{config.label}</Badge>;
   };
 
-  const isPrescricaoProxima = (dataPrescricao: string) => {
-    const hoje = new Date();
-    const prescricao = new Date(dataPrescricao);
-    const diffTime = prescricao.getTime() - hoje.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays <= 365; // Considera próxima se faltar menos de 1 ano
-  };
 
-  const filteredPareceres = pareceres.filter(parecer =>
-    parecer.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    parecer.servidor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    parecer.numero_protocolo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   if (showNovoParecer) {
     return (
       <NovoParecer 
         user={user} 
         onClose={() => setShowNovoParecer(false)}
-        onSave={(parecer) => {
-          if (import.meta.env.DEV) {
-            console.log("Novo parecer salvo:", parecer);
+        onSave={async (parecer) => {
+          try {
+            await saveParecer(parecer);
+            toast({
+              title: "Parecer salvo!",
+              description: "Parecer salvo com sucesso no sistema.",
+            });
+            setShowNovoParecer(false);
+          } catch (error) {
+            toast({
+              title: "Erro ao salvar",
+              description: "Não foi possível salvar o parecer. Tente novamente.",
+              variant: "destructive",
+            });
           }
-          toast({
-            title: "Parecer salvo!",
-            description: "Parecer salvo com sucesso.",
-          });
-          setShowNovoParecer(false);
         }}
       />
     );
@@ -127,28 +136,74 @@ const PareceresSection = ({ user }: PareceresProps) => {
                 />
               </div>
             </div>
-            <Button variant="outline" className="shrink-0">
-              <Filter className="h-4 w-4 mr-2" />
-              Filtros
+            <Button 
+              variant="outline" 
+              className="shrink-0"
+              onClick={loadPareceres}
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4 mr-2" />
+              )}
+              {loading ? "Carregando..." : "Atualizar"}
             </Button>
           </div>
+          
+          {/* Estatísticas de busca */}
+          {searchTerm && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                Buscando por: <span className="font-medium">"{searchTerm}"</span>
+                <span className="ml-2">
+                  • {filteredPareceres.length} resultado(s) encontrado(s)
+                </span>
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Tabs de Status */}
-      <Tabs defaultValue="todos" className="w-full">
+      <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="todos">Todos ({pareceres.length})</TabsTrigger>
           <TabsTrigger value="rascunho">Rascunho ({pareceres.filter(p => p.status === "rascunho").length})</TabsTrigger>
           <TabsTrigger value="revisao">Revisão ({pareceres.filter(p => p.status === "revisao").length})</TabsTrigger>
           <TabsTrigger value="aprovado">Aprovado ({pareceres.filter(p => p.status === "aprovado").length})</TabsTrigger>
           <TabsTrigger value="entregue">Entregue ({pareceres.filter(p => p.status === "entregue").length})</TabsTrigger>
-          <TabsTrigger value="prescricao">Prescrição ({pareceres.filter(p => isPrescricaoProxima(p.data_prescricao)).length})</TabsTrigger>
+          <TabsTrigger value="prescricao">Prescrição ({pareceresPrescricao.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="todos" className="mt-6">
-          <div className="grid gap-4">
-            {filteredPareceres.map((parecer) => (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-gray-600">Carregando pareceres...</span>
+            </div>
+          ) : filteredPareceres.length === 0 ? (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {searchTerm ? 'Nenhum parecer encontrado' : 'Nenhum parecer cadastrado'}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {searchTerm 
+                  ? `Não foram encontrados pareceres para "${searchTerm}"`
+                  : 'Comece criando seu primeiro parecer jurídico'
+                }
+              </p>
+              {!searchTerm && (
+                <Button onClick={() => setShowNovoParecer(true)} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Primeiro Parecer
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {filteredPareceres.map((parecer) => (
               <Card key={parecer.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between">
@@ -172,9 +227,18 @@ const PareceresSection = ({ user }: PareceresProps) => {
                         {parecer.titulo}
                       </h3>
                       
-                      <p className="text-sm text-gray-600 mb-2">
-                        Servidor: {parecer.servidor}
-                      </p>
+                      <div className="text-sm text-gray-600 mb-2">
+                        <p className="font-medium mb-1">Servidores:</p>
+                        {parecer.servidores && parecer.servidores.length > 0 ? (
+                          parecer.servidores.map((servidor, index) => (
+                            <div key={index} className="text-xs bg-gray-50 p-2 rounded mb-1">
+                              {servidor.nome} ({servidor.matricula}) - {servidor.categoria_funcional}
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-gray-500 italic">Nenhum servidor cadastrado</p>
+                        )}
+                      </div>
                       
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <div className="flex items-center">
@@ -206,7 +270,8 @@ const PareceresSection = ({ user }: PareceresProps) => {
                 </CardContent>
               </Card>
             ))}
-          </div>
+            </div>
+          )}
         </TabsContent>
 
         {/* Outras tabs seguem o mesmo padrão, filtrando por status */}
@@ -233,9 +298,18 @@ const PareceresSection = ({ user }: PareceresProps) => {
                             {parecer.titulo}
                           </h3>
                           
-                          <p className="text-sm text-gray-600 mb-2">
-                            Servidor: {parecer.servidor}
-                          </p>
+                          <div className="text-sm text-gray-600 mb-2">
+                            <p className="font-medium mb-1">Servidores:</p>
+                            {parecer.servidores && parecer.servidores.length > 0 ? (
+                              parecer.servidores.map((servidor, index) => (
+                                <div key={index} className="text-xs bg-gray-50 p-2 rounded mb-1">
+                                  {servidor.nome} ({servidor.matricula}) - {servidor.categoria_funcional}
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-gray-500 italic">Nenhum servidor cadastrado</p>
+                            )}
+                          </div>
                           
                           <div className="flex items-center gap-4 text-xs text-gray-500">
                             <div className="flex items-center">
@@ -292,9 +366,18 @@ const PareceresSection = ({ user }: PareceresProps) => {
                           {parecer.titulo}
                         </h3>
                         
-                        <p className="text-sm text-gray-600 mb-2">
-                          Servidor: {parecer.servidor}
-                        </p>
+                        <div className="text-sm text-gray-600 mb-2">
+                          <p className="font-medium mb-1">Servidores:</p>
+                          {parecer.servidores && parecer.servidores.length > 0 ? (
+                            parecer.servidores.map((servidor, index) => (
+                              <div key={index} className="text-xs bg-gray-50 p-2 rounded mb-1">
+                                {servidor.nome} ({servidor.matricula}) - {servidor.categoria_funcional}
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-gray-500 italic">Nenhum servidor cadastrado</p>
+                          )}
+                        </div>
                         
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           <div className="flex items-center">
