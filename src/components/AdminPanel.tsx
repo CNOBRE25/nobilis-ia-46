@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,36 +7,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, X, Users, RotateCcw, Trash2, UserPlus, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { UnifiedStatsPanel } from "./UnifiedStatsPanel";
+import { supabase } from "../integrations/supabase/client";
 
 interface AdminPanelProps {
   onClose: () => void;
 }
 
+interface PendingUser {
+  id: string;
+  email: string;
+  nome_completo: string;
+  matricula: string;
+  cargo_funcao: string;
+  auth_user_id: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requested_at: string;
+  reviewed_at?: string;
+  reviewed_by?: string;
+  review_notes?: string;
+}
+
 const AdminPanel = ({ onClose }: AdminPanelProps) => {
   const { toast } = useToast();
 
-  // Lista de cadastros pendentes (vazia inicialmente)
-  const [cadastrosPendentes, setCadastrosPendentes] = useState([]);
+  // Lista de cadastros pendentes
+  const [cadastrosPendentes, setCadastrosPendentes] = useState<PendingUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [solicitacoesReversao, setSolicitacoesReversao] = useState([]);
 
   const [usuariosAtivos] = useState([]);
 
-  const handleAprovarCadastro = (id: string) => {
-    setCadastrosPendentes(prev => prev.filter(item => item.id !== id));
-    toast({
-      title: "Cadastro Aprovado",
-      description: "Usuário aprovado com sucesso!"
-    });
-  };
 
-  const handleRejeitarCadastro = (id: string) => {
-    setCadastrosPendentes(prev => prev.filter(item => item.id !== id));
-    toast({
-      title: "Cadastro Rejeitado",
-      description: "Solicitação de cadastro rejeitada."
-    });
-  };
 
   const handleAprovarReversao = (id: string) => {
     setSolicitacoesReversao(prev => prev.filter(item => item.id !== id));
@@ -54,12 +57,81 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
     });
   };
 
+  const fetchPendingUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Por enquanto, usar dados vazios até a migração ser aplicada
+      // Quando a tabela pending_users estiver disponível, esta função será atualizada
+      console.log('Buscando usuários pendentes...');
+      
+      // Simular busca (será substituída pela busca real após migração)
+      setTimeout(() => {
+        setCadastrosPendentes([]);
+        setLoading(false);
+      }, 1000);
+      
+    } catch (err) {
+      console.error('Erro ao buscar usuários pendentes:', err);
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar usuários pendentes",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
+  const handleAprovarCadastro = async (id: string) => {
+    try {
+      // Por enquanto, apenas remover da lista local
+      // Quando a migração for aplicada, esta função será atualizada para usar o banco
+      setCadastrosPendentes(prev => prev.filter(item => item.id !== id));
+      toast({
+        title: "Cadastro Aprovado",
+        description: "Usuário aprovado com sucesso!"
+      });
+    } catch (error) {
+      console.error('Erro ao aprovar usuário:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao aprovar usuário",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRejeitarCadastro = async (id: string) => {
+    try {
+      // Por enquanto, apenas remover da lista local
+      // Quando a migração for aplicada, esta função será atualizada para usar o banco
+      setCadastrosPendentes(prev => prev.filter(item => item.id !== id));
+      toast({
+        title: "Cadastro Rejeitado",
+        description: "Solicitação de cadastro rejeitada."
+      });
+    } catch (error) {
+      console.error('Erro ao rejeitar usuário:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao rejeitar usuário",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDesativarUsuario = (id: string) => {
     toast({
       title: "Usuário Desativado",
       description: "Usuário foi desativado do sistema."
     });
   };
+
+  useEffect(() => {
+    fetchPendingUsers();
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 z-50 overflow-auto">
@@ -101,7 +173,9 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
                 <CardTitle className="text-white">Solicitações de Cadastro</CardTitle>
               </CardHeader>
               <CardContent>
-                {cadastrosPendentes.length === 0 ? (
+                {loading ? (
+                  <p className="text-white text-center py-8">Carregando solicitações...</p>
+                ) : cadastrosPendentes.length === 0 ? (
                   <p className="text-white text-center py-8">Nenhuma solicitação pendente.</p>
                 ) : (
                   <div className="space-y-4">
@@ -109,12 +183,12 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
                       <div key={cadastro.id} className="bg-white/5 p-4 rounded-lg">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div className="space-y-2">
-                            <h3 className="text-white font-semibold">{cadastro.nome}</h3>
+                            <h3 className="text-white font-semibold">{cadastro.nome_completo}</h3>
                             <div className="text-blue-200 text-sm space-y-1">
                               <p><strong>Email:</strong> {cadastro.email}</p>
                               <p><strong>Matrícula:</strong> {cadastro.matricula}</p>
-                              <p><strong>Cargo:</strong> {cadastro.cargo}</p>
-                              <p><strong>Solicitado em:</strong> {new Date(cadastro.dataSolicitacao).toLocaleDateString('pt-BR')}</p>
+                              <p><strong>Cargo:</strong> {cadastro.cargo_funcao}</p>
+                              <p><strong>Solicitado em:</strong> {new Date(cadastro.requested_at).toLocaleDateString('pt-BR')}</p>
                             </div>
                           </div>
                           <div className="flex gap-2">
