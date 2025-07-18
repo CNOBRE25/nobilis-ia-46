@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Calendar, Clock, TrendingUp, FileText, CheckCircle, AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { Calendar, Clock, TrendingUp, FileText, CheckCircle, AlertTriangle, Loader2, RefreshCw, Shield, Users, MapPin } from "lucide-react";
 import { useDetailedStats } from "../hooks/useDetailedStats";
+import { useCrimeStats } from "../hooks/useCrimeStats";
 import { useToast } from "../hooks/use-toast";
 
 interface StatisticsPageProps {
@@ -31,10 +32,22 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
     lastUpdateTime
   } = useDetailedStats();
 
+  const {
+    tiposCrime,
+    transgressoes,
+    sexoVitima,
+    unidadesInvestigado,
+    crimesPorMes,
+    loading: crimeLoading,
+    error: crimeError,
+    lastUpdateTime: crimeLastUpdate,
+    refreshStats: refreshCrimeStats
+  } = useCrimeStats();
+
   // Função de atualização controlada
   const handleRefresh = async () => {
     try {
-      await refreshStats();
+      await Promise.all([refreshStats(), refreshCrimeStats()]);
       toast({
         title: "Estatísticas atualizadas",
         description: "Os dados foram atualizados com sucesso.",
@@ -120,8 +133,9 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
         </div>
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="geral" className="text-white">Estatística Geral</TabsTrigger>
+            <TabsTrigger value="crimes" className="text-white">Estatísticas de Crimes</TabsTrigger>
             <TabsTrigger value="relatorios" className="text-white">Relatórios Realizados</TabsTrigger>
           </TabsList>
 
@@ -432,6 +446,307 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
                 ) : (
                   <div className="text-center text-blue-200 py-8">
                     Nenhum processo em tramitação
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="crimes" className="space-y-6">
+            {/* Cards de Resumo de Crimes */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-white">Total de Crimes</CardTitle>
+                  <Shield className="h-4 w-4 text-red-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-white">
+                    {crimeLoading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Carregando...</span>
+                      </div>
+                    ) : (
+                      tiposCrime.reduce((sum, item) => sum + item.count, 0)
+                    )}
+                  </div>
+                  <p className="text-xs text-blue-200">Crimes registrados</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-white">Tipos de Crime</CardTitle>
+                  <FileText className="h-4 w-4 text-blue-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-white">
+                    {crimeLoading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Carregando...</span>
+                      </div>
+                    ) : (
+                      tiposCrime.length
+                    )}
+                  </div>
+                  <p className="text-xs text-blue-200">Categorias diferentes</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-white">Vítimas Femininas</CardTitle>
+                  <Users className="h-4 w-4 text-pink-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-white">
+                    {crimeLoading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Carregando...</span>
+                      </div>
+                    ) : (
+                      sexoVitima.find(item => item.name === 'Feminino')?.count || 0
+                    )}
+                  </div>
+                  <p className="text-xs text-blue-200">Vítimas do sexo feminino</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-white">Unidades Ativas</CardTitle>
+                  <MapPin className="h-4 w-4 text-green-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-white">
+                    {crimeLoading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Carregando...</span>
+                      </div>
+                    ) : (
+                      unidadesInvestigado.length
+                    )}
+                  </div>
+                  <p className="text-xs text-blue-200">Unidades investigando</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Gráficos de Crimes */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Gráfico de Tipos de Crime */}
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Tipos de Crime (Top 10)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {crimeLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+                    </div>
+                  ) : tiposCrime.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={tiposCrime} layout="horizontal">
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                        <XAxis type="number" stroke="#ffffff80" />
+                        <YAxis dataKey="name" type="category" stroke="#ffffff80" width={120} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(0,0,0,0.8)', 
+                            border: '1px solid #ffffff20',
+                            borderRadius: '8px',
+                            color: '#ffffff'
+                          }}
+                        />
+                        <Bar dataKey="count" fill="#ef4444">
+                          {tiposCrime.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-64 text-blue-200">
+                      Nenhum dado disponível
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Transgressões */}
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Transgressões (Top 8)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {crimeLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+                    </div>
+                  ) : transgressoes.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={transgressoes}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="count"
+                        >
+                          {transgressoes.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(0,0,0,0.8)', 
+                            border: '1px solid #ffffff20',
+                            borderRadius: '8px',
+                            color: '#ffffff'
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-64 text-blue-200">
+                      Nenhum dado disponível
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Gráficos Adicionais */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Gráfico de Sexo da Vítima */}
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Distribuição por Sexo da Vítima</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {crimeLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+                    </div>
+                  ) : sexoVitima.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={250}>
+                      <PieChart>
+                        <Pie
+                          data={sexoVitima}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="count"
+                        >
+                          {sexoVitima.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(0,0,0,0.8)', 
+                            border: '1px solid #ffffff20',
+                            borderRadius: '8px',
+                            color: '#ffffff'
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-64 text-blue-200">
+                      Nenhum dado disponível
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Unidades do Investigado */}
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Unidades do Investigado (Top 12)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {crimeLoading ? (
+                    <div className="flex items-center justify-center h-64">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+                    </div>
+                  ) : unidadesInvestigado.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={unidadesInvestigado}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                        <XAxis dataKey="name" stroke="#ffffff80" angle={-45} textAnchor="end" height={80} />
+                        <YAxis stroke="#ffffff80" />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(0,0,0,0.8)', 
+                            border: '1px solid #ffffff20',
+                            borderRadius: '8px',
+                            color: '#ffffff'
+                          }}
+                        />
+                        <Bar dataKey="count" fill="#10b981">
+                          {unidadesInvestigado.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-64 text-blue-200">
+                      Nenhum dado disponível
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Gráfico de Crimes por Mês */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">Evolução de Crimes por Mês (Últimos 12 meses)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {crimeLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+                  </div>
+                ) : crimesPorMes.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={crimesPorMes}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                      <XAxis dataKey="mes" stroke="#ffffff80" />
+                      <YAxis stroke="#ffffff80" />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'rgba(0,0,0,0.8)', 
+                          border: '1px solid #ffffff20',
+                          borderRadius: '8px',
+                          color: '#ffffff'
+                        }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="count" 
+                        stroke="#3b82f6" 
+                        strokeWidth={3}
+                        dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-64 text-blue-200">
+                    Nenhum dado disponível
                   </div>
                 )}
               </CardContent>
