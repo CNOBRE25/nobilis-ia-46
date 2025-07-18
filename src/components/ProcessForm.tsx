@@ -44,7 +44,7 @@ interface ProcessFormData {
   numeroSigpad: string;
 }
 
-const ProcessForm = ({ onClose }: { onClose: () => void }) => {
+const ProcessForm = ({ onClose, onProcessSaved }: { onClose: () => void; onProcessSaved?: () => void }) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { profile } = useRoles();
@@ -334,6 +334,11 @@ const ProcessForm = ({ onClose }: { onClose: () => void }) => {
           title: "Processo salvo!",
           description: "Processo salvo com sucesso no sistema.",
         });
+        
+        // Chamar callback para atualizar estatísticas
+        if (onProcessSaved) {
+          onProcessSaved();
+        }
       }
 
       onClose();
