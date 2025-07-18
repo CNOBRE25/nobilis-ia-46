@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, UserPlus, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { Shield, UserPlus, AlertTriangle, Eye, EyeOff, CheckCircle, XCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 // import { useAudit } from "@/hooks/useAudit"; // Temporariamente desabilitado
 import { registerSchema, RegisterFormData, sanitizeInput } from "@/utils/validation";
@@ -27,6 +27,7 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [aceitouTermos, setAceitouTermos] = useState(false);
+  const [password, setPassword] = useState("");
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -48,6 +49,20 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
     "DPC", "APC", "EPC", "PERITO CRIMINAL", "ASP"
   ];
 
+  // Função para validar senha em tempo real
+  const validatePassword = (password: string) => {
+    const rules = [
+      { test: password.length >= 8, label: "Mínimo 8 caracteres" },
+      { test: /[A-Z]/.test(password), label: "Uma letra maiúscula" },
+      { test: /[a-z]/.test(password), label: "Uma letra minúscula" },
+      { test: /[0-9]/.test(password), label: "Um número" },
+      { test: /[^A-Za-z0-9]/.test(password), label: "Um caractere especial" },
+    ];
+    return rules;
+  };
+
+  const passwordRules = validatePassword(password);
+
   const handleSubmit = async (data: RegisterFormData) => {
     if (!aceitouTermos) {
       form.setError("root", {
@@ -55,6 +70,25 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
       });
       return;
     }
+
+    // Debug: Log dos dados do formulário
+    console.log("Dados do formulário:", {
+      email: data.email,
+      password: data.password,
+      confirmPassword: data.confirmPassword,
+      nomeCompleto: data.nomeCompleto,
+      matricula: data.matricula,
+      cargoFuncao: data.cargoFuncao
+    });
+
+    // Debug: Validar senha localmente
+    const passwordValidation = validatePassword(data.password);
+    const allRulesMet = passwordValidation.every(rule => rule.test);
+    console.log("Validação local da senha:", {
+      password: data.password,
+      rules: passwordValidation,
+      allRulesMet
+    });
 
     // Sanitizar dados de entrada
     const sanitizedData = {
@@ -69,9 +103,15 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
       cargo_funcao: sanitizedData.cargoFuncao,
     };
 
+    console.log("Dados sanitizados:", sanitizedData);
+    console.log("Dados do usuário:", userData);
+
     const { error } = await signUp(sanitizedData.email, sanitizedData.password, userData);
     
-    if (!error) {
+    if (error) {
+      console.error("Erro no signUp:", error);
+    } else {
+      console.log("SignUp realizado com sucesso");
       // await logEvent('SIGN_UP_SUCCESS', undefined, {
       //   email: sanitizedData.email,
       //   cargo: sanitizedData.cargoFuncao
@@ -129,6 +169,10 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
                             type={showPassword ? "text" : "password"}
                             placeholder="Digite sua senha"
                             className="h-8 text-sm"
+                            onChange={(e) => {
+                              field.onChange(e);
+                              setPassword(e.target.value);
+                            }}
                           />
                           <Button
                             type="button"
@@ -145,6 +189,26 @@ const RegisterForm = ({ onBack, onRegisterSuccess }: RegisterFormProps) => {
                           </Button>
                         </div>
                       </FormControl>
+                      
+                      {/* Indicador de regras de senha */}
+                      {password && (
+                        <div className="mt-2 space-y-1">
+                          <p className="text-xs text-muted-foreground font-medium">Requisitos da senha:</p>
+                          {passwordRules.map((rule, index) => (
+                            <div key={index} className="flex items-center gap-2 text-xs">
+                              {rule.test ? (
+                                <CheckCircle className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <XCircle className="h-3 w-3 text-red-500" />
+                              )}
+                              <span className={rule.test ? "text-green-600" : "text-red-600"}>
+                                {rule.label}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
                       <FormMessage />
                     </FormItem>
                   )}
