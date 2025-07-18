@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, X, Users, RotateCcw, Trash2, UserPlus } from "lucide-react";
+import { Check, X, Users, RotateCcw, Trash2, UserPlus, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { UnifiedStatsPanel } from "./UnifiedStatsPanel";
 
 interface AdminPanelProps {
   onClose: () => void;
@@ -71,7 +72,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
         </div>
 
         <Tabs defaultValue="cadastros" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="cadastros" className="text-white">
               <UserPlus className="h-4 w-4 mr-2" />
               Cadastros Pendentes
@@ -87,6 +88,10 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
             <TabsTrigger value="exclusoes" className="text-white">
               <Trash2 className="h-4 w-4 mr-2" />
               Exclusão de Processos
+            </TabsTrigger>
+            <TabsTrigger value="estatisticas" className="text-white">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Estatísticas Unificadas
             </TabsTrigger>
           </TabsList>
 
@@ -235,6 +240,12 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="estatisticas" className="space-y-4">
+            <div className="bg-white/10 backdrop-blur-sm border-white/20 rounded-lg p-6">
+              <UnifiedStatsPanel />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
