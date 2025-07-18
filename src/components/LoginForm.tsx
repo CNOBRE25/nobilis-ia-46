@@ -11,12 +11,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { loginSchema, resetPasswordSchema, LoginFormData, ResetPasswordFormData } from "@/utils/validation";
 import { config, getSecurityConfig } from "@/config/environment";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import RegisterForm from "./RegisterForm";
 
 export default function LoginForm() {
   const { signIn, resetPassword, isAccountLocked, sessionExpiresAt } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
   const securityConfig = getSecurityConfig();
 
   const form = useForm<LoginFormData>({
@@ -73,9 +75,15 @@ export default function LoginForm() {
     return `${minutes}m`;
   };
 
+  if (showRegister) {
+    return (
+      <RegisterForm onBack={() => setShowRegister(false)} onRegisterSuccess={() => setShowRegister(false)} />
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="w-full">
+      <Card className="w-full max-w-md mx-auto bg-background/90 backdrop-blur-md border-border/40 shadow-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-blue-600 rounded-full">
@@ -240,6 +248,19 @@ export default function LoginForm() {
                 className="text-sm"
               >
                 Esqueci minha senha
+              </Button>
+            </div>
+          )}
+          {/* Botão Criar Conta */}
+          {!showForgotPassword && (
+            <div className="text-center pt-2">
+              <Button
+                variant="outline"
+                className="w-full h-8 text-sm"
+                onClick={() => setShowRegister(true)}
+                disabled={isLoading}
+              >
+                Criar conta
               </Button>
             </div>
           )}
