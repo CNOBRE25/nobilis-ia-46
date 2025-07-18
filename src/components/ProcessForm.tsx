@@ -42,6 +42,10 @@ interface ProcessFormData {
   dataAdmissao: Date | null;
   vitima: string;
   numeroSigpad: string;
+  // Campos de crime
+  tipoCrime: string;
+  transgressao: string;
+  sexoVitima: string;
 }
 
 const ProcessForm = ({ onClose, onProcessSaved }: { onClose: () => void; onProcessSaved?: () => void }) => {
@@ -74,7 +78,11 @@ const ProcessForm = ({ onClose, onProcessSaved }: { onClose: () => void; onProce
     matriculaInvestigado: "",
     dataAdmissao: null,
     vitima: "",
-    numeroSigpad: ""
+    numeroSigpad: "",
+    // Campos de crime
+    tipoCrime: "",
+    transgressao: "",
+    sexoVitima: ""
   });
 
   const tiposProcesso = [
@@ -135,6 +143,54 @@ const ProcessForm = ({ onClose, onProcessSaved }: { onClose: () => void; onProce
     "Instauração de SAD",
     "Instauração de IPM",
     "Instauração de Conselho de Disciplina"
+  ];
+
+  const tiposCrime = [
+    "Homicídio",
+    "Tentativa de Homicídio",
+    "Lesão Corporal",
+    "Estupro",
+    "Roubo",
+    "Furto",
+    "Tráfico de Drogas",
+    "Porte Ilegal de Arma",
+    "Corrupção",
+    "Abuso de Autoridade",
+    "Deserção",
+    "Insubordinação",
+    "Violência Doméstica",
+    "Ameaça",
+    "Calúnia",
+    "Difamação",
+    "Injúria",
+    "Outros"
+  ];
+
+  const transgressoes = [
+    "Art. 121 CP - Homicídio",
+    "Art. 121, §2º CP - Homicídio Qualificado",
+    "Art. 129 CP - Lesão Corporal",
+    "Art. 213 CP - Estupro",
+    "Art. 157 CP - Roubo",
+    "Art. 155 CP - Furto",
+    "Art. 33 LAD - Tráfico de Drogas",
+    "Art. 12 LAD - Porte Ilegal",
+    "Art. 317 CP - Corrupção",
+    "Art. 3º LCP - Abuso de Autoridade",
+    "Art. 187 CPM - Deserção",
+    "Art. 176 CPM - Insubordinação",
+    "Art. 7º Lei Maria da Penha",
+    "Art. 147 CP - Ameaça",
+    "Art. 138 CP - Calúnia",
+    "Art. 139 CP - Difamação",
+    "Art. 140 CP - Injúria",
+    "Outros"
+  ];
+
+  const sexoVitima = [
+    "M",
+    "F",
+    "Não especificado"
   ];
 
   const sanitizeText = (text: string) => {
