@@ -295,11 +295,11 @@ const Dashboard = ({ user }: DashboardProps) => {
           >
             <div className="relative">
               <Plus className="h-8 w-8 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 bg-primary/20 rounded-full blur-sm group-hover:bg-primary/30 transition-all"></div>
+              <div className="absolute inset-0 bg-[hsl(var(--ai-green))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-green))]/30 transition-all"></div>
             </div>
             <div className="text-center">
               <div className="font-semibold">Cadastrar Processo</div>
-              <div className="text-xs opacity-80">Novo processo militar</div>
+              <div className="text-xs opacity-80"></div>
             </div>
           </Button>
 
@@ -309,7 +309,7 @@ const Dashboard = ({ user }: DashboardProps) => {
           >
             <div className="relative">
               <Clock className="h-8 w-8 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 bg-[hsl(var(--ai-yellow))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-yellow))]/30 transition-all"></div>
+              <div className="absolute inset-0 bg-[hsl(var(--ai-blue))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-blue))]/30 transition-all"></div>
             </div>
             <div className="text-center">
               <div className="font-semibold">Em Tramitação</div>
@@ -323,7 +323,7 @@ const Dashboard = ({ user }: DashboardProps) => {
           >
             <div className="relative">
               <CheckCircle className="h-8 w-8 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 bg-[hsl(var(--ai-green))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-green))]/30 transition-all"></div>
+              <div className="absolute inset-0 bg-[hsl(var(--ai-orange))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-orange))]/30 transition-all"></div>
             </div>
             <div className="text-center">
               <div className="font-semibold">Concluídos</div>
@@ -337,7 +337,7 @@ const Dashboard = ({ user }: DashboardProps) => {
           >
             <div className="relative">
               <BarChart3 className="h-8 w-8 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 bg-[hsl(var(--ai-blue))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-blue))]/30 transition-all"></div>
+              <div className="absolute inset-0 bg-[hsl(var(--ai-yellow))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-yellow))]/30 transition-all"></div>
             </div>
             <div className="text-center">
               <div className="font-semibold">Estatísticas</div>
