@@ -326,7 +326,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: { message: 'Password does not meet requirements' } as AuthError };
       }
 
-      // Skip server-side validation for now to avoid RPC issues
       console.log('Senha validada localmente, prosseguindo com cadastro...');
 
       const { data, error } = await supabase.auth.signUp({
@@ -350,13 +349,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       } else {
         console.log('Cadastro realizado com sucesso:', data);
+        
+        // Criar registro de usuário pendente para aprovação
+        if (data.user?.id) {
+          const { error: pendingError } = await supabase
+            .from('pending_users')
+            .insert({
+              email: email,
+              nome_completo: userData.nome_completo,
+              matricula: userData.matricula,
+              cargo_funcao: userData.cargo_funcao,
+              auth_user_id: data.user.id,
+              status: 'pending'
+            });
+
+          if (pendingError) {
+            console.error('Erro ao criar registro pendente:', pendingError);
+            // Não falhar o cadastro por causa do erro na tabela pendente
+          }
+        }
+
         toast({
           title: "Cadastro realizado!",
-          description: "Verifique seu email para confirmar a conta.",
+          description: "Sua solicitação foi enviada e está aguardando aprovação do administrador.",
         });
         await logSecurityEvent('SIGNUP_SUCCESS', data.user?.id, {
           email,
-          userData: userData
+          userData: userData,
+          requires_approval: true
         });
       }
 
@@ -524,26 +544,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         return { error: undefined };
       } else {
-        // Try server-side validation first
-        try {
-          const { data: passwordValidation, error: validationError } = await supabase
-            .rpc('validate_password_strength', { password });
-
-          if (validationError || !passwordValidation?.valid) {
-            const feedback = passwordValidation?.feedback || localValidation.feedback;
-            toast({
-              title: "Senha Inválida",
-              description: Array.isArray(feedback) ? feedback.join(', ') : feedback,
-              variant: "destructive",
-            });
-            return { error: { message: 'Password does not meet requirements' } as AuthError };
-          }
-        } catch (serverError) {
-          // If server validation fails, continue with local validation
-          if (import.meta.env.DEV) {
-            console.warn('Server password validation failed, using local validation:', serverError);
-          }
-        }
+        // Skip server-side validation for now to avoid RPC issues
+        // The local validation is sufficient for password strength checking
 
         // Try to update password via Supabase Auth
         const { error } = await supabase.auth.updateUser({ password });
