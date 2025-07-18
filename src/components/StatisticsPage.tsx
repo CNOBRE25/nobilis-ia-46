@@ -424,7 +424,7 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
                           {getPriorityBadge(processo.prioridade)}
                         </div>
                         <div className="text-sm text-blue-200">
-                          {processo.diasTramitacao} dias em tramitação
+                          Recebido: {new Date(processo.dataRecebimento).toLocaleDateString('pt-BR')} ({processo.diasTramitacao} dias)
                         </div>
                       </div>
                     ))}

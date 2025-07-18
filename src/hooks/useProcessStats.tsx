@@ -90,14 +90,14 @@ export function useProcessStats() {
       // Calcular tempo médio de resolução (processos concluídos)
       let tempoMedioResolucao = 0;
       const processosConcluidosComData = processosList.filter(p => 
-        p.status === 'concluido' && p.created_at && p.updated_at
+        p.status === 'concluido' && p.data_recebimento && p.updated_at
       );
 
       if (processosConcluidosComData.length > 0) {
         const temposResolucao = processosConcluidosComData.map(p => {
-          const created = new Date(p.created_at);
+          const dataRecebimento = new Date(p.data_recebimento);
           const updated = new Date(p.updated_at);
-          return Math.ceil((updated.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+          return Math.ceil((updated.getTime() - dataRecebimento.getTime()) / (1000 * 60 * 60 * 24));
         });
         tempoMedioResolucao = Math.round(
           temposResolucao.reduce((sum, tempo) => sum + tempo, 0) / temposResolucao.length
