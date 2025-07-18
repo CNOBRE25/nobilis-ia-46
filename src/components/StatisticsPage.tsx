@@ -430,9 +430,9 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
                     <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
                   </div>
                 ) : processosDetalhados.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="max-h-96 overflow-y-auto pr-2 space-y-3 custom-scrollbar-dark">
                     {processosDetalhados.map((processo, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                      <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-medium text-white">#{processo.numero}</span>
                           {getPriorityBadge(processo.prioridade)}
@@ -765,9 +765,9 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
                     <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
                   </div>
                 ) : relatoriosRealizados.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="max-h-96 overflow-y-auto pr-2 space-y-3 custom-scrollbar-dark">
                     {relatoriosRealizados.map((relatorio, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                      <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-medium text-white">#{relatorio.numero}</span>
                           <Badge className="bg-green-600 text-white">{relatorio.desfecho}</Badge>
