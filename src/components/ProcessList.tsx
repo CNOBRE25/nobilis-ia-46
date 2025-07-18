@@ -398,27 +398,36 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
 
       {/* Modal de Edição */}
       {editingProcess && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Editar Processo: {editingProcess.numero_processo}</h2>
-              <div className="flex gap-2">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md">
+          <div className="ai-gradient rounded-2xl p-8 w-full max-w-5xl max-h-[90vh] overflow-auto border border-border/60 shadow-2xl">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 rounded-lg">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-card-foreground">Editar Processo</h2>
+                  <p className="text-muted-foreground text-lg">{editingProcess.numero_processo}</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
                 <Button
                   onClick={handleSaveEdit}
                   disabled={isEditing}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="ai-button-primary px-6 py-2 rounded-lg font-medium"
                 >
                   {isEditing ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
                     <Save className="h-4 w-4 mr-2" />
                   )}
-                  Salvar
+                  Salvar Alterações
                 </Button>
                 <Button
                   onClick={handleCancelEdit}
                   variant="outline"
                   disabled={isEditing}
+                  className="ai-button-secondary px-6 py-2 rounded-lg font-medium"
                 >
                   <X className="h-4 w-4 mr-2" />
                   Cancelar
@@ -426,200 +435,254 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Informações Básicas */}
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="numero_processo">Número do Processo</Label>
-                  <Input
-                    id="numero_processo"
-                    value={editFormData.numero_processo || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, numero_processo: e.target.value }))}
-                    disabled={isEditing}
-                  />
-                </div>
+              <Card className="ai-card border-primary/20">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-semibold text-card-foreground flex items-center gap-2">
+                    <div className="p-1 bg-primary/20 rounded">
+                      <FileText className="h-4 w-4 text-primary" />
+                    </div>
+                    Informações Básicas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="numero_processo" className="text-sm font-medium text-card-foreground">Número do Processo</Label>
+                    <Input
+                      id="numero_processo"
+                      value={editFormData.numero_processo || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, numero_processo: e.target.value }))}
+                      disabled={isEditing}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
+                    />
+                  </div>
 
-                <div>
-                  <Label htmlFor="tipo_processo">Tipo de Processo</Label>
-                  <Select
-                    value={editFormData.tipo_processo || ''}
-                    onValueChange={(value) => setEditFormData(prev => ({ ...prev, tipo_processo: value }))}
-                    disabled={isEditing}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="investigacao_preliminar">INVESTIGAÇÃO PRELIMINAR</SelectItem>
-                      <SelectItem value="sindicancia">SINDICÂNCIA</SelectItem>
-                      <SelectItem value="processo_administrativo">PROCESSO ADMINISTRATIVO</SelectItem>
-                      <SelectItem value="inquerito_policial_militar">INQUÉRITO POLICIAL MILITAR</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div>
+                    <Label htmlFor="tipo_processo" className="text-sm font-medium text-card-foreground">Tipo de Processo</Label>
+                    <Select
+                      value={editFormData.tipo_processo || ''}
+                      onValueChange={(value) => setEditFormData(prev => ({ ...prev, tipo_processo: value }))}
+                      disabled={isEditing}
+                    >
+                      <SelectTrigger className="mt-1 bg-background/50 border-border/60 focus:border-primary/60">
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="investigacao_preliminar">INVESTIGAÇÃO PRELIMINAR</SelectItem>
+                        <SelectItem value="sindicancia">SINDICÂNCIA</SelectItem>
+                        <SelectItem value="processo_administrativo">PROCESSO ADMINISTRATIVO</SelectItem>
+                        <SelectItem value="inquerito_policial_militar">INQUÉRITO POLICIAL MILITAR</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label htmlFor="prioridade">Prioridade</Label>
-                  <Select
-                    value={editFormData.prioridade || ''}
-                    onValueChange={(value) => setEditFormData(prev => ({ ...prev, prioridade: value }))}
-                    disabled={isEditing}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a prioridade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="urgente">URGENTE</SelectItem>
-                      <SelectItem value="alta">ALTA</SelectItem>
-                      <SelectItem value="media">MÉDIA</SelectItem>
-                      <SelectItem value="baixa">BAIXA</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div>
+                    <Label htmlFor="prioridade" className="text-sm font-medium text-card-foreground">Prioridade</Label>
+                    <Select
+                      value={editFormData.prioridade || ''}
+                      onValueChange={(value) => setEditFormData(prev => ({ ...prev, prioridade: value }))}
+                      disabled={isEditing}
+                    >
+                      <SelectTrigger className="mt-1 bg-background/50 border-border/60 focus:border-primary/60">
+                        <SelectValue placeholder="Selecione a prioridade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="urgente">URGENTE</SelectItem>
+                        <SelectItem value="alta">ALTA</SelectItem>
+                        <SelectItem value="media">MÉDIA</SelectItem>
+                        <SelectItem value="baixa">BAIXA</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label htmlFor="data_recebimento">Data de Recebimento</Label>
-                  <Input
-                    id="data_recebimento"
-                    type="date"
-                    value={editFormData.data_recebimento || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, data_recebimento: e.target.value }))}
-                    disabled={isEditing}
-                  />
-                </div>
+                  <div>
+                    <Label htmlFor="data_recebimento" className="text-sm font-medium text-card-foreground">Data de Recebimento</Label>
+                    <Input
+                      id="data_recebimento"
+                      type="date"
+                      value={editFormData.data_recebimento || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, data_recebimento: e.target.value }))}
+                      disabled={isEditing}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
+                    />
+                  </div>
 
-                <div>
-                  <Label htmlFor="data_fato">Data do Fato</Label>
-                  <Input
-                    id="data_fato"
-                    type="date"
-                    value={editFormData.data_fato || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, data_fato: e.target.value }))}
-                    disabled={isEditing}
-                  />
-                </div>
-              </div>
+                  <div>
+                    <Label htmlFor="data_fato" className="text-sm font-medium text-card-foreground">Data do Fato</Label>
+                    <Input
+                      id="data_fato"
+                      type="date"
+                      value={editFormData.data_fato || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, data_fato: e.target.value }))}
+                      disabled={isEditing}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Informações do Investigado */}
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="nome_investigado">Nome do Investigado</Label>
-                  <Input
-                    id="nome_investigado"
-                    value={editFormData.nome_investigado || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, nome_investigado: e.target.value }))}
-                    disabled={isEditing}
-                  />
-                </div>
+              <Card className="ai-card border-[hsl(var(--ai-blue))]/20">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-semibold text-card-foreground flex items-center gap-2">
+                    <div className="p-1 bg-[hsl(var(--ai-blue))]/20 rounded">
+                      <Users className="h-4 w-4 text-[hsl(var(--ai-blue))]" />
+                    </div>
+                    Informações do Investigado
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="nome_investigado" className="text-sm font-medium text-card-foreground">Nome do Investigado</Label>
+                    <Input
+                      id="nome_investigado"
+                      value={editFormData.nome_investigado || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, nome_investigado: e.target.value }))}
+                      disabled={isEditing}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
+                    />
+                  </div>
 
-                <div>
-                  <Label htmlFor="cargo_investigado">Cargo do Investigado</Label>
-                  <Input
-                    id="cargo_investigado"
-                    value={editFormData.cargo_investigado || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, cargo_investigado: e.target.value }))}
-                    disabled={isEditing}
-                  />
-                </div>
+                  <div>
+                    <Label htmlFor="cargo_investigado" className="text-sm font-medium text-card-foreground">Cargo do Investigado</Label>
+                    <Input
+                      id="cargo_investigado"
+                      value={editFormData.cargo_investigado || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, cargo_investigado: e.target.value }))}
+                      disabled={isEditing}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
+                    />
+                  </div>
 
-                <div>
-                  <Label htmlFor="unidade_investigado">Unidade do Investigado</Label>
-                  <Input
-                    id="unidade_investigado"
-                    value={editFormData.unidade_investigado || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, unidade_investigado: e.target.value }))}
-                    disabled={isEditing}
-                  />
-                </div>
+                  <div>
+                    <Label htmlFor="unidade_investigado" className="text-sm font-medium text-card-foreground">Unidade do Investigado</Label>
+                    <Input
+                      id="unidade_investigado"
+                      value={editFormData.unidade_investigado || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, unidade_investigado: e.target.value }))}
+                      disabled={isEditing}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
+                    />
+                  </div>
 
-                <div>
-                  <Label htmlFor="matricula_investigado">Matrícula do Investigado</Label>
-                  <Input
-                    id="matricula_investigado"
-                    value={editFormData.matricula_investigado || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, matricula_investigado: e.target.value }))}
-                    disabled={isEditing}
-                  />
-                </div>
+                  <div>
+                    <Label htmlFor="matricula_investigado" className="text-sm font-medium text-card-foreground">Matrícula do Investigado</Label>
+                    <Input
+                      id="matricula_investigado"
+                      value={editFormData.matricula_investigado || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, matricula_investigado: e.target.value }))}
+                      disabled={isEditing}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
+                    />
+                  </div>
 
-                <div>
-                  <Label htmlFor="data_admissao">Data de Admissão</Label>
-                  <Input
-                    id="data_admissao"
-                    type="date"
-                    value={editFormData.data_admissao || ''}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, data_admissao: e.target.value }))}
-                    disabled={isEditing}
-                  />
-                </div>
-              </div>
+                  <div>
+                    <Label htmlFor="data_admissao" className="text-sm font-medium text-card-foreground">Data de Admissão</Label>
+                    <Input
+                      id="data_admissao"
+                      type="date"
+                      value={editFormData.data_admissao || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, data_admissao: e.target.value }))}
+                      disabled={isEditing}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Campos de Texto Longo */}
-            <div className="mt-6 space-y-4">
-              <div>
-                <Label htmlFor="descricao_fatos">Descrição dos Fatos</Label>
-                <Textarea
-                  id="descricao_fatos"
-                  value={editFormData.descricao_fatos || ''}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, descricao_fatos: e.target.value }))}
-                  disabled={isEditing}
-                  rows={4}
-                />
-              </div>
+            <div className="mt-8">
+              <Card className="ai-card border-[hsl(var(--ai-purple))]/20">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-semibold text-card-foreground flex items-center gap-2">
+                    <div className="p-1 bg-[hsl(var(--ai-purple))]/20 rounded">
+                      <Brain className="h-4 w-4 text-[hsl(var(--ai-purple))]" />
+                    </div>
+                    Detalhes e Observações
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label htmlFor="descricao_fatos" className="text-sm font-medium text-card-foreground">Descrição dos Fatos</Label>
+                    <Textarea
+                      id="descricao_fatos"
+                      value={editFormData.descricao_fatos || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, descricao_fatos: e.target.value }))}
+                      disabled={isEditing}
+                      rows={4}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60 resize-none"
+                      placeholder="Descreva detalhadamente os fatos do processo..."
+                    />
+                  </div>
 
-              <div>
-                <Label htmlFor="modus_operandi">Modus Operandi</Label>
-                <Textarea
-                  id="modus_operandi"
-                  value={editFormData.modus_operandi || ''}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, modus_operandi: e.target.value }))}
-                  disabled={isEditing}
-                  rows={3}
-                />
-              </div>
+                  <div>
+                    <Label htmlFor="modus_operandi" className="text-sm font-medium text-card-foreground">Modus Operandi</Label>
+                    <Textarea
+                      id="modus_operandi"
+                      value={editFormData.modus_operandi || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, modus_operandi: e.target.value }))}
+                      disabled={isEditing}
+                      rows={3}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60 resize-none"
+                      placeholder="Descreva o modus operandi..."
+                    />
+                  </div>
 
-              <div>
-                <Label htmlFor="vitima">Vítima</Label>
-                <Input
-                  id="vitima"
-                  value={editFormData.vitima || ''}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, vitima: e.target.value }))}
-                  disabled={isEditing}
-                />
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="vitima" className="text-sm font-medium text-card-foreground">Vítima</Label>
+                      <Input
+                        id="vitima"
+                        value={editFormData.vitima || ''}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, vitima: e.target.value }))}
+                        disabled={isEditing}
+                        className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
+                        placeholder="Nome da vítima..."
+                      />
+                    </div>
 
-              <div>
-                <Label htmlFor="numero_sigpad">Número SIGPAD</Label>
-                <Input
-                  id="numero_sigpad"
-                  value={editFormData.numero_sigpad || ''}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, numero_sigpad: e.target.value }))}
-                  disabled={isEditing}
-                />
-              </div>
+                    <div>
+                      <Label htmlFor="numero_sigpad" className="text-sm font-medium text-card-foreground">Número SIGPAD</Label>
+                      <Input
+                        id="numero_sigpad"
+                        value={editFormData.numero_sigpad || ''}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, numero_sigpad: e.target.value }))}
+                        disabled={isEditing}
+                        className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
+                        placeholder="Número do SIGPAD..."
+                      />
+                    </div>
+                  </div>
 
-              <div>
-                <Label htmlFor="redistribuicao">Redistribuição</Label>
-                <Textarea
-                  id="redistribuicao"
-                  value={editFormData.redistribuicao || ''}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, redistribuicao: e.target.value }))}
-                  disabled={isEditing}
-                  rows={3}
-                />
-              </div>
+                  <div>
+                    <Label htmlFor="redistribuicao" className="text-sm font-medium text-card-foreground">Redistribuição</Label>
+                    <Textarea
+                      id="redistribuicao"
+                      value={editFormData.redistribuicao || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, redistribuicao: e.target.value }))}
+                      disabled={isEditing}
+                      rows={3}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60 resize-none"
+                      placeholder="Informações sobre redistribuição..."
+                    />
+                  </div>
 
-              <div>
-                <Label htmlFor="sugestoes">Sugestões</Label>
-                <Textarea
-                  id="sugestoes"
-                  value={editFormData.sugestoes || ''}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, sugestoes: e.target.value }))}
-                  disabled={isEditing}
-                  rows={3}
-                />
-              </div>
+                  <div>
+                    <Label htmlFor="sugestoes" className="text-sm font-medium text-card-foreground">Sugestões</Label>
+                    <Textarea
+                      id="sugestoes"
+                      value={editFormData.sugestoes || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, sugestoes: e.target.value }))}
+                      disabled={isEditing}
+                      rows={3}
+                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60 resize-none"
+                      placeholder="Sugestões e recomendações..."
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
