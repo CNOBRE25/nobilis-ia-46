@@ -59,16 +59,19 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
 
   // Carregar processos do banco de dados
   useEffect(() => {
+    console.log('useEffect triggered - type:', type);
     loadProcesses();
   }, [type]);
 
   const loadProcesses = async () => {
+    console.log('Iniciando carregamento de processos...');
     setLoading(true);
     setError(null);
 
     try {
       // Determinar o status baseado no tipo
       const statusFilter = type === 'tramitacao' ? 'tramitacao' : 'concluido';
+      console.log('Filtro de status:', statusFilter);
 
       // Carregar processos do Supabase
       const { data, error } = await supabase
@@ -93,18 +96,20 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
           description: "Carregando processos do navegador (modo offline).",
         });
       } else {
-        console.log('Processos carregados:', data);
+        console.log('Processos carregados com sucesso:', data?.length || 0, 'processos');
         setProcesses(data || []);
       }
     } catch (err) {
       console.error('Erro inesperado ao carregar processos:', err);
       setError('Erro inesperado ao carregar processos');
     } finally {
+      console.log('Finalizando carregamento de processos');
       setLoading(false);
     }
   };
 
   const filteredProcesses = processes.filter(p => p.status === type);
+  console.log('Processos filtrados:', filteredProcesses.length, 'de', processes.length, 'total');
 
   const getPriorityBadge = (prioridade: string) => {
     switch (prioridade) {
@@ -137,6 +142,7 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
   };
 
   const handleEditProcess = (process: Process) => {
+    console.log('Abrindo processo para edição:', process.id);
     setEditingProcess(process);
     setEditFormData({
       ...process,
@@ -144,13 +150,18 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
       data_fato: process.data_fato ? new Date(process.data_fato).toISOString().split('T')[0] : '',
       data_admissao: process.data_admissao ? new Date(process.data_admissao).toISOString().split('T')[0] : ''
     });
-    setIsEditing(true);
+    setIsEditing(false);
   };
 
   const handleSaveEdit = async () => {
-    if (!editingProcess) return;
+    if (!editingProcess) {
+      console.log('Nenhum processo selecionado para edição');
+      return;
+    }
 
+    console.log('Iniciando salvamento do processo:', editingProcess.id);
     setIsEditing(true);
+    
     try {
       const { error } = await supabase
         .from('processos')
@@ -165,7 +176,7 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
           variant: "destructive"
         });
       } else {
-        console.log("Processo atualizado:", editingProcess.id);
+        console.log("Processo atualizado com sucesso:", editingProcess.id);
         toast({
           title: "Processo Atualizado",
           description: "Alterações salvas com sucesso."
@@ -179,7 +190,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
         // Fechar modal de edição
         setEditingProcess(null);
         setEditFormData({});
-        setIsEditing(false);
       }
     } catch (err) {
       console.error('Erro inesperado ao atualizar processo:', err);
@@ -189,11 +199,13 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
         variant: "destructive"
       });
     } finally {
+      console.log('Finalizando salvamento do processo');
       setIsEditing(false);
     }
   };
 
   const handleCancelEdit = () => {
+    console.log('Cancelando edição do processo');
     setEditingProcess(null);
     setEditFormData({});
     setIsEditing(false);
