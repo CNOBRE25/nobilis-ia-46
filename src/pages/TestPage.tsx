@@ -1,7 +1,7 @@
 import React from 'react';
 import { TestUserCreator } from '../components/TestUserCreator';
 
-export function TestPage() {
+export default function TestPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
