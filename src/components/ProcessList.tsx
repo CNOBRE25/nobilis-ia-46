@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Edit, Eye, RotateCcw, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, Brain } from "lucide-react";
+import { Edit, Eye, RotateCcw, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, Brain, EyeOff } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -448,14 +448,13 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="numero_processo" className="text-sm font-medium text-card-foreground">Número do Processo</Label>
-                    <Input
-                      id="numero_processo"
-                      value={editFormData.numero_processo || ''}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, numero_processo: e.target.value }))}
-                      disabled={isEditing}
-                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
-                    />
+                    <Label htmlFor="numero_processo" className="text-sm font-medium text-card-foreground flex items-center gap-2">
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      Número do Processo
+                    </Label>
+                    <div className="mt-1 p-3 bg-muted/30 border border-border/40 rounded-md text-sm text-muted-foreground">
+                      {editFormData.numero_processo || 'Não informado'}
+                    </div>
                   </div>
 
                   <div>
@@ -497,27 +496,23 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
                   </div>
 
                   <div>
-                    <Label htmlFor="data_recebimento" className="text-sm font-medium text-card-foreground">Data de Recebimento</Label>
-                    <Input
-                      id="data_recebimento"
-                      type="date"
-                      value={editFormData.data_recebimento || ''}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, data_recebimento: e.target.value }))}
-                      disabled={isEditing}
-                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
-                    />
+                    <Label htmlFor="data_recebimento" className="text-sm font-medium text-card-foreground flex items-center gap-2">
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      Data de Recebimento
+                    </Label>
+                    <div className="mt-1 p-3 bg-muted/30 border border-border/40 rounded-md text-sm text-muted-foreground">
+                      {editFormData.data_recebimento ? new Date(editFormData.data_recebimento).toLocaleDateString('pt-BR') : 'Não informado'}
+                    </div>
                   </div>
 
                   <div>
-                    <Label htmlFor="data_fato" className="text-sm font-medium text-card-foreground">Data do Fato</Label>
-                    <Input
-                      id="data_fato"
-                      type="date"
-                      value={editFormData.data_fato || ''}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, data_fato: e.target.value }))}
-                      disabled={isEditing}
-                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
-                    />
+                    <Label htmlFor="data_fato" className="text-sm font-medium text-card-foreground flex items-center gap-2">
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      Data do Fato
+                    </Label>
+                    <div className="mt-1 p-3 bg-muted/30 border border-border/40 rounded-md text-sm text-muted-foreground">
+                      {editFormData.data_fato ? new Date(editFormData.data_fato).toLocaleDateString('pt-BR') : 'Não informado'}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -578,15 +573,13 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
                   </div>
 
                   <div>
-                    <Label htmlFor="data_admissao" className="text-sm font-medium text-card-foreground">Data de Admissão</Label>
-                    <Input
-                      id="data_admissao"
-                      type="date"
-                      value={editFormData.data_admissao || ''}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, data_admissao: e.target.value }))}
-                      disabled={isEditing}
-                      className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
-                    />
+                    <Label htmlFor="data_admissao" className="text-sm font-medium text-card-foreground flex items-center gap-2">
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      Data de Admissão
+                    </Label>
+                    <div className="mt-1 p-3 bg-muted/30 border border-border/40 rounded-md text-sm text-muted-foreground">
+                      {editFormData.data_admissao ? new Date(editFormData.data_admissao).toLocaleDateString('pt-BR') : 'Não informado'}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

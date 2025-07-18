@@ -101,7 +101,7 @@ export function useDetailedStats() {
       const { data: processos, error: processosError } = await supabase
         .from('processos')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('data_recebimento', { ascending: false });
 
       if (processosError) {
         console.error('Erro ao buscar processos:', processosError);
@@ -133,14 +133,14 @@ export function useDetailedStats() {
       // Calcular tempo médio de resolução
       let tempoMedioResolucao = 0;
       const processosConcluidosComData = processosList.filter(p => 
-        p.status === 'concluido' && p.created_at && p.updated_at
+        p.status === 'concluido' && p.data_recebimento && p.updated_at
       );
 
       if (processosConcluidosComData.length > 0) {
         const temposResolucao = processosConcluidosComData.map(p => {
-          const created = new Date(p.created_at);
+          const dataRecebimento = new Date(p.data_recebimento);
           const updated = new Date(p.updated_at);
-          return Math.ceil((updated.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+          return Math.ceil((updated.getTime() - dataRecebimento.getTime()) / (1000 * 60 * 60 * 24));
         });
         tempoMedioResolucao = Math.round(
           temposResolucao.reduce((sum, tempo) => sum + tempo, 0) / temposResolucao.length
@@ -187,7 +187,7 @@ export function useDetailedStats() {
       }
 
       processosList.forEach(p => {
-        const dataProcesso = new Date(p.created_at);
+        const dataProcesso = new Date(p.data_recebimento || p.created_at);
         const mesAno = dataProcesso.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
         
         if (eficienciaPorMes[mesAno]) {
@@ -211,14 +211,14 @@ export function useDetailedStats() {
       const processosAtivosDetalhados = processosList
         .filter(p => p.status === 'tramitacao')
         .map(p => {
-          const dataRecebimento = new Date(p.created_at);
+          const dataRecebimento = new Date(p.data_recebimento || p.created_at);
           const hoje = new Date();
           const diasTramitacao = Math.ceil((hoje.getTime() - dataRecebimento.getTime()) / (1000 * 60 * 60 * 24));
           
           return {
             numero: p.numero_processo,
             prioridade: p.prioridade || 'media',
-            dataRecebimento: p.created_at,
+            dataRecebimento: p.data_recebimento || p.created_at,
             diasTramitacao,
             status: p.status
           };
