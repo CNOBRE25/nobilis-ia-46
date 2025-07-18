@@ -26,6 +26,7 @@ interface PareceresProps {
 
 const PareceresSection = ({ user }: PareceresProps) => {
   const [showNovoParecer, setShowNovoParecer] = useState(false);
+  const [processoParaParecer, setProcessoParaParecer] = useState<string>("");
   const { toast } = useToast();
   
   const {
@@ -80,13 +81,42 @@ const PareceresSection = ({ user }: PareceresProps) => {
     return <Badge variant="outline" className={config.color}>{config.label}</Badge>;
   };
 
+  // Função para verificar se o termo de busca é um número de processo
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    
+    // Verificar se é um número de processo (formato: números e hífens)
+    const processoPattern = /^[\d\-]+$/;
+    if (processoPattern.test(value) && value.length >= 5) {
+      setProcessoParaParecer(value);
+    } else {
+      setProcessoParaParecer("");
+    }
+  };
+
+  // Função para abrir parecer com número de processo
+  const abrirParecerComProcesso = () => {
+    if (processoParaParecer) {
+      setShowNovoParecer(true);
+      toast({
+        title: "Parecer para Processo",
+        description: `Abrindo parecer para o processo ${processoParaParecer}`,
+      });
+    }
+  };
+
 
 
   if (showNovoParecer) {
     return (
       <NovoParecer 
         user={user} 
-        onClose={() => setShowNovoParecer(false)}
+        onClose={() => {
+          setShowNovoParecer(false);
+          setProcessoParaParecer("");
+          setSearchTerm("");
+        }}
+        numeroProcesso={processoParaParecer}
         onSave={async (parecer) => {
           try {
             await saveParecer(parecer);
@@ -95,6 +125,8 @@ const PareceresSection = ({ user }: PareceresProps) => {
               description: "Parecer salvo com sucesso no sistema.",
             });
             setShowNovoParecer(false);
+            setProcessoParaParecer("");
+            setSearchTerm("");
           } catch (error) {
             toast({
               title: "Erro ao salvar",
@@ -129,10 +161,15 @@ const PareceresSection = ({ user }: PareceresProps) => {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Buscar por título, servidor ou protocolo..."
+                  placeholder="Buscar por título, servidor, protocolo ou número do processo..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && processoParaParecer) {
+                      abrirParecerComProcesso();
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -160,6 +197,32 @@ const PareceresSection = ({ user }: PareceresProps) => {
                   • {filteredPareceres.length} resultado(s) encontrado(s)
                 </span>
               </p>
+            </div>
+          )}
+
+          {/* Botão para criar parecer com número de processo */}
+          {processoParaParecer && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-green-800 mb-1">
+                    Número de Processo Detectado
+                  </h4>
+                  <p className="text-sm text-green-700">
+                    Processo: <span className="font-mono font-medium">{processoParaParecer}</span>
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Pressione Enter ou clique no botão para criar um parecer para este processo
+                  </p>
+                </div>
+                <Button 
+                  onClick={abrirParecerComProcesso}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Criar Parecer
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

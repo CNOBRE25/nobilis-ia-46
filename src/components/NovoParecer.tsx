@@ -29,10 +29,12 @@ interface NovoParecerProps {
   user: any;
   onClose: () => void;
   onSave: (parecer: any) => void;
+  numeroProcesso?: string;
 }
 
-const NovoParecer = ({ user, onClose, onSave }: NovoParecerProps) => {
+const NovoParecer = ({ user, onClose, onSave, numeroProcesso }: NovoParecerProps) => {
   const [formData, setFormData] = useState({
+    numero_processo: numeroProcesso || "",
     servidores: [
       {
         nome: "",
@@ -215,7 +217,7 @@ Gerado por: NOBILIS-IA v1.0 (ChatGPT 4-o Mini)
 
   const salvarParecer = () => {
     const novoParecer = {
-      numero_protocolo: `${user?.orgao || 'Sistema'}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}-2024`,
+      numero_protocolo: formData.numero_processo || `${user?.orgao || 'Sistema'}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}-2024`,
       titulo: formData.questao_principal || `Parecer sobre ${formData.servidores[0]?.nome || 'caso'}`,
       servidores: formData.servidores,
       data_fato: formData.data_fato,
@@ -385,6 +387,17 @@ Gerado por: NOBILIS-IA v1.0 (ChatGPT 4-o Mini)
                 <CardDescription>Definições técnicas e organizacionais</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="numero_processo">Número do Processo</Label>
+                  <Input
+                    id="numero_processo"
+                    value={formData.numero_processo}
+                    onChange={(e) => handleInputChange("numero_processo", e.target.value)}
+                    placeholder="Digite o número do processo"
+                    className="font-mono"
+                  />
+                </div>
+
                 <div>
                   <Label htmlFor="data_fato">Data do Fato</Label>
                   <Popover>
