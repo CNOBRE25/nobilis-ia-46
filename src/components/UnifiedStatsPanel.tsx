@@ -172,16 +172,105 @@ export function UnifiedStatsPanel() {
       )}
 
       {/* Tabs com detalhes */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="users">Usuários</TabsTrigger>
-          <TabsTrigger value="orgaos">Órgãos</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-        </TabsList>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="crimes">Estatísticas de Crimes</TabsTrigger>
+            <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="orgaos">Órgãos</TabsTrigger>
+            <TabsTrigger value="performance">Performance</TabsTrigger>
+          </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Estatísticas de Crimes - Destaque */}
+            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-800">
+                  <Target className="h-5 w-5" />
+                  Estatísticas de Crimes
+                </CardTitle>
+                <CardDescription className="text-red-700">
+                  Dados criminais consolidados do sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-3 bg-white/50 rounded-lg">
+                      <p className="text-2xl font-bold text-red-600">{summary?.total_crimes || 0}</p>
+                      <p className="text-sm text-red-700">Total de Crimes</p>
+                    </div>
+                    <div className="text-center p-3 bg-white/50 rounded-lg">
+                      <p className="text-2xl font-bold text-red-600">{summary?.tipos_crime_mais_comuns?.length || 0}</p>
+                      <p className="text-sm text-red-700">Tipos Diferentes</p>
+                    </div>
+                  </div>
+                  
+                  {summary?.tipos_crime_mais_comuns && summary.tipos_crime_mais_comuns.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-red-800">Top 3 Crimes:</p>
+                      {summary.tipos_crime_mais_comuns.slice(0, 3).map((crime, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm">
+                          <span className="text-red-700">{crime.tipo}</span>
+                          <span className="font-bold text-red-800">{crime.quantidade}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Distribuição de Vítimas */}
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-800">
+                  <Users className="h-5 w-5" />
+                  Distribuição de Vítimas
+                </CardTitle>
+                <CardDescription className="text-blue-700">
+                  Análise por sexo das vítimas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {summary?.distribuicao_vitimas && summary.distribuicao_vitimas.total > 0 ? (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-blue-600">{summary.distribuicao_vitimas.total}</p>
+                      <p className="text-sm text-blue-700">Total de Vítimas</p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-blue-800">Femininas</span>
+                          <span className="text-sm font-bold text-pink-600">{summary.distribuicao_vitimas.femininas}</span>
+                        </div>
+                        <Progress 
+                          value={(summary.distribuicao_vitimas.femininas / summary.distribuicao_vitimas.total) * 100} 
+                          className="h-2 bg-pink-100"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-blue-800">Masculinas</span>
+                          <span className="text-sm font-bold text-blue-600">{summary.distribuicao_vitimas.masculinas}</span>
+                        </div>
+                        <Progress 
+                          value={(summary.distribuicao_vitimas.masculinas / summary.distribuicao_vitimas.total) * 100} 
+                          className="h-2 bg-blue-100"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-blue-700">Nenhum dado de vítimas disponível</p>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Top Performers */}
             <Card>
               <CardHeader>
@@ -247,6 +336,185 @@ export function UnifiedStatsPanel() {
                 ) : (
                   <p className="text-muted-foreground">Nenhum dado de órgão disponível</p>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="crimes" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Tipos de Crime Mais Comuns */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-red-600" />
+                  Tipos de Crime Mais Comuns
+                </CardTitle>
+                <CardDescription>
+                  Top 10 tipos de crime registrados no sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {summary?.tipos_crime_mais_comuns && summary.tipos_crime_mais_comuns.length > 0 ? (
+                  <div className="space-y-3">
+                    {summary.tipos_crime_mais_comuns.map((crime, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Badge variant="secondary" className="w-6 h-6 rounded-full p-0 flex items-center justify-center">
+                              {index + 1}
+                            </Badge>
+                            <span className="text-sm font-medium">{crime.tipo}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm font-bold">{crime.quantidade}</span>
+                            <span className="text-xs text-muted-foreground ml-1">({crime.percentual}%)</span>
+                          </div>
+                        </div>
+                        <Progress value={crime.percentual} className="h-2" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">Nenhum dado de crime disponível</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Distribuição de Vítimas */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  Distribuição de Vítimas
+                </CardTitle>
+                <CardDescription>
+                  Análise por sexo das vítimas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {summary?.distribuicao_vitimas && summary.distribuicao_vitimas.total > 0 ? (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-blue-600">{summary.distribuicao_vitimas.total}</p>
+                      <p className="text-sm text-muted-foreground">Total de Vítimas</p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Vítimas Femininas</span>
+                          <span className="text-sm font-bold text-pink-600">{summary.distribuicao_vitimas.femininas}</span>
+                        </div>
+                        <Progress 
+                          value={(summary.distribuicao_vitimas.femininas / summary.distribuicao_vitimas.total) * 100} 
+                          className="h-2 bg-pink-100"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Vítimas Masculinas</span>
+                          <span className="text-sm font-bold text-blue-600">{summary.distribuicao_vitimas.masculinas}</span>
+                        </div>
+                        <Progress 
+                          value={(summary.distribuicao_vitimas.masculinas / summary.distribuicao_vitimas.total) * 100} 
+                          className="h-2 bg-blue-100"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">Nenhum dado de vítimas disponível</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Unidades Mais Ativas */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="h-5 w-5 text-green-600" />
+                  Unidades Mais Ativas
+                </CardTitle>
+                <CardDescription>
+                  Top 10 unidades investigativas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {summary?.unidades_mais_ativas && summary.unidades_mais_ativas.length > 0 ? (
+                  <div className="space-y-3">
+                    {summary.unidades_mais_ativas.map((unidade, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Badge variant="outline" className="w-6 h-6 rounded-full p-0 flex items-center justify-center text-xs">
+                              {index + 1}
+                            </Badge>
+                            <span className="text-sm font-medium">{unidade.unidade}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm font-bold">{unidade.quantidade}</span>
+                            <span className="text-xs text-muted-foreground ml-1">({unidade.percentual}%)</span>
+                          </div>
+                        </div>
+                        <Progress value={unidade.percentual} className="h-2" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">Nenhum dado de unidades disponível</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Resumo de Crimes */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-purple-600" />
+                  Resumo de Crimes
+                </CardTitle>
+                <CardDescription>
+                  Visão geral das estatísticas criminais
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-red-50 rounded-lg">
+                      <p className="text-2xl font-bold text-red-600">{summary?.total_crimes || 0}</p>
+                      <p className="text-sm text-muted-foreground">Total de Crimes</p>
+                    </div>
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <p className="text-2xl font-bold text-blue-600">{summary?.tipos_crime_mais_comuns?.length || 0}</p>
+                      <p className="text-sm text-muted-foreground">Tipos Diferentes</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Crime mais comum:</span>
+                      <span className="font-medium">
+                        {summary?.tipos_crime_mais_comuns?.[0]?.tipo || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Unidade mais ativa:</span>
+                      <span className="font-medium">
+                        {summary?.unidades_mais_ativas?.[0]?.unidade || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Maioria das vítimas:</span>
+                      <span className="font-medium">
+                        {summary?.distribuicao_vitimas ? 
+                          (summary.distribuicao_vitimas.femininas > summary.distribuicao_vitimas.masculinas ? 'Femininas' : 'Masculinas') 
+                          : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

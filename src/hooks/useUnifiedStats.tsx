@@ -34,6 +34,22 @@ interface UnifiedStatsSummary {
   total_crimes: number;
   media_eficiencia: number;
   media_tempo_resolucao: number;
+  // Estatísticas de crimes
+  tipos_crime_mais_comuns: Array<{
+    tipo: string;
+    quantidade: number;
+    percentual: number;
+  }>;
+  distribuicao_vitimas: {
+    femininas: number;
+    masculinas: number;
+    total: number;
+  };
+  unidades_mais_ativas: Array<{
+    unidade: string;
+    quantidade: number;
+    percentual: number;
+  }>;
   top_performers: Array<{
     user_email: string;
     user_orgao: string;
@@ -92,6 +108,9 @@ export function useUnifiedStats() {
         const mediaEficiencia = latestStats.reduce((sum, stat) => sum + stat.taxa_eficiencia, 0) / totalUsers;
         const mediaTempoResolucao = latestStats.reduce((sum, stat) => sum + stat.tempo_medio_resolucao, 0) / totalUsers;
 
+        // Estatísticas de crimes - coletar dados de todos os usuários
+        const crimeData = await fetchCrimeStatistics();
+        
         // Top performers (usuários com mais processos e melhor eficiência)
         const topPerformers = latestStats
           .filter(stat => stat.total_processos > 0)
@@ -136,6 +155,9 @@ export function useUnifiedStats() {
           total_crimes,
           media_eficiencia: Math.round(mediaEficiencia * 100) / 100,
           media_tempo_resolucao: Math.round(mediaTempoResolucao),
+          tipos_crime_mais_comuns: crimeData.tipos_crime_mais_comuns,
+          distribuicao_vitimas: crimeData.distribuicao_vitimas,
+          unidades_mais_ativas: crimeData.unidades_mais_ativas,
           top_performers: topPerformers,
           stats_por_orgao: statsPorOrgao.sort((a, b) => b.total_processos - a.total_processos)
         });
@@ -187,6 +209,80 @@ export function useUnifiedStats() {
   const getStatsByOrgao = useCallback((orgao: string) => {
     return userStats.filter(stat => stat.user_orgao === orgao);
   }, [userStats]);
+
+  // Função para buscar estatísticas de crimes
+  const fetchCrimeStatistics = useCallback(async () => {
+    try {
+      // Buscar dados de crimes de todos os processos
+      const { data: processos, error } = await supabase
+        .from('processos')
+        .select('tipo_crime, sexo_vitima, unidade_investigado')
+        .not('tipo_crime', 'is', null);
+
+      if (error) {
+        console.error('Erro ao buscar dados de crimes:', error);
+        return {
+          tipos_crime_mais_comuns: [],
+          distribuicao_vitimas: { femininas: 0, masculinas: 0, total: 0 },
+          unidades_mais_ativas: []
+        };
+      }
+
+      // Calcular tipos de crime mais comuns
+      const tiposCrime = processos?.reduce((acc, processo) => {
+        const tipo = processo.tipo_crime || 'Não especificado';
+        acc[tipo] = (acc[tipo] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const tiposCrimeArray = Object.entries(tiposCrime)
+        .map(([tipo, quantidade]) => ({
+          tipo,
+          quantidade,
+          percentual: Math.round((quantidade / processos!.length) * 100)
+        }))
+        .sort((a, b) => b.quantidade - a.quantidade)
+        .slice(0, 10);
+
+      // Calcular distribuição de vítimas
+      const vitimasFemininas = processos?.filter(p => p.sexo_vitima === 'F').length || 0;
+      const vitimasMasculinas = processos?.filter(p => p.sexo_vitima === 'M').length || 0;
+      const totalVitimas = vitimasFemininas + vitimasMasculinas;
+
+      // Calcular unidades mais ativas
+      const unidades = processos?.reduce((acc, processo) => {
+        const unidade = processo.unidade_investigado || 'Não especificada';
+        acc[unidade] = (acc[unidade] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const unidadesArray = Object.entries(unidades)
+        .map(([unidade, quantidade]) => ({
+          unidade,
+          quantidade,
+          percentual: Math.round((quantidade / processos!.length) * 100)
+        }))
+        .sort((a, b) => b.quantidade - a.quantidade)
+        .slice(0, 10);
+
+      return {
+        tipos_crime_mais_comuns: tiposCrimeArray,
+        distribuicao_vitimas: {
+          femininas: vitimasFemininas,
+          masculinas: vitimasMasculinas,
+          total: totalVitimas
+        },
+        unidades_mais_ativas: unidadesArray
+      };
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas de crimes:', error);
+      return {
+        tipos_crime_mais_comuns: [],
+        distribuicao_vitimas: { femininas: 0, masculinas: 0, total: 0 },
+        unidades_mais_ativas: []
+      };
+    }
+  }, []);
 
   useEffect(() => {
     fetchUnifiedStats();
