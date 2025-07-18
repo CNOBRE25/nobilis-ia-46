@@ -150,7 +150,10 @@ const Dashboard = ({ user }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          <Card className="ai-card group hover:ai-glow-soft transition-all duration-500 rounded-xl">
+          <Card 
+            className="ai-card group hover:ai-glow-soft transition-all duration-500 rounded-xl cursor-pointer"
+            onClick={() => setActiveModal('processos-tramitacao')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-card-foreground">Em Tramitação</CardTitle>
               <div className="relative">
@@ -171,7 +174,7 @@ const Dashboard = ({ user }: DashboardProps) => {
               </div>
               <div className="flex items-center gap-2">
                 <Zap className="h-3 w-3 text-[hsl(var(--ai-yellow))]" />
-                <p className="text-xs text-muted-foreground">Processamento ativo</p>
+                <p className="text-xs text-muted-foreground">Clique para ver processos ativos</p>
               </div>
             </CardContent>
           </Card>
