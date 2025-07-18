@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Edit, Eye, RotateCcw, Calendar as CalendarIcon, Loader2, Save, X } from "lucide-react";
+import { Edit, Eye, RotateCcw, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, Brain } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
