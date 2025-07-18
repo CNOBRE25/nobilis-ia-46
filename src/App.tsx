@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import SupabaseTestPage from "./pages/SupabaseTestPage";
 import FunctionalityTablePage from "./pages/FunctionalityTablePage";
 import ProcessTestPage from "./pages/ProcessTestPage";
+import TestPage from "./pages/TestPage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/test-supabase" element={<SupabaseTestPage />} />
             <Route path="/funcionalidades" element={<FunctionalityTablePage />} />
             <Route path="/test-processos" element={<ProcessTestPage />} />
+            <Route path="/criar-teste" element={<TestPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
