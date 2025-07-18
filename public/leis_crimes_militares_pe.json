@@ -16,7 +16,8 @@
         "Art. 187 - Abandono de posto",
         "Art. 205 - Desacato a superior",
         "Art. 244 - Embriaguez em serviço"
-      ]
+      ],
+      "link": "https://www.planalto.gov.br/ccivil_03/decreto-lei/del1001.htm"
     },
     {
       "id": "cpm_002", 
@@ -27,7 +28,8 @@
       "categoria": "Processual Militar",
       "dataPublicacao": "1969-10-21",
       "status": "vigente",
-      "orgao": "PM/BM PE"
+      "orgao": "PM/BM PE",
+      "link": "https://www.planalto.gov.br/ccivil_03/decreto-lei/del1002.htm"
     },
     {
       "id": "rdpm_001",
@@ -38,7 +40,8 @@
       "categoria": "Disciplinar",
       "dataPublicacao": "1986-01-31",
       "status": "vigente", 
-      "orgao": "PMPE"
+      "orgao": "PMPE",
+      "link": "https://www.legisweb.com.br/legislacao/?id=101993"
     },
     {
       "id": "lei_pe_001",
@@ -49,7 +52,8 @@
       "categoria": "Estatuto",
       "dataPublicacao": "1972-04-04",
       "status": "vigente",
-      "orgao": "PMPE"
+      "orgao": "PMPE",
+      "link": "https://www.legisweb.com.br/legislacao/?id=102001"
     },
     {
       "id": "lei_pe_002",
@@ -60,7 +64,8 @@
       "categoria": "Estatuto",
       "dataPublicacao": "2000-02-13",
       "status": "vigente",
-      "orgao": "CBMPE"
+      "orgao": "CBMPE",
+      "link": "https://www.legisweb.com.br/legislacao/?id=102002"
     }
   ],
   "crimes_militares": [
@@ -143,6 +148,14 @@
       "pena": "Reclusão de dois a doze anos e multa",
       "categoria": "Contra a administração militar",
       "observacoes": "Crime contra o patrimônio militar"
+    },
+    {
+      "crime": "Lesão Corporal",
+      "artigo": "209 CPM",
+      "descricao": "Ofender a integridade corporal ou a saúde de outrem",
+      "pena": "Detenção de três meses a um ano",
+      "categoria": "Contra a pessoa",
+      "observacoes": "Crime militar equivalente ao art. 129 do CP"
     }
   ],
   "regulamentos_pe": [

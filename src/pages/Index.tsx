@@ -64,9 +64,9 @@ const Index = () => {
                 <h1 className="text-3xl font-bold text-foreground bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                   NOBILIS-IA
                 </h1>
-                <p className="text-muted-foreground text-sm font-light">
+                {/* <p className="text-muted-foreground text-sm font-light">
                   BEM VINDO, ENCARREGADO! SISTEMA
-                </p>
+                </p> */}
               </div>
             </div>
           </div>
@@ -93,7 +93,6 @@ const Index = () => {
                 <h1 className="text-2xl font-bold text-foreground bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                   NOBILIS-IA
                 </h1>
-                <p className="text-sm text-muted-foreground">BEM VINDO, ENCARREGADO! SISTEMA</p>
               </div>
             </div>
             

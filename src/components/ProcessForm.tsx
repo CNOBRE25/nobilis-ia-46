@@ -194,25 +194,65 @@ const ProcessForm = ({ onClose }: { onClose: () => void }) => {
     setIsLoading(true);
 
     try {
-      // Get current user ID
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id;
+      // Get current user from auth context first
+      const currentUser = user;
+      console.log("Current user from context:", currentUser);
 
-      // Get user profile to get the internal user ID
+      if (!currentUser) {
+        console.error("Usuário não encontrado no contexto de autenticação");
+        toast({
+          title: "Erro de Autenticação",
+          description: "Usuário não autenticado. Faça login novamente.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Get user profile from Supabase
       let internalUserId = null;
-      if (userId) {
-        const { data: userProfile } = await supabase
+      
+      try {
+        const { data: userProfile, error: profileError } = await supabase
           .from('users')
           .select('id')
-          .eq('auth_id', userId)
+          .eq('email', currentUser.email)
           .single();
-        internalUserId = userProfile?.id;
+        
+        if (!profileError && userProfile) {
+          internalUserId = userProfile.id;
+          console.log("Internal User ID found:", internalUserId);
+        } else {
+          console.log("Usuário não encontrado no banco, continuando sem user_id");
+        }
+      } catch (error) {
+        console.error("Erro ao buscar usuário:", error);
+        // Continue without internal user ID
       }
+
+      // Mapear tipos de processo para o formato do banco
+      const mapTipoProcesso = (tipo: string) => {
+        switch (tipo) {
+          case "INVESTIGAÇÃO PRELIMINAR": return "investigacao_preliminar";
+          case "SINDICÂNCIA": return "sindicancia";
+          case "IP-RETORNO": return "investigacao_preliminar";
+          default: return "investigacao_preliminar";
+        }
+      };
+
+      // Mapear prioridades para o formato do banco
+      const mapPrioridade = (prioridade: string) => {
+        switch (prioridade) {
+          case "URGENTE-MARIA DA PENHA": return "urgente";
+          case "URGENTE": return "urgente";
+          case "MODERADO": return "media";
+          default: return "media";
+        }
+      };
 
       const processData = {
         numero_processo: formData.numeroProcesso,
-        tipo_processo: formData.tipoProcesso as any,
-        prioridade: formData.prioridade as any,
+        tipo_processo: mapTipoProcesso(formData.tipoProcesso),
+        prioridade: mapPrioridade(formData.prioridade),
         numero_despacho: formData.numeroDespacho || null,
         data_despacho: formData.dataDespacho ? formData.dataDespacho.toISOString() : null,
         data_recebimento: formData.dataRecebimento ? formData.dataRecebimento.toISOString() : null,
@@ -224,7 +264,7 @@ const ProcessForm = ({ onClose }: { onClose: () => void }) => {
         desfecho_final: formData.desfechoFinal ? sanitizeText(formData.desfechoFinal) : null,
         redistribuicao: formData.redistribuicao || null,
         sugestoes: formData.sugestoes ? sanitizeText(formData.sugestoes) : null,
-        status: 'tramitacao' as any,
+        status: 'tramitacao',
         user_id: internalUserId,
         nome_investigado: formData.nomeInvestigado || null,
         cargo_investigado: formData.cargoInvestigado || null,
@@ -236,11 +276,9 @@ const ProcessForm = ({ onClose }: { onClose: () => void }) => {
         crime_typing: formData.origemProcesso || null
       };
 
-      if (import.meta.env.DEV) {
-        console.log("Salvando processo:", processData);
-      }
+      console.log("Dados do processo a serem salvos:", processData);
 
-      // Try to save to Supabase first
+      // Try to save to Supabase
       const { data, error } = await supabase
         .from('processos')
         .insert([processData])
@@ -248,29 +286,50 @@ const ProcessForm = ({ onClose }: { onClose: () => void }) => {
         .single();
 
       if (error) {
-        if (import.meta.env.DEV) {
-          console.error("Erro ao salvar processo:", error);
-        }
-        // Fallback to local storage
-        const processosLocais = JSON.parse(localStorage.getItem('processos') || '[]');
-        processosLocais.push(processData);
-        localStorage.setItem('processos', JSON.stringify(processosLocais));
+        console.error("Erro detalhado ao salvar processo:", error);
+        console.error("Código do erro:", error.code);
+        console.error("Mensagem do erro:", error.message);
+        console.error("Detalhes do erro:", error.details);
         
-        if (import.meta.env.DEV) {
-          console.log("Processo salvo localmente:", {
-            id: processData.id,
-            numero: processData.numero_processo
+        // Verificar tipo específico de erro
+        if (error.code === '23505') { // Unique constraint violation
+          toast({
+            title: "Processo já existe",
+            description: "Um processo com este número já existe no sistema.",
+            variant: "destructive"
+          });
+        } else if (error.code === '42501') { // Permission denied
+          toast({
+            title: "Permissão Negada",
+            description: "Você não tem permissão para salvar processos. Verifique suas credenciais.",
+            variant: "destructive"
+          });
+        } else if (error.code === 'PGRST116') { // JWT error
+          toast({
+            title: "Erro de Autenticação",
+            description: "Sessão expirada. Faça login novamente.",
+            variant: "destructive"
+          });
+        } else {
+          // Fallback to local storage
+          const processosLocais = JSON.parse(localStorage.getItem('processos') || '[]');
+          const processoLocal = {
+            ...processData,
+            id: Date.now().toString(),
+            created_at: new Date().toISOString()
+          };
+          processosLocais.push(processoLocal);
+          localStorage.setItem('processos', JSON.stringify(processosLocais));
+          
+          console.log("Processo salvo localmente:", processoLocal);
+
+          toast({
+            title: "Processo salvo localmente",
+            description: `Processo salvo no navegador (modo offline). Erro: ${error.message}`,
           });
         }
-
-        toast({
-          title: "Processo salvo!",
-          description: "Processo salvo localmente (modo offline).",
-        });
       } else {
-        if (import.meta.env.DEV) {
-          console.log("Processo salvo no banco:", data);
-        }
+        console.log("Processo salvo com sucesso no Supabase:", data);
         toast({
           title: "Processo salvo!",
           description: "Processo salvo com sucesso no sistema.",
@@ -279,9 +338,7 @@ const ProcessForm = ({ onClose }: { onClose: () => void }) => {
 
       onClose();
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error("Erro inesperado ao salvar processo:", error);
-      }
+      console.error("Erro inesperado ao salvar processo:", error);
       toast({
         title: "Erro",
         description: "Erro ao salvar processo. Tente novamente.",

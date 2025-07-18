@@ -73,32 +73,7 @@ const Dashboard = ({ user }: DashboardProps) => {
   return (
     <div className="min-h-screen ai-gradient">
       <div className="space-y-6 p-6">
-        {/* Header Elegante */}
-        <div className="relative overflow-hidden ai-card p-6 rounded-2xl ai-glow-soft">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5"></div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-4 mb-3">
-              <div className="relative">
-                <Brain className="h-10 w-10 text-primary ai-pulse-soft" />
-                <div className="absolute inset-0 h-10 w-10 bg-primary/10 rounded-full blur-lg ai-pulse-soft"></div>
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                  NOBILIS-IA
-                </h1>
-                <p className="text-lg text-muted-foreground font-light">BEM VINDO, ENCARREGADO! SISTEMA</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Shield className="h-4 w-4 text-primary" />
-              <span>Bem-vindo, {user?.nome || "Encarregado"}! Sistema Seguro de Processos</span>
-              <div className="flex gap-1 ml-auto">
-                <div className="w-2 h-2 bg-[hsl(var(--ai-green))] rounded-full ai-pulse-soft"></div>
-                <span className="text-[hsl(var(--ai-green))] text-sm">ONLINE</span>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         {/* Cards de Estatísticas - Design Suave */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -270,6 +245,22 @@ const Dashboard = ({ user }: DashboardProps) => {
               </div>
             </Button>
           )}
+
+          <Button
+            onClick={() => window.open('/funcionalidades', '_blank')}
+            className="h-16 bg-gradient-to-r from-indigo-500/90 to-purple-500/90 hover:from-indigo-500 hover:to-purple-500 text-primary-foreground rounded-xl shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Cpu className="h-6 w-6 group-hover:scale-110 transition-transform" />
+                <div className="absolute inset-0 bg-white/10 rounded-full blur-md group-hover:bg-white/20 transition-all"></div>
+              </div>
+              <div className="text-left">
+                <div className="font-semibold">Funcionalidades</div>
+                <div className="text-sm opacity-90">Mapeamento do sistema</div>
+              </div>
+            </div>
+          </Button>
         </div>
 
         {/* Visão Geral Melhorada */}
