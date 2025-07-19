@@ -9,12 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Edit, Eye, RotateCcw, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, Brain, EyeOff } from "lucide-react";
+import { Edit, Eye, RotateCcw, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, Brain, EyeOff, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import ProcessForm from "./ProcessForm";
 
 interface Process {
   id: string;
@@ -56,12 +57,81 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
   const [editingProcess, setEditingProcess] = useState<Process | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState<Partial<Process>>({});
+  const [showProcessForm, setShowProcessForm] = useState(false);
+  const [processToEdit, setProcessToEdit] = useState<Process | null>(null);
 
-  // Carregar processos do banco de dados
+  // Carregar processos do banco de dados e configurar sincronização em tempo real
   useEffect(() => {
     console.log('useEffect triggered - type:', type);
     loadProcesses();
-  }, [type]);
+    
+    // Configurar sincronização em tempo real
+    const channel = supabase
+      .channel('processos-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'processos'
+        },
+        (payload) => {
+          console.log('Mudança detectada em tempo real:', payload);
+          
+          // Atualizar a lista baseado no tipo de mudança
+          if (payload.eventType === 'INSERT') {
+            // Novo processo adicionado
+            const newProcess = payload.new as Process;
+            if (newProcess.status === (type === 'tramitacao' ? 'tramitacao' : 'concluido')) {
+              setProcesses(prev => [newProcess, ...prev]);
+              toast({
+                title: "Novo Processo",
+                description: `Processo ${newProcess.numero_processo} foi adicionado.`,
+              });
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            // Processo atualizado
+            const updatedProcess = payload.new as Process;
+            const oldProcess = payload.old as Process;
+            
+            setProcesses(prev => {
+              // Se o status mudou, remover da lista atual se necessário
+              if (oldProcess.status !== updatedProcess.status) {
+                const filtered = prev.filter(p => p.id !== updatedProcess.id);
+                // Se o novo status corresponde ao tipo atual, adicionar
+                if (updatedProcess.status === (type === 'tramitacao' ? 'tramitacao' : 'concluido')) {
+                  return [updatedProcess, ...filtered];
+                }
+                return filtered;
+              }
+              // Se apenas dados foram atualizados, atualizar o processo
+              return prev.map(p => p.id === updatedProcess.id ? updatedProcess : p);
+            });
+            
+            toast({
+              title: "Processo Atualizado",
+              description: `Processo ${updatedProcess.numero_processo} foi atualizado.`,
+            });
+          } else if (payload.eventType === 'DELETE') {
+            // Processo excluído
+            const deletedProcess = payload.old as Process;
+            setProcesses(prev => prev.filter(p => p.id !== deletedProcess.id));
+            
+            toast({
+              title: "Processo Excluído",
+              description: `Processo ${deletedProcess.numero_processo} foi excluído.`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup da subscription
+    return () => {
+      console.log('Desconectando do canal de tempo real');
+      supabase.removeChannel(channel);
+    };
+  }, [type, toast]);
 
   const loadProcesses = async () => {
     console.log('Iniciando carregamento de processos...');
@@ -143,14 +213,8 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
 
   const handleEditProcess = (process: Process) => {
     console.log('Abrindo processo para edição:', process.id);
-    setEditingProcess(process);
-    setEditFormData({
-      ...process,
-      data_recebimento: process.data_recebimento ? new Date(process.data_recebimento).toISOString().split('T')[0] : '',
-      data_fato: process.data_fato ? new Date(process.data_fato).toISOString().split('T')[0] : '',
-      data_admissao: process.data_admissao ? new Date(process.data_admissao).toISOString().split('T')[0] : ''
-    });
-    setIsEditing(false);
+    setProcessToEdit(process);
+    setShowProcessForm(true);
   };
 
   const handleSaveEdit = async () => {
@@ -181,11 +245,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
           title: "Processo Atualizado",
           description: "Alterações salvas com sucesso."
         });
-        
-        // Atualizar a lista local
-        setProcesses(prev => prev.map(p => 
-          p.id === editingProcess.id ? { ...p, ...editFormData } : p
-        ));
         
         // Fechar modal de edição
         setEditingProcess(null);
@@ -239,8 +298,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
           title: "Processo Reaberto",
           description: "Processo foi reaberto para nova análise."
         });
-        // Recarregar processos
-        loadProcesses();
       }
     } catch (err) {
       console.error('Erro inesperado ao reabrir processo:', err);
@@ -252,10 +309,46 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
     }
   };
 
-  const calculateDaysInProcess = (createdAt: string) => {
-    const created = new Date(createdAt);
+  const handleDeleteProcess = async (processId: string, numeroProcesso: string) => {
+    // Confirmação antes de excluir
+    if (!confirm(`Tem certeza que deseja excluir o processo ${numeroProcesso}? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('processos')
+        .delete()
+        .eq('id', processId);
+
+      if (error) {
+        console.error('Erro ao excluir processo:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao excluir processo.",
+          variant: "destructive"
+        });
+      } else {
+        console.log("Processo excluído:", processId);
+        toast({
+          title: "Processo Excluído",
+          description: "Processo foi excluído com sucesso."
+        });
+      }
+    } catch (err) {
+      console.error('Erro inesperado ao excluir processo:', err);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao excluir processo.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const calculateDaysInProcess = (dataRecebimento: string) => {
+    const recebimento = new Date(dataRecebimento);
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - created.getTime());
+    const diffTime = Math.abs(now.getTime() - recebimento.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
@@ -280,14 +373,10 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
               {type === 'tramitacao' ? 'Processos em Tramitação' : 'Processos Concluídos'}
             </h1>
             <div className="flex items-center gap-4">
-              <Button 
-                onClick={loadProcesses} 
-                variant="outline" 
-                className="text-white border-white"
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Atualizar
-              </Button>
+              <div className="flex items-center gap-2 text-green-400 text-sm">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span>Sincronizado em tempo real</span>
+              </div>
               <Button onClick={onClose} variant="outline" className="text-white border-white">
                 Fechar
               </Button>
@@ -327,9 +416,9 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
                           <CalendarIcon className="h-4 w-4" />
                           <span>Criado: {new Date(process.created_at).toLocaleDateString('pt-BR')}</span>
                         </div>
-                        {type === 'tramitacao' && (
+                        {type === 'tramitacao' && process.data_recebimento && (
                           <span className="text-yellow-300">
-                            {calculateDaysInProcess(process.created_at)} dias em tramitação
+                            {calculateDaysInProcess(process.data_recebimento)} dias em tramitação
                           </span>
                         )}
                         {type === 'concluidos' && process.updated_at && (
@@ -347,13 +436,22 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
 
                     <div className="flex gap-2">
                       {type === 'tramitacao' ? (
-                        <Button
-                          onClick={() => handleEditProcess(process)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </Button>
+                        <>
+                          <Button
+                            onClick={() => handleEditProcess(process)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteProcess(process.id, process.numero_processo)}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </Button>
+                        </>
                       ) : (
                         <>
                           <Button
@@ -395,6 +493,22 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
           </div>
         </div>
       </div>
+
+      {/* ProcessForm para Edição */}
+      {showProcessForm && processToEdit && (
+        <ProcessForm
+          onClose={() => {
+            setShowProcessForm(false);
+            setProcessToEdit(null);
+          }}
+          onProcessSaved={() => {
+            setShowProcessForm(false);
+            setProcessToEdit(null);
+          }}
+          editProcess={processToEdit}
+          isEditMode={true}
+        />
+      )}
 
       {/* Modal de Edição */}
       {editingProcess && (
