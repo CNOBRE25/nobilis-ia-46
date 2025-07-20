@@ -92,7 +92,6 @@ const Dashboard = ({ user }: DashboardProps) => {
   return (
     <div className="min-h-screen ai-gradient">
       <div className="space-y-6 p-6">
-
         {/* Cards de Estatísticas - Design Suave */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
