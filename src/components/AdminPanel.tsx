@@ -62,16 +62,24 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
       setLoading(true);
       setError(null);
 
-      // Por enquanto, usar dados vazios até a migração ser aplicada
-      // Quando a tabela pending_users estiver disponível, esta função será atualizada
-      console.log('Buscando usuários pendentes...');
-      
-      // Simular busca (será substituída pela busca real após migração)
-      setTimeout(() => {
-        setCadastrosPendentes([]);
-        setLoading(false);
-      }, 1000);
-      
+      // Buscar usuários pendentes do banco de dados
+      const { data, error } = await supabase
+        .from('pending_users' as any)
+        .select('*')
+        .eq('status', 'pending')
+        .order('requested_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar usuários pendentes:', error);
+        setError(error.message);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar usuários pendentes",
+          variant: "destructive",
+        });
+      } else {
+        setCadastrosPendentes((data as PendingUser[]) || []);
+      }
     } catch (err) {
       console.error('Erro ao buscar usuários pendentes:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
@@ -80,14 +88,40 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
         description: "Erro ao carregar usuários pendentes",
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
     }
   };
 
   const handleAprovarCadastro = async (id: string) => {
     try {
-      // Por enquanto, apenas remover da lista local
-      // Quando a migração for aplicada, esta função será atualizada para usar o banco
+      // Atualizar status para aprovado
+      const { error: updateError } = await supabase
+        .from('pending_users' as any)
+        .update({
+          status: 'approved',
+          reviewed_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Ativar o usuário na tabela users
+      const { data: pendingUser } = await supabase
+        .from('pending_users' as any)
+        .select('auth_user_id')
+        .eq('id', id)
+        .single();
+
+      if (pendingUser) {
+        await supabase
+          .from('users')
+          .update({ ativo: true })
+          .eq('auth_id', pendingUser.auth_user_id);
+      }
+
       setCadastrosPendentes(prev => prev.filter(item => item.id !== id));
       toast({
         title: "Cadastro Aprovado",
@@ -105,8 +139,33 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
 
   const handleRejeitarCadastro = async (id: string) => {
     try {
-      // Por enquanto, apenas remover da lista local
-      // Quando a migração for aplicada, esta função será atualizada para usar o banco
+      // Atualizar status para rejeitado
+      const { error: updateError } = await supabase
+        .from('pending_users' as any)
+        .update({
+          status: 'rejected',
+          reviewed_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Desativar o usuário na tabela users
+      const { data: pendingUser } = await supabase
+        .from('pending_users' as any)
+        .select('auth_user_id')
+        .eq('id', id)
+        .single();
+
+      if (pendingUser) {
+        await supabase
+          .from('users')
+          .update({ ativo: false })
+          .eq('auth_id', pendingUser.auth_user_id);
+      }
+
       setCadastrosPendentes(prev => prev.filter(item => item.id !== id));
       toast({
         title: "Cadastro Rejeitado",
