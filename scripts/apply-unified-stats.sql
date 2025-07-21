@@ -131,7 +131,7 @@ BEGIN
       COUNT(*) as total_processos,
       COUNT(*) FILTER (WHERE status = 'tramitacao') as processos_ativos,
       COUNT(*) FILTER (WHERE status = 'concluido') as processos_concluidos,
-      COUNT(*) FILTER (WHERE prioridade IN ('urgente', 'alta')) as processos_urgentes,
+      COUNT(*) FILTER (WHERE prioridade IN ('urgente', 'alta', 'urgente_maria_penha')) as processos_urgentes,
       AVG(
         CASE 
           WHEN status = 'concluido' AND data_recebimento IS NOT NULL AND updated_at IS NOT NULL
