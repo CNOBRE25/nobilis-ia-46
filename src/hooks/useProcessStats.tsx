@@ -57,7 +57,7 @@ export function useProcessStats() {
 
       // Buscar todos os processos
       const { data: processos, error: processosError } = await supabase
-        .from('processos')
+        .from('processos' as any)
         .select('*');
 
       if (processosError) {
@@ -66,7 +66,7 @@ export function useProcessStats() {
         return;
       }
 
-      const processosList = processos || [];
+      const processosList = (processos as any[]) || [];
 
       // Gerar hash dos dados atuais
       const currentDataHash = generateDataHash(processosList);
@@ -85,7 +85,11 @@ export function useProcessStats() {
       const totalProcessos = processosList.length;
       const processosAtivos = processosList.filter(p => p.status === 'tramitacao').length;
       const processosConcluidos = processosList.filter(p => p.status === 'concluido').length;
-      const processosUrgentes = processosList.filter(p => p.prioridade === 'urgente' || p.prioridade === 'alta').length;
+      const processosUrgentes = processosList.filter(p => 
+        p.prioridade === 'urgente' || 
+        p.prioridade === 'alta' || 
+        p.prioridade === 'urgente_maria_penha'
+      ).length;
 
       // Calcular tempo médio de resolução (processos concluídos)
       let tempoMedioResolucao = 0;

@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Edit, Eye, RotateCcw, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, Brain, EyeOff, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Edit, Eye, RotateCcw, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, Brain, EyeOff, Trash2, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,9 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
   const [editFormData, setEditFormData] = useState<Partial<Process>>({});
   const [showProcessForm, setShowProcessForm] = useState(false);
   const [processToEdit, setProcessToEdit] = useState<Process | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [processToDelete, setProcessToDelete] = useState<Process | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Carregar processos do banco de dados e configurar sincronização em tempo real
   useEffect(() => {
@@ -309,40 +313,56 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
     }
   };
 
-  const handleDeleteProcess = async (processId: string, numeroProcesso: string) => {
-    // Confirmação antes de excluir
-    if (!confirm(`Tem certeza que deseja excluir o processo ${numeroProcesso}? Esta ação não pode ser desfeita.`)) {
-      return;
-    }
+  const handleDeleteProcess = (process: Process) => {
+    setProcessToDelete(process);
+    setShowDeleteDialog(true);
+  };
 
+  const confirmDeleteProcess = async () => {
+    if (!processToDelete) return;
+
+    setIsDeleting(true);
+    
     try {
       const { error } = await supabase
-        .from('processos')
+        .from('processos' as any)
         .delete()
-        .eq('id', processId);
+        .eq('id', processToDelete.id);
 
       if (error) {
         console.error('Erro ao excluir processo:', error);
         toast({
-          title: "Erro",
-          description: "Erro ao excluir processo.",
+          title: "Erro ao Excluir",
+          description: "Erro ao excluir processo. Tente novamente.",
           variant: "destructive"
         });
       } else {
-        console.log("Processo excluído:", processId);
+        console.log("Processo excluído:", processToDelete.id);
         toast({
           title: "Processo Excluído",
-          description: "Processo foi excluído com sucesso."
+          description: `Processo ${processToDelete.numero_processo} foi excluído com sucesso.`
         });
+        
+        // A atualização automática acontece via real-time subscription
+        // O processo será removido automaticamente da lista
       }
     } catch (err) {
       console.error('Erro inesperado ao excluir processo:', err);
       toast({
-        title: "Erro",
-        description: "Erro inesperado ao excluir processo.",
+        title: "Erro Inesperado",
+        description: "Erro inesperado ao excluir processo. Tente novamente.",
         variant: "destructive"
       });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setProcessToDelete(null);
     }
+  };
+
+  const cancelDeleteProcess = () => {
+    setShowDeleteDialog(false);
+    setProcessToDelete(null);
   };
 
   const calculateDaysInProcess = (dataRecebimento: string) => {
@@ -445,7 +465,7 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
                             Editar
                           </Button>
                           <Button
-                            onClick={() => handleDeleteProcess(process.id, process.numero_processo)}
+                            onClick={() => handleDeleteProcess(process)}
                             className="bg-red-600 hover:bg-red-700 text-white"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
@@ -509,6 +529,62 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
           isEditMode={true}
         />
       )}
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-white/95 backdrop-blur-sm border-white/20">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Confirmar Exclusão
+            </DialogTitle>
+            <DialogDescription className="text-gray-700">
+              Tem certeza que deseja excluir o processo <strong>{processToDelete?.numero_processo}</strong>?
+              <br />
+              <span className="text-red-600 font-medium">Esta ação não pode ser desfeita.</span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h4 className="font-medium text-red-800 mb-2">Detalhes do Processo:</h4>
+            <div className="text-sm text-red-700 space-y-1">
+              <p><strong>Número:</strong> {processToDelete?.numero_processo}</p>
+              <p><strong>Tipo:</strong> {processToDelete?.tipo_processo}</p>
+              <p><strong>Investigado:</strong> {processToDelete?.nome_investigado || 'Não informado'}</p>
+              <p><strong>Status:</strong> {processToDelete?.status}</p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={cancelDeleteProcess}
+              disabled={isDeleting}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteProcess}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Processo
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal de Edição */}
       {editingProcess && (
