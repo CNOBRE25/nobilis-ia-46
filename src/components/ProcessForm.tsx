@@ -19,6 +19,7 @@ import { openaiService, RelatorioDados, RelatorioIA as RelatorioIAType } from "@
 import RelatorioIA from "./RelatorioIA";
 import { usePareceres } from "@/hooks/usePareceres";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCrimeStats } from "../hooks/useCrimeStats";
 
 interface ProcessFormProps {
   onClose: () => void;
@@ -32,6 +33,7 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
   const { user } = useAuth();
   const { profile } = useRoles();
   const { saveParecer } = usePareceres(user);
+  const { refreshStats: refreshCrimeStats } = useCrimeStats();
   const [isLoading, setIsLoading] = useState(false);
   const [showRelatorioIA, setShowRelatorioIA] = useState(false);
   const [relatorioIA, setRelatorioIA] = useState<RelatorioIAType | null>(null);
@@ -70,21 +72,10 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
     }
   };
 
-  const [vitimas, setVitimas] = useState(() => {
-    if (editProcess?.vitimas && Array.isArray(editProcess.vitimas)) {
-      return editProcess.vitimas;
-    } else if (editProcess?.vitima) {
-      // Se há uma vítima única, convertê-la para o formato de array
-      return [{
-        id: Date.now(),
-        nome: editProcess.vitima || "",
-        tipo: editProcess.tipo_vitima || "",
-        idade: editProcess.idade_vitima || "",
-        sexo: converterSexoBancoParaFormulario(editProcess.sexo_vitima || "")
-      }];
-    }
-    return [];
-  });
+  // 1. Remover o estado e funções relacionadas a 'vitimas', 'addVitima', 'updateVitima', 'removeVitima'.
+  // 2. Remover campos e lógica de vítima e idade_vitima dos objetos processData e dos fluxos de salvamento.
+  // 3. Remover referências a vítima em RelatorioDados e relatórios IA.
+  // 4. Remover qualquer campo de vítima do formulário e do JSX.
 
   const [formData, setFormData] = useState({
     numeroProcesso: editProcess?.numero_processo || "",
@@ -104,6 +95,10 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
     tipoCrime: editProcess?.tipo_crime || "",
     transgressao: editProcess?.transgressao || ""
   });
+
+  // 1. Adicionar estado para tipificação criminal
+  const [crimeSelecionado, setCrimeSelecionado] = useState(editProcess?.crime || "");
+  const [legislacaoSelecionada, setLegislacaoSelecionada] = useState(editProcess?.legislacao || "");
 
   // Funções para gerenciar investigados
   const addInvestigado = () => {
@@ -129,26 +124,10 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
   };
 
   // Funções para gerenciar vítimas
-  const addVitima = () => {
-    const novaVitima = {
-      id: Date.now(),
-      nome: "",
-      tipo: "",
-      idade: "",
-      sexo: ""
-    };
-    setVitimas([...vitimas, novaVitima]);
-  };
-
-  const updateVitima = (id: number, field: string, value: any) => {
-    setVitimas(vitimas.map(vit => 
-      vit.id === id ? { ...vit, [field]: value } : vit
-    ));
-  };
-
-  const removeVitima = (id: number) => {
-    setVitimas(vitimas.filter(vit => vit.id !== id));
-  };
+  // 1. Remover o estado e funções relacionadas a 'vitimas', 'addVitima', 'updateVitima', 'removeVitima'.
+  // 2. Remover campos e lógica de vítima e idade_vitima dos objetos processData e dos fluxos de salvamento.
+  // 3. Remover referências a vítima em RelatorioDados e relatórios IA.
+  // 4. Remover qualquer campo de vítima do formulário e do JSX.
 
   const handleGerarRelatorioIA = async () => {
     if (!formData.descricaoFatos) {
@@ -174,7 +153,6 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
         numero_despacho: formData.numeroDespacho,
         data_despacho: formData.dataDespacho ? format(formData.dataDespacho, "dd/MM/yyyy") : "Não informado",
         origem: formData.origemProcesso,
-        vitima: vitimas.length > 0 ? vitimas[0].nome : "Não informado",
         matricula: investigados.length > 0 ? investigados[0].matricula : "Não informado",
         data_admissao: investigados.length > 0 && investigados[0].dataAdmissao ? format(investigados[0].dataAdmissao, "dd/MM/yyyy") : "Não informado"
       };
@@ -223,7 +201,6 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
         numero_despacho: formData.numeroDespacho,
         data_despacho: formData.dataDespacho ? format(formData.dataDespacho, "dd/MM/yyyy") : "Não informado",
         origem: formData.origemProcesso,
-        vitima: vitimas.length > 0 ? vitimas[0].nome : "Não informado",
         matricula: investigados.length > 0 ? investigados[0].matricula : "Não informado",
         data_admissao: investigados.length > 0 && investigados[0].dataAdmissao ? format(investigados[0].dataAdmissao, "dd/MM/yyyy") : "Não informado"
       };
@@ -340,9 +317,12 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
         data_recebimento: formData.dataRecebimento ? formData.dataRecebimento.toISOString() : null,
         data_fato: formData.dataFato ? formData.dataFato.toISOString() : null,
         origem_processo: formData.origemProcesso ? formData.origemProcesso.trim() : null,
+        status_funcional: formData.statusFuncional || null,
         descricao_fatos: formData.descricaoFatos.trim(),
         status: 'tramitacao',
-        user_id: internalUserId
+        user_id: internalUserId,
+        crime: crimeSelecionado || null,
+        legislacao: legislacaoSelecionada || null
       };
 
       let data, error;
@@ -472,7 +452,6 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
     try {
       const processId = savedProcessId || editProcess?.id;
       const primeiroInvestigado = investigados[0] || {};
-      const primeiroVitima = vitimas[0] || {};
       
       // Converter valores do sexo da vítima para o formato do banco
       const converterSexoVitima = (sexo: string) => {
@@ -484,18 +463,30 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
         }
       };
 
-      const processData = {
+      const processData: any = {
         nome_investigado: primeiroInvestigado.nome || null,
         cargo_investigado: primeiroInvestigado.cargo || null,
         unidade_investigado: primeiroInvestigado.unidade || null,
         matricula_investigado: primeiroInvestigado.matricula || null,
         data_admissao: primeiroInvestigado.dataAdmissao ? primeiroInvestigado.dataAdmissao.toISOString().split('T')[0] : null,
-        vitima: primeiroVitima.nome || null,
-        sexo_vitima: converterSexoVitima(primeiroVitima.sexo),
-        tipo_vitima: primeiroVitima.tipo || null,
-        idade_vitima: primeiroVitima.idade ? parseInt(primeiroVitima.idade) : null,
         crime_typing: formData.origemProcesso || null
       };
+
+      // Só adiciona campos de vítima se houver nome preenchido
+      if (primeiroInvestigado && primeiroInvestigado.nome && primeiroInvestigado.nome.trim() !== "") {
+        processData.vitima = primeiroInvestigado.nome;
+        processData.sexo_vitima = converterSexoVitima(primeiroInvestigado.sexo);
+        processData.tipo_vitima = primeiroInvestigado.tipo || null;
+        // Idade só se for número válido
+        const idadeNum = parseInt(primeiroInvestigado.idade);
+        processData.idade_vitima = !isNaN(idadeNum) ? idadeNum : null;
+      } else {
+        // Se não houver vítima, zera os campos no banco
+        processData.vitima = null;
+        processData.sexo_vitima = null;
+        processData.tipo_vitima = null;
+        processData.idade_vitima = null;
+      }
 
       const { data, error } = await supabase
         .from('processos' as any)
@@ -534,17 +525,35 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
 
   // Função de salvamento completo (mantida para compatibilidade)
   const handleSave = async () => {
-    // Primeiro salva os dados básicos (inclui descrição dos fatos)
-    await handleSaveDadosBasicos();
-    
-    // Salva os detalhes se houver processo criado
-    if (savedProcessId || editProcess?.id) {
-      await handleSaveDetalhes();
-    }
-    
-    // Salva os investigados e vítimas se houver processo criado
-    if (savedProcessId || editProcess?.id) {
-      await handleSaveInvestigados();
+    setIsLoading(true);
+    let sucesso = true;
+    let mensagemErro = '';
+    try {
+      await handleSaveDadosBasicos();
+      if (savedProcessId || editProcess?.id) {
+        await handleSaveDetalhes();
+        await handleSaveInvestigados();
+      }
+      await refreshCrimeStats();
+    } catch (err) {
+      sucesso = false;
+      mensagemErro = err instanceof Error ? err.message : 'Erro desconhecido ao salvar o processo.';
+    } finally {
+      setIsLoading(false);
+      if (sucesso) {
+        toast({
+          title: 'Processo salvo com sucesso!',
+          description: 'Todos os dados do processo foram salvos e as estatísticas atualizadas.',
+          variant: 'success',
+        });
+        if (onProcessSaved) onProcessSaved();
+      } else {
+        toast({
+          title: 'Erro ao salvar processo',
+          description: mensagemErro,
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -785,24 +794,46 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                 </div>
 
                 {/* Botão de Salvar Dados Básicos */}
-                <div className="flex justify-end pt-4 border-t border-white/20">
-                  <Button
-                    onClick={handleSaveDadosBasicos}
-                    disabled={isSavingDadosBasicos || !formData.numeroProcesso || !formData.descricaoFatos}
-                    className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
-                  >
-                    {isSavingDadosBasicos ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Salvando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Salvar Dados Básicos
-                      </>
-                    )}
-                  </Button>
+                {/* Removido */}
+
+                {/* Nova sub-aba: Tipificação Criminal */}
+                <div className="mt-8 p-4 bg-white/10 border border-white/20 rounded-lg">
+                  <h2 className="text-lg font-bold text-white mb-4">Tipificação Criminal</h2>
+                  <div className="mb-4">
+                    <Label className="text-white">Crime (após análise dos fatos)</Label>
+                    <Select value={crimeSelecionado} onValueChange={setCrimeSelecionado}>
+                      <SelectTrigger className="bg-white/20 border-white/30 text-white">
+                        <SelectValue placeholder="Selecione o crime" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="desobediencia">Desobediência</SelectItem>
+                        <SelectItem value="peculato">Peculato</SelectItem>
+                        <SelectItem value="concussao">Concussão</SelectItem>
+                        <SelectItem value="corrupcao_passiva">Corrupção Passiva</SelectItem>
+                        <SelectItem value="corrupcao_ativa">Corrupção Ativa</SelectItem>
+                        <SelectItem value="injuria">Injúria</SelectItem>
+                        <SelectItem value="calunia">Calúnia</SelectItem>
+                        <SelectItem value="difamacao">Difamação</SelectItem>
+                        <SelectItem value="lesao_corporal">Lesão Corporal</SelectItem>
+                        <SelectItem value="homicidio">Homicídio</SelectItem>
+                        <SelectItem value="outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-white">Legislação Aplicável</Label>
+                    <Select value={legislacaoSelecionada} onValueChange={setLegislacaoSelecionada}>
+                      <SelectTrigger className="bg-white/20 border-white/30 text-white">
+                        <SelectValue placeholder="Selecione a legislação" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CPM">CPM (Código Penal Militar)</SelectItem>
+                        <SelectItem value="RDPM">RDPM (Regulamento Disciplinar da PM)</SelectItem>
+                        <SelectItem value="CPP">CPP (Código de Processo Penal)</SelectItem>
+                        <SelectItem value="outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </TabsContent>
 
@@ -991,7 +1022,6 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                               placeholder="Nome completo"
                             />
                           </div>
-                          
                           <div>
                             <Label className="text-white text-sm">Cargo</Label>
                             <Input
@@ -1001,7 +1031,6 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                               placeholder="Cargo/função"
                             />
                           </div>
-                          
                           <div>
                             <Label className="text-white text-sm">Unidade</Label>
                             <Input
@@ -1011,7 +1040,6 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                               placeholder="Unidade/órgão"
                             />
                           </div>
-                          
                           <div>
                             <Label className="text-white text-sm">Matrícula</Label>
                             <Input
@@ -1021,7 +1049,6 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                               placeholder="Número da matrícula"
                             />
                           </div>
-                          
                           <div>
                             <Label className="text-white text-sm">Data de Admissão</Label>
                             <Popover>
@@ -1053,150 +1080,16 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                   ))}
                 </div>
 
-                {/* Seção de Vítimas */}
-                <div className="space-y-4 pt-6 border-t border-white/20">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-white text-lg font-semibold">Vítimas</Label>
-                    <Button 
-                      onClick={addVitima} 
-                      size="sm" 
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                    >
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Adicionar Vítima
-                    </Button>
-                  </div>
-
-                  {vitimas.length === 0 && (
-                    <div className="text-white/70 text-center py-4 border border-white/20 rounded">
-                      Nenhuma vítima adicionada
-                    </div>
-                  )}
-
-                  {vitimas.map((vitima, index) => (
-                    <Card key={vitima.id} className="bg-white/5 border-white/20">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-center mb-4">
-                          <Label className="text-white font-medium">Vítima {index + 1}</Label>
-                          <Button 
-                            onClick={() => removeVitima(vitima.id)} 
-                            size="sm" 
-                            variant="destructive"
-                            className="h-8 w-8 p-0"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Label className="text-white text-sm">Nome</Label>
-                            <Input
-                              value={vitima.nome}
-                              onChange={(e) => updateVitima(vitima.id, 'nome', e.target.value)}
-                              className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
-                              placeholder="Nome da vítima"
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label className="text-white text-sm">Tipo</Label>
-                            <Select 
-                              value={vitima.tipo} 
-                              onValueChange={(value) => updateVitima(vitima.id, 'tipo', value)}
-                            >
-                              <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                                <SelectValue placeholder="Selecione o tipo" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="civil">Civil</SelectItem>
-                                <SelectItem value="militar">Militar</SelectItem>
-                                <SelectItem value="policial">Policial</SelectItem>
-                                <SelectItem value="outro">Outro</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          
-                          <div>
-                            <Label className="text-white text-sm">Idade</Label>
-                            <Input
-                              value={vitima.idade}
-                              onChange={(e) => updateVitima(vitima.id, 'idade', e.target.value)}
-                              className="bg-white/20 border-white/30 text-white placeholder:text-white/70"
-                              placeholder="Idade"
-                              type="number"
-                            />
-                          </div>
-                          
-                          <div>
-                            <Label className="text-white text-sm">Sexo</Label>
-                            <Select 
-                              value={vitima.sexo} 
-                              onValueChange={(value) => updateVitima(vitima.id, 'sexo', value)}
-                            >
-                              <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                                <SelectValue placeholder="Selecione o sexo" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="masculino">Masculino</SelectItem>
-                                <SelectItem value="feminino">Feminino</SelectItem>
-                                <SelectItem value="nao_informado">Não Informado</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-
-
                 {/* Botões de IA e Relatório - Apenas na aba Investigados */}
-                <div className="border-t border-white/20 pt-6 mt-6">
-                  <div className="flex flex-col sm:flex-row gap-4">
-              {!isEditMode && (
-                <Button 
-                  onClick={handleGerarRelatorioIA}
-                  disabled={isGeneratingReport || !formData.descricaoFatos}
-                  className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
-                >
-                  <Brain className="h-4 w-4 mr-2" />
-                  {isGeneratingReport ? "Gerando..." : "Análise Jurídica IA"}
-                </Button>
-              )}
-
-              {isEditMode && (
-                <Button 
-                  onClick={handleGerarRelatorioIA}
-                  disabled={isGeneratingReport || !formData.descricaoFatos}
-                  className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
-                >
-                  <Brain className="h-4 w-4 mr-2" />
-                  {isGeneratingReport ? "Gerando..." : "Atualizar Análise IA"}
-                </Button>
-              )}
-
-                    <Button 
-                      onClick={handleGerarRelatorio}
-                      disabled={isGeneratingParecer || !formData.descricaoFatos}
-                      className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      {isGeneratingParecer ? "Gerando..." : "Gerar Relatório"}
-                    </Button>
+                <div className="mt-3 p-3 bg-blue-500/20 border border-blue-500/50 rounded text-white text-sm">
+                  <div className="flex items-center">
+                    <Brain className="h-4 w-4 mr-2" />
+                    <span className="font-medium">Funcionalidades de IA</span>
                   </div>
-                  
-                  <div className="mt-3 p-3 bg-blue-500/20 border border-blue-500/50 rounded text-white text-sm">
-                    <div className="flex items-center">
-                      <Brain className="h-4 w-4 mr-2" />
-                      <span className="font-medium">Funcionalidades de IA</span>
-                    </div>
-                    <p className="mt-1 text-white/80">
-                      Após preencher todos os dados do processo, utilize estes botões para gerar análises jurídicas 
-                      e relatórios completos baseados em IA.
-                    </p>
-                  </div>
+                  <p className="mt-1 text-white/80">
+                    Após preencher todos os dados do processo, utilize estes botões para gerar análises jurídicas 
+                    e relatórios completos baseados em IA.
+                  </p>
                 </div>
               </TabsContent>
             </Tabs>
@@ -1209,7 +1102,7 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                 className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {isLoading ? "Salvando..." : "Salvar Dados"}
+                {isLoading ? "Salvando todas as informações..." : "Salvar Todos os Dados"}
               </Button>
             </div>
           </CardContent>
