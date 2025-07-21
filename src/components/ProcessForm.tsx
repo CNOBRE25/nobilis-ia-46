@@ -20,6 +20,7 @@ import RelatorioIA from "./RelatorioIA";
 import { usePareceres } from "@/hooks/usePareceres";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCrimeStats } from "../hooks/useCrimeStats";
+import { ProcessBasicDataForm } from "./ProcessBasicDataForm";
 
 interface ProcessFormProps {
   onClose: () => void;
@@ -99,6 +100,34 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
   // 1. Adicionar estado para tipificação criminal
   const [crimeSelecionado, setCrimeSelecionado] = useState(editProcess?.crime || "");
   const [legislacaoSelecionada, setLegislacaoSelecionada] = useState(editProcess?.legislacao || "");
+
+  // 1. Novo estado para texto livre e resultado da IA
+  const [textoTipificacao, setTextoTipificacao] = useState("");
+  const [iaTipificacao, setIaTipificacao] = useState<string | null>(null);
+  const [iaPrescricao, setIaPrescricao] = useState<string | null>(null);
+  const [isInterpretandoIA, setIsInterpretandoIA] = useState(false);
+
+  // Função para interpretar via IA
+  const interpretarTipificacaoIA = async () => {
+    if (!textoTipificacao || !formData.dataFato) return;
+    setIsInterpretandoIA(true);
+    setIaTipificacao(null);
+    setIaPrescricao(null);
+    try {
+      // Chame o serviço de IA (exemplo fictício, ajuste conforme seu openaiService)
+      const resposta = await openaiService.interpretarTipificacao({
+        texto: textoTipificacao,
+        dataFato: formData.dataFato
+      });
+      setIaTipificacao(resposta.tipificacao);
+      setIaPrescricao(resposta.dataPrescricao);
+    } catch (err) {
+      setIaTipificacao("Erro ao interpretar via IA");
+      setIaPrescricao(null);
+    } finally {
+      setIsInterpretandoIA(false);
+    }
+  };
 
   // Funções para gerenciar investigados
   const addInvestigado = () => {
@@ -585,256 +614,17 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
               </TabsList>
 
               <TabsContent value="dados-basicos" className="space-y-6 mt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
-                    <Label className="text-white">Número do Processo *</Label>
-                    <Input
-                      value={formData.numeroProcesso}
-                      onChange={(e) => setFormData(prev => ({ ...prev, numeroProcesso: e.target.value }))}
-                      disabled={isEditMode}
-                      className={`bg-white/20 border-white/30 text-white placeholder:text-white/70 ${isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-white">Tipo de Processo *</Label>
-                    <Select 
-                      value={formData.tipoProcesso} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, tipoProcesso: value }))}
-                      disabled={isEditMode}
-                    >
-                      <SelectTrigger className={`bg-white/20 border-white/30 text-white ${isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="investigacao_preliminar">INVESTIGAÇÃO PRELIMINAR</SelectItem>
-                        <SelectItem value="sindicancia">SINDICÂNCIA</SelectItem>
-                        <SelectItem value="processo_administrativo">PROCESSO ADMINISTRATIVO</SelectItem>
-                        <SelectItem value="inquerito_policial_militar">INQUÉRITO POLICIAL MILITAR</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label className="text-white">Prioridade</Label>
-                    <Select value={formData.prioridade} onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: value }))}>
-                      <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                        <SelectValue placeholder="Selecione a prioridade" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="urgente_maria_penha" className="text-red-600 font-bold">URGENTE-MARIA DA PENHA</SelectItem>
-                        <SelectItem value="urgente">URGENTE</SelectItem>
-                        <SelectItem value="alta">ALTA</SelectItem>
-                        <SelectItem value="media">MÉDIA</SelectItem>
-                        <SelectItem value="baixa">BAIXA</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label className="text-white">Número do Despacho</Label>
-                    <Input
-                      value={formData.numeroDespacho}
-                      onChange={(e) => setFormData(prev => ({ ...prev, numeroDespacho: e.target.value }))}
-                      disabled={isEditMode}
-                      className={`bg-white/20 border-white/30 text-white placeholder:text-white/70 ${isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      placeholder="Número do despacho"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-white">Data do Despacho</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant={"outline"}
-                          disabled={isEditMode}
-                          className={cn(
-                            "w-full justify-start text-left font-normal bg-white/20 border-white/30 text-white",
-                            !formData.dataDespacho && "text-white/70",
-                            isEditMode && "opacity-50 cursor-not-allowed"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.dataDespacho ? format(formData.dataDespacho, "dd/MM/yyyy") : "Selecionar data"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={formData.dataDespacho || undefined}
-                          onSelect={(date) => setFormData(prev => ({ ...prev, dataDespacho: date }))}
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <div>
-                    <Label className="text-white">Data de Recebimento</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant={"outline"}
-                          disabled={isEditMode}
-                          className={cn(
-                            "w-full justify-start text-left font-normal bg-white/20 border-white/30 text-white",
-                            !formData.dataRecebimento && "text-white/70",
-                            isEditMode && "opacity-50 cursor-not-allowed"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.dataRecebimento ? format(formData.dataRecebimento, "dd/MM/yyyy") : "Selecionar data"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={formData.dataRecebimento || undefined}
-                          onSelect={(date) => setFormData(prev => ({ ...prev, dataRecebimento: date }))}
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <div>
-                    <Label className="text-white">Data do Fato</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant={"outline"}
-                          disabled={isEditMode}
-                          className={cn(
-                            "w-full justify-start text-left font-normal bg-white/20 border-white/30 text-white",
-                            !formData.dataFato && "text-white/70",
-                            isEditMode && "opacity-50 cursor-not-allowed"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.dataFato ? format(formData.dataFato, "dd/MM/yyyy") : "Selecionar data"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={formData.dataFato || undefined}
-                          onSelect={(date) => setFormData(prev => ({ ...prev, dataFato: date }))}
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  <div>
-                    <Label className="text-white">Origem do Processo</Label>
-                    <Select 
-                      value={formData.origemProcesso}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, origemProcesso: value }))}
-                      disabled={isEditMode}
-                    >
-                      <SelectTrigger className={`bg-white/20 border-white/30 text-white ${isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                        <SelectValue placeholder="Selecione a origem" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Denúncia">Denúncia</SelectItem>
-                        <SelectItem value="Representação">Representação</SelectItem>
-                        <SelectItem value="Portaria">Portaria</SelectItem>
-                        <SelectItem value="Ofício">Ofício</SelectItem>
-                        <SelectItem value="Memorando">Memorando</SelectItem>
-                        <SelectItem value="Relatório">Relatório</SelectItem>
-                        <SelectItem value="Comunicação">Comunicação</SelectItem>
-                        <SelectItem value="Solicitação">Solicitação</SelectItem>
-                        <SelectItem value="Determinação Superior">Determinação Superior</SelectItem>
-                        <SelectItem value="Notícia de Fato">Notícia de Fato</SelectItem>
-                        <SelectItem value="Representação da Vítima">Representação da Vítima</SelectItem>
-                        <SelectItem value="Representação de Terceiro">Representação de Terceiro</SelectItem>
-                        <SelectItem value="Auto de Prisão em Flagrante">Auto de Prisão em Flagrante</SelectItem>
-                        <SelectItem value="Auto de Infração">Auto de Infração</SelectItem>
-                        <SelectItem value="Relatório de Ocorrência">Relatório de Ocorrência</SelectItem>
-                        <SelectItem value="Boletim de Ocorrência">Boletim de Ocorrência</SelectItem>
-                        <SelectItem value="Comunicação de Crime">Comunicação de Crime</SelectItem>
-                        <SelectItem value="Outros">Outros</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label className="text-white">Status Funcional</Label>
-                    <Select 
-                      value={formData.statusFuncional} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, statusFuncional: value }))}
-                      disabled={isEditMode}
-                    >
-                      <SelectTrigger className={`bg-white/20 border-white/30 text-white ${isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                        <SelectValue placeholder="Selecione o status funcional" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="militar_servico">MILITAR DE SERVIÇO</SelectItem>
-                        <SelectItem value="militar_folga">MILITAR DE FOLGA</SelectItem>
-                        <SelectItem value="policial_civil">POLICIAL CIVIL</SelectItem>
-                        <SelectItem value="policial_penal">POLICIAL PENAL</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                <div>
-                    <Label className="text-white">Descrição dos Fatos *</Label>
-                  <div className="mb-2 p-2 bg-red-500/20 border border-red-500/50 rounded text-white text-sm flex items-center">
-                    <AlertTriangle className="h-4 w-4 mr-2" />
-                    AVISO: Não inserir dados sensíveis (nome, CPF, RG, endereço). O sistema remove automaticamente.
-                  </div>
-                                      <Textarea
-                      value={formData.descricaoFatos}
-                      onChange={(e) => setFormData(prev => ({ ...prev, descricaoFatos: e.target.value }))}
-                      className="bg-white/20 border-white/30 text-white placeholder:text-white/70 h-[200px] w-[1200px] max-w-full mx-auto resize-none"
-                      placeholder="Descreva detalhadamente os fatos ocorridos..."
-                    />
-                  </div>
-                </div>
-
-                {/* Botão de Salvar Dados Básicos */}
-                {/* Removido */}
-
-                {/* Nova sub-aba: Tipificação Criminal */}
-                <div className="mt-8 p-4 bg-white/10 border border-white/20 rounded-lg">
-                  <h2 className="text-lg font-bold text-white mb-4">Tipificação Criminal</h2>
-                  <div className="mb-4">
-                    <Label className="text-white">Crime (após análise dos fatos)</Label>
-                    <Select value={crimeSelecionado} onValueChange={setCrimeSelecionado}>
-                      <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                        <SelectValue placeholder="Selecione o crime" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="desobediencia">Desobediência</SelectItem>
-                        <SelectItem value="peculato">Peculato</SelectItem>
-                        <SelectItem value="concussao">Concussão</SelectItem>
-                        <SelectItem value="corrupcao_passiva">Corrupção Passiva</SelectItem>
-                        <SelectItem value="corrupcao_ativa">Corrupção Ativa</SelectItem>
-                        <SelectItem value="injuria">Injúria</SelectItem>
-                        <SelectItem value="calunia">Calúnia</SelectItem>
-                        <SelectItem value="difamacao">Difamação</SelectItem>
-                        <SelectItem value="lesao_corporal">Lesão Corporal</SelectItem>
-                        <SelectItem value="homicidio">Homicídio</SelectItem>
-                        <SelectItem value="outro">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-white">Legislação Aplicável</Label>
-                    <Select value={legislacaoSelecionada} onValueChange={setLegislacaoSelecionada}>
-                      <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                        <SelectValue placeholder="Selecione a legislação" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="CPM">CPM (Código Penal Militar)</SelectItem>
-                        <SelectItem value="RDPM">RDPM (Regulamento Disciplinar da PM)</SelectItem>
-                        <SelectItem value="CPP">CPP (Código de Processo Penal)</SelectItem>
-                        <SelectItem value="outro">Outro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                <ProcessBasicDataForm
+                  formData={formData}
+                  setFormData={setFormData}
+                  isEditMode={isEditMode}
+                  textoTipificacao={textoTipificacao}
+                  setTextoTipificacao={setTextoTipificacao}
+                  iaTipificacao={iaTipificacao}
+                  iaPrescricao={iaPrescricao}
+                  isInterpretandoIA={isInterpretandoIA}
+                  interpretarTipificacaoIA={interpretarTipificacaoIA}
+                />
               </TabsContent>
 
               <TabsContent value="detalhes" className="space-y-6 mt-6">
