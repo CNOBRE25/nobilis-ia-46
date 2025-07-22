@@ -24,7 +24,6 @@ import {
   RefreshCw
 } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import ProcessForm from "./ProcessForm";
 import ProcessList from "./ProcessList";
 import StatisticsPage from "./StatisticsPage";
 import AdminPanel from "./AdminPanel";
@@ -32,6 +31,7 @@ import AIReportGenerator from "./AIReportGenerator";
 import DatabaseDiffChecker from "./DatabaseDiffChecker";
 import { useProcessStats } from "../hooks/useProcessStats";
 import { useToast } from "../hooks/use-toast";
+import NovoProcessoForm from "./NovoProcessoForm";
 
 interface User {
   id: string;
@@ -81,7 +81,7 @@ const Dashboard = ({ user }: DashboardProps) => {
   const renderModal = () => {
     switch (activeModal) {
       case 'cadastrar-processo':
-        return <ProcessForm onClose={closeModal} onProcessSaved={refreshStats} />;
+        return <NovoProcessoForm onProcessCreated={() => { closeModal(); refreshStats(); }} />;
       case 'processos-tramitacao':
         return <ProcessList type="tramitacao" onClose={closeModal} />;
       case 'processos-concluidos':

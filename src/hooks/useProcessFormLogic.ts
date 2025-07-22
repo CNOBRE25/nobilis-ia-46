@@ -1,10 +1,45 @@
-import { useState } from "react";
+import { useState, useReducer } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { openaiService, RelatorioIA as RelatorioIAType } from "@/services/openaiService";
 import { usePareceres } from "@/hooks/usePareceres";
 import { useCrimeStats } from "../hooks/useCrimeStats";
+import { supabase } from "@/integrations/supabase/client";
+
+// Tipos de ação para o reducer
+
+type FormAction =
+  | { type: 'SET_FIELD'; field: string; value: any }
+  | { type: 'SET_FORM'; payload: any }
+  | { type: 'ADD_INVESTIGADO'; payload: Investigado }
+  | { type: 'UPDATE_INVESTIGADO'; id: number; field: string; value: any }
+  | { type: 'SET_INVESTIGADOS'; payload: Investigado[] }
+  | { type: 'RESET' };
+
+function formReducer(state: any, action: FormAction) {
+  switch (action.type) {
+    case 'SET_FIELD':
+      return { ...state, formData: { ...state.formData, [action.field]: action.value } };
+    case 'SET_FORM':
+      return { ...state, formData: action.payload };
+    case 'ADD_INVESTIGADO':
+      return { ...state, investigados: [...state.investigados, action.payload] };
+    case 'UPDATE_INVESTIGADO':
+      return {
+        ...state,
+        investigados: state.investigados.map((inv: Investigado) =>
+          inv.id === action.id ? { ...inv, [action.field]: action.value } : inv
+        )
+      };
+    case 'SET_INVESTIGADOS':
+      return { ...state, investigados: action.payload };
+    case 'RESET':
+      return action.payload;
+    default:
+      return state;
+  }
+}
 
 export function useProcessFormLogic(editProcess?: any, isEditMode = false, onProcessSaved?: () => void) {
   const { toast } = useToast();
@@ -23,7 +58,7 @@ export function useProcessFormLogic(editProcess?: any, isEditMode = false, onPro
   const [isSavingInvestigados, setIsSavingInvestigados] = useState(false);
 
   // Estado para múltiplos investigados
-  const [investigados, setInvestigados] = useState(() => {
+  const initialInvestigados = (() => {
     if (editProcess?.investigados && Array.isArray(editProcess.investigados)) {
       return editProcess.investigados;
     } else if (editProcess?.nome_investigado) {
@@ -37,26 +72,35 @@ export function useProcessFormLogic(editProcess?: any, isEditMode = false, onPro
       }];
     }
     return [];
+  })();
+  const [state, dispatch] = useReducer(formReducer, {
+    formData: {
+      numeroProcesso: editProcess?.numero_processo || "",
+      tipoProcesso: editProcess?.tipo_processo || "",
+      prioridade: editProcess?.prioridade || "",
+      numeroDespacho: editProcess?.numero_despacho || "",
+      dataDespacho: editProcess?.data_despacho ? new Date(editProcess?.data_despacho) : null,
+      dataRecebimento: editProcess?.data_recebimento ? new Date(editProcess?.data_recebimento) : null,
+      dataFato: editProcess?.data_fato ? new Date(editProcess?.data_fato) : null,
+      origemProcesso: editProcess?.origem_processo || "",
+      descricaoFatos: editProcess?.descricao_fatos || "",
+      diligenciasRealizadas: editProcess?.diligencias_realizadas || {},
+      desfechoFinal: editProcess?.desfecho_final || "",
+      redistribuicao: editProcess?.redistribuicao || "",
+      sugestoes: editProcess?.sugestoes || "",
+      statusFuncional: editProcess?.status_funcional || "",
+      tipoCrime: editProcess?.tipo_crime || "",
+      transgressao: editProcess?.transgressao || ""
+    },
+    investigados: initialInvestigados
   });
 
-  const [formData, setFormData] = useState({
-    numeroProcesso: editProcess?.numero_processo || "",
-    tipoProcesso: editProcess?.tipo_processo || "",
-    prioridade: editProcess?.prioridade || "",
-    numeroDespacho: editProcess?.numero_despacho || "",
-    dataDespacho: editProcess?.data_despacho ? new Date(editProcess.data_despacho) : null,
-    dataRecebimento: editProcess?.data_recebimento ? new Date(editProcess.data_recebimento) : null,
-    dataFato: editProcess?.data_fato ? new Date(editProcess.data_fato) : null,
-    origemProcesso: editProcess?.origem_processo || "",
-    descricaoFatos: editProcess?.descricao_fatos || "",
-    diligenciasRealizadas: editProcess?.diligencias_realizadas || {},
-    desfechoFinal: editProcess?.desfecho_final || "",
-    redistribuicao: editProcess?.redistribuicao || "",
-    sugestoes: editProcess?.sugestoes || "",
-    statusFuncional: editProcess?.status_funcional || "",
-    tipoCrime: editProcess?.tipo_crime || "",
-    transgressao: editProcess?.transgressao || ""
-  });
+  // Wrappers para compatibilidade
+  const setFormData = (newData: any) => dispatch({ type: 'SET_FORM', payload: newData });
+  const setField = (field: string, value: any) => dispatch({ type: 'SET_FIELD', field, value });
+  const setInvestigados = (arr: Investigado[]) => dispatch({ type: 'SET_INVESTIGADOS', payload: arr });
+  const addInvestigado = (inv: Investigado) => dispatch({ type: 'ADD_INVESTIGADO', payload: inv });
+  const updateInvestigado = (id: number, field: string, value: any) => dispatch({ type: 'UPDATE_INVESTIGADO', id, field, value });
 
   // Tipificação criminal IA
   const [textoTipificacao, setTextoTipificacao] = useState("");
@@ -65,14 +109,14 @@ export function useProcessFormLogic(editProcess?: any, isEditMode = false, onPro
   const [isInterpretandoIA, setIsInterpretandoIA] = useState(false);
 
   const interpretarTipificacaoIA = async () => {
-    if (!textoTipificacao || !formData.dataFato) return;
+    if (!textoTipificacao || !state.formData.dataFato) return;
     setIsInterpretandoIA(true);
     setIaTipificacao(null);
     setIaPrescricao(null);
     try {
       const resposta = await openaiService.interpretarTipificacao({
         texto: textoTipificacao,
-        dataFato: formData.dataFato
+        dataFato: state.formData.dataFato
       });
       setIaTipificacao(resposta.tipificacao);
       setIaPrescricao(resposta.dataPrescricao);
@@ -84,22 +128,148 @@ export function useProcessFormLogic(editProcess?: any, isEditMode = false, onPro
     }
   };
 
+  // Função para salvar o processo (exemplo robusto)
+  const handleSave = async () => {
+    setIsLoading(true);
+    let sucesso = true;
+    let mensagemErro = '';
+    try {
+      // Exemplo: salvar processo (ajuste conforme sua lógica real)
+      const { data, error } = await supabase
+        .from('processos')
+        .insert([
+          {
+            ...state.formData,
+            user_id: user?.id || null,
+            status: 'tramitacao',
+            // Adicione outros campos necessários
+          }
+        ])
+        .select()
+        .single();
+      if (error) {
+        throw error;
+      }
+      toast({
+        title: 'Processo salvo com sucesso!',
+        description: 'Todos os dados do processo foram salvos.',
+        variant: 'default',
+      });
+      if (onProcessSaved) onProcessSaved();
+    } catch (err: any) {
+      sucesso = false;
+      mensagemErro = err.message || 'Erro desconhecido ao salvar o processo.';
+      toast({
+        title: 'Erro ao salvar processo',
+        description: mensagemErro,
+        variant: 'destructive',
+      });
+      console.error('Erro ao salvar processo:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCadastrarProcesso = async () => {
+    setIsLoading(true);
+    try {
+      // Validação básica (exemplo)
+      if (!state.formData.numeroProcesso || !state.formData.tipoProcesso) {
+        toast({
+          title: "Campos obrigatórios faltando",
+          description: "Preencha todos os campos obrigatórios.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('processos')
+        .insert([
+          {
+            ...state.formData,
+            user_id: user?.id || null,
+            status: 'tramitacao',
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Processo cadastrado com sucesso!",
+        description: `Número: ${state.formData.numeroProcesso}`,
+        variant: "default",
+      });
+
+      setSavedProcessId(data.id);
+      if (onProcessSaved) onProcessSaved();
+    } catch (err: any) {
+      toast({
+        title: "Erro ao cadastrar processo",
+        description: err.message || "Erro desconhecido.",
+        variant: "destructive",
+      });
+      console.error("Erro ao cadastrar processo:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // ... Outras funções de manipulação, salvamento, etc. (handleSave, etc.)
 
   return {
-    formData,
+    formData: state.formData,
     setFormData,
-    investigados,
+    setField,
+    investigados: state.investigados,
     setInvestigados,
+    addInvestigado,
+    updateInvestigado,
     textoTipificacao,
     setTextoTipificacao,
     iaTipificacao,
+    setIaTipificacao,
     iaPrescricao,
+    setIaPrescricao,
     isInterpretandoIA,
+    setIsInterpretandoIA,
     interpretarTipificacaoIA,
     isLoading,
+    setIsLoading,
     isEditMode,
     editProcess,
-    // Adicione outros handlers e estados necessários
+    showRelatorioIA,
+    setShowRelatorioIA,
+    relatorioIA,
+    setRelatorioIA,
+    isGeneratingReport,
+    setIsGeneratingReport,
+    isGeneratingParecer,
+    setIsGeneratingParecer,
+    savedProcessId,
+    setSavedProcessId,
+    isSavingDadosBasicos,
+    setIsSavingDadosBasicos,
+    isSavingDetalhes,
+    setIsSavingDetalhes,
+    isSavingInvestigados,
+    setIsSavingInvestigados,
+    processoCriadoAutomaticamente: false, // stub, ajuste conforme necessário
+    setProcessoCriadoAutomaticamente: () => {}, // stub
+    prevFormData: null, // stub
+    crimeSelecionado: '', // stub
+    setCrimeSelecionado: () => {}, // stub
+    legislacaoSelecionada: '', // stub
+    setLegislacaoSelecionada: () => {}, // stub
+    handleGerarRelatorioIA: () => {}, // stub
+    handleGerarRelatorio: () => {}, // stub
+    handleSave,
+    handleCadastrarProcesso,
+    handleSaveDetalhes: () => {}, // stub
+    handleSaveInvestigados: () => {}, // stub
+    getUserId: () => {}, // stub
   };
 } 

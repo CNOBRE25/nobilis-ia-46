@@ -16,4 +16,14 @@ export interface Process {
   created_at: string;
   updated_at: string;
   // ... outros campos relevantes
+}
+
+export interface Investigado {
+  id: number;
+  nome: string;
+  cargo: string;
+  unidade: string;
+  matricula: string;
+  dataAdmissao: Date | null;
+  // Adicione outros campos relevantes se necessário
 } 

@@ -65,8 +65,8 @@ const functionalityData: Functionality[] = [
     lastUpdate: "2024-01-10",
     description: "Sistema completo de criação, edição e gestão de processos jurídicos",
     tableName: "processos",
-    componentName: "ProcessForm",
-    filePath: "src/components/ProcessForm.tsx"
+    componentName: "ProcessList",
+    filePath: "src/components/ProcessList.tsx"
   },
   {
     id: 3,

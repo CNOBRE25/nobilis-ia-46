@@ -13,7 +13,7 @@ import React from "react"; // Added missing import
 
 interface ProcessBasicDataFormProps {
   formData: any;
-  setFormData: (fn: (prev: any) => any) => void;
+  setField: (field: string, value: any) => void;
   isEditMode: boolean;
   textoTipificacao: string;
   setTextoTipificacao: (v: string) => void;
@@ -25,7 +25,7 @@ interface ProcessBasicDataFormProps {
 
 export function ProcessBasicDataForm({
   formData,
-  setFormData,
+  setField,
   isEditMode,
   textoTipificacao,
   setTextoTipificacao,
@@ -197,7 +197,7 @@ export function ProcessBasicDataForm({
               <Label className="text-white text-sm font-medium">Número do Processo *</Label>
               <Input
                 value={formData.numeroProcesso}
-                onChange={(e) => setFormData((prev: any) => ({ ...prev, numeroProcesso: e.target.value }))}
+                onChange={(e) => setField('numeroProcesso', e.target.value)}
                 disabled={isEditMode}
                 className={`mt-1 bg-white/20 border-white/30 text-white placeholder:text-white/70 ${isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}
                 placeholder="Digite o número do processo"
@@ -208,7 +208,7 @@ export function ProcessBasicDataForm({
               <Label className="text-white text-sm font-medium">Tipo de Processo *</Label>
               <Select 
                 value={formData.tipoProcesso} 
-                onValueChange={(value) => setFormData((prev: any) => ({ ...prev, tipoProcesso: value }))}
+                onValueChange={(value) => setField('tipoProcesso', value)}
                 disabled={isEditMode}
               >
                 <SelectTrigger className={`mt-1 bg-white/20 border-white/30 text-white ${isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}>
@@ -225,7 +225,7 @@ export function ProcessBasicDataForm({
 
             <div>
               <Label className="text-white text-sm font-medium">Prioridade</Label>
-              <Select value={formData.prioridade} onValueChange={(value) => setFormData((prev: any) => ({ ...prev, prioridade: value }))}>
+              <Select value={formData.prioridade} onValueChange={(value) => setField('prioridade', value)}>
                 <SelectTrigger className="mt-1 bg-white/20 border-white/30 text-white">
                   <SelectValue placeholder="Selecione a prioridade" />
                 </SelectTrigger>
@@ -243,7 +243,7 @@ export function ProcessBasicDataForm({
               <Label className="text-white text-sm font-medium">Número do Despacho</Label>
               <Input
                 value={formData.numeroDespacho}
-                onChange={(e) => setFormData((prev: any) => ({ ...prev, numeroDespacho: e.target.value }))}
+                onChange={(e) => setField('numeroDespacho', e.target.value)}
                 disabled={isEditMode}
                 className={`mt-1 bg-white/20 border-white/30 text-white placeholder:text-white/70 ${isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}
                 placeholder="Número do despacho"
@@ -270,7 +270,7 @@ export function ProcessBasicDataForm({
                   <Calendar
                     mode="single"
                     selected={formData.dataDespacho || undefined}
-                    onSelect={(date) => setFormData((prev: any) => ({ ...prev, dataDespacho: date }))}
+                    onSelect={(date) => setField('dataDespacho', date)}
                     className="pointer-events-auto"
                   />
                 </PopoverContent>
@@ -297,7 +297,7 @@ export function ProcessBasicDataForm({
                   <Calendar
                     mode="single"
                     selected={formData.dataRecebimento || undefined}
-                    onSelect={(date) => setFormData((prev: any) => ({ ...prev, dataRecebimento: date }))}
+                    onSelect={(date) => setField('dataRecebimento', date)}
                     className="pointer-events-auto"
                   />
                 </PopoverContent>
@@ -324,7 +324,7 @@ export function ProcessBasicDataForm({
                   <Calendar
                     mode="single"
                     selected={formData.dataFato || undefined}
-                    onSelect={(date) => setFormData((prev: any) => ({ ...prev, dataFato: date }))}
+                    onSelect={(date) => setField('dataFato', date)}
                     className="pointer-events-auto"
                   />
                 </PopoverContent>
@@ -345,7 +345,7 @@ export function ProcessBasicDataForm({
               <Label className="text-white text-sm font-medium">Origem do Processo</Label>
               <Select 
                 value={formData.origemProcesso}
-                onValueChange={(value) => setFormData((prev: any) => ({ ...prev, origemProcesso: value }))}
+                onValueChange={(value) => setField('origemProcesso', value)}
                 disabled={isEditMode}
               >
                 <SelectTrigger className={`mt-1 bg-white/20 border-white/30 text-white ${isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}>
@@ -377,7 +377,7 @@ export function ProcessBasicDataForm({
               <Label className="text-white text-sm font-medium">Status Funcional</Label>
               <Select 
                 value={formData.statusFuncional} 
-                onValueChange={(value) => setFormData((prev: any) => ({ ...prev, statusFuncional: value }))}
+                onValueChange={(value) => setField('statusFuncional', value)}
                 disabled={isEditMode}
               >
                 <SelectTrigger className={`mt-1 bg-white/20 border-white/30 text-white ${isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}>
@@ -406,7 +406,7 @@ export function ProcessBasicDataForm({
           </div>
           <Textarea
             value={formData.descricaoFatos}
-            onChange={(e) => setFormData((prev: any) => ({ ...prev, descricaoFatos: e.target.value }))}
+            onChange={(e) => setField('descricaoFatos', e.target.value)}
             className="bg-white/20 border-white/30 text-white placeholder:text-white/70 min-h-[200px] resize-none"
             placeholder="Descreva detalhadamente os fatos ocorridos..."
           />
@@ -427,7 +427,7 @@ export function ProcessBasicDataForm({
               <Label className="text-white text-sm font-medium">Selecione o crime (opcional)</Label>
               <Select
                 value={formData.tipoCrime}
-                onValueChange={value => setFormData((prev: any) => ({ ...prev, tipoCrime: value }))}
+                onValueChange={value => setField('tipoCrime', value)}
               >
                 <SelectTrigger className="mt-1 bg-white/20 border-white/30 text-white">
                   <SelectValue placeholder="Selecione um crime" />
