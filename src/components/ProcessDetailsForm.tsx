@@ -1,18 +1,33 @@
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Loader2, Save } from "lucide-react";
+import React from "react";
 
 interface ProcessDetailsFormProps {
   formData: any;
   setFormData: (fn: (prev: any) => any) => void;
+  isSavingDetalhes: boolean;
+  handleSaveDetalhes: () => void;
+  savedProcessId: string | null;
+  editProcess: any;
 }
 
-export function ProcessDetailsForm({ formData, setFormData }: ProcessDetailsFormProps) {
+export const ProcessDetailsForm: React.FC<ProcessDetailsFormProps> = ({
+  formData,
+  setFormData,
+  isSavingDetalhes,
+  handleSaveDetalhes,
+  savedProcessId,
+  editProcess
+}) => {
   return (
-    <div className="space-y-6">
+    <>
       <div>
         <Label className="text-white">Desfecho Final (Sugestão do Encarregado)</Label>
-        <Select value={formData.desfechoFinal} onValueChange={(value) => setFormData((prev: any) => ({ ...prev, desfechoFinal: value }))}>
+        <Select value={formData.desfechoFinal} onValueChange={(value) => setFormData(prev => ({ ...prev, desfechoFinal: value }))}>
           <SelectTrigger className="bg-white/20 border-white/30 text-white">
             <SelectValue placeholder="Selecione o desfecho" />
           </SelectTrigger>
@@ -27,10 +42,12 @@ export function ProcessDetailsForm({ formData, setFormData }: ProcessDetailsForm
             <SelectItem value="Arquivamento por Falta de Materialidade">Arquivamento por Falta de Materialidade</SelectItem>
             <SelectItem value="Redistribuição por Superior Hierárquico ao Encarregado">Redistribuição por Superior Hierárquico ao Encarregado</SelectItem>
             <SelectItem value="Instauração de SAD">Instauração de SAD</SelectItem>
+            <SelectItem value="Instauração de IPM">Instauração de IPM</SelectItem>
             <SelectItem value="Instauração de Conselho de Disciplina">Instauração de Conselho de Disciplina</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
       <div>
         <Label className="text-white">Diligências Realizadas</Label>
         <div className="max-h-96 overflow-y-auto p-4 bg-white/10 rounded-lg border border-white/20">
@@ -54,6 +71,7 @@ export function ProcessDetailsForm({ formData, setFormData }: ProcessDetailsForm
               { id: 'laudo_pericial_iml_negativo', label: 'Laudo Pericial - IML - Negativo' },
               { id: 'mapa_lancamento_viaturas', label: 'Mapa de Lançamento de Viaturas' },
               { id: 'ouvida_testemunha', label: 'Ouvida da Testemunha' },
+              { id: 'ouvida_vitima', label: 'Ouvida da Vítima' },
               { id: 'ouvida_investigado', label: 'Ouvida do Investigado' },
               { id: 'ouvida_sindicado', label: 'Ouvida do Sindicado' },
               { id: 'rastreamento_viaturas_com_registro', label: 'Rastreamento de Viaturas - Com Registro' },
@@ -64,60 +82,84 @@ export function ProcessDetailsForm({ formData, setFormData }: ProcessDetailsForm
               { id: 'sigpad_nada_consta', label: 'SIGPAD - Nada Consta' },
               { id: 'videos', label: 'Vídeos' }
             ].map((diligencia) => (
-              <div key={diligencia.id} className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  checked={!!formData.diligenciasRealizadas?.[diligencia.id]?.realizada}
-                  onChange={e => setFormData((prev: any) => ({
-                    ...prev,
-                    diligenciasRealizadas: {
-                      ...prev.diligenciasRealizadas,
-                      [diligencia.id]: {
-                        ...prev.diligenciasRealizadas?.[diligencia.id],
-                        realizada: e.target.checked
+              <div key={diligencia.id} className="border-b border-white/20 pb-3 last:border-b-0">
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id={diligencia.id}
+                    checked={formData.diligenciasRealizadas?.[diligencia.id]?.realizada || false}
+                    onCheckedChange={(checked) => setFormData(prev => ({
+                      ...prev,
+                      diligenciasRealizadas: {
+                        ...prev.diligenciasRealizadas,
+                        [diligencia.id]: {
+                          ...prev.diligenciasRealizadas?.[diligencia.id],
+                          realizada: checked
+                        }
                       }
-                    }
-                  }))}
-                  className="mr-2"
-                />
-                <div className="flex-1">
-                  <Label htmlFor={diligencia.id} className="text-white text-sm cursor-pointer font-medium">
-                    {diligencia.label}
-                  </Label>
-                  {formData.diligenciasRealizadas?.[diligencia.id]?.realizada && (
-                    <div className="mt-2">
-                      <Textarea
-                        value={formData.diligenciasRealizadas?.[diligencia.id]?.observacao || ''}
-                        onChange={e => setFormData((prev: any) => ({
-                          ...prev,
-                          diligenciasRealizadas: {
-                            ...prev.diligenciasRealizadas,
-                            [diligencia.id]: {
-                              ...prev.diligenciasRealizadas?.[diligencia.id],
-                              observacao: e.target.value
+                    }))}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor={diligencia.id} className="text-white text-sm cursor-pointer font-medium">
+                      {diligencia.label}
+                    </Label>
+                    {formData.diligenciasRealizadas?.[diligencia.id]?.realizada && (
+                      <div className="mt-2">
+                        <Textarea
+                          value={formData.diligenciasRealizadas?.[diligencia.id]?.observacao || ''}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            diligenciasRealizadas: {
+                              ...prev.diligenciasRealizadas,
+                              [diligencia.id]: {
+                                ...prev.diligenciasRealizadas?.[diligencia.id],
+                                observacao: e.target.value
+                              }
                             }
-                          }
-                        }))}
-                        className="bg-white/20 border-white/30 text-white placeholder:text-white/70 text-sm min-h-[80px]"
-                        placeholder="Adicione observações sobre esta diligência..."
-                      />
-                    </div>
-                  )}
+                          }))}
+                          className="bg-white/20 border-white/30 text-white placeholder:text-white/70 text-sm min-h-[80px]"
+                          placeholder="Adicione observações sobre esta diligência..."
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
       </div>
+
       <div>
         <Label className="text-white">Sugestões</Label>
         <Textarea
           value={formData.sugestoes}
-          onChange={e => setFormData((prev: any) => ({ ...prev, sugestoes: e.target.value }))}
+          onChange={(e) => setFormData(prev => ({ ...prev, sugestoes: e.target.value }))}
           className="bg-white/20 border-white/30 text-white placeholder:text-white/70 min-h-[100px]"
           placeholder="Sugestões adicionais..."
         />
       </div>
-    </div>
+
+      {/* Botão de Salvar Detalhes */}
+      <div className="flex justify-end pt-4 border-t border-white/20">
+        <Button
+          onClick={handleSaveDetalhes}
+          disabled={isSavingDetalhes || (!savedProcessId && !editProcess?.id)}
+          className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+        >
+          {isSavingDetalhes ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Salvando...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Detalhes
+            </>
+          )}
+        </Button>
+      </div>
+    </>
   );
-} 
+}; 

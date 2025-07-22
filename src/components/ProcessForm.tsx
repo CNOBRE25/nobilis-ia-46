@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,8 @@ import { usePareceres } from "@/hooks/usePareceres";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCrimeStats } from "../hooks/useCrimeStats";
 import { ProcessBasicDataForm } from "./ProcessBasicDataForm";
+import { validateRequiredFields } from '@/utils/validation';
+import { ProcessDetailsForm } from "./ProcessDetailsForm";
 
 interface ProcessFormProps {
   onClose: () => void;
@@ -44,6 +46,62 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
   const [isSavingDadosBasicos, setIsSavingDadosBasicos] = useState(false);
   const [isSavingDetalhes, setIsSavingDetalhes] = useState(false);
   const [isSavingInvestigados, setIsSavingInvestigados] = useState(false);
+  const [processoCriadoAutomaticamente, setProcessoCriadoAutomaticamente] = useState(false);
+  const [formData, setFormData] = useState({
+    numeroProcesso: editProcess?.numero_processo || "",
+    tipoProcesso: editProcess?.tipo_processo || "",
+    prioridade: editProcess?.prioridade || "",
+    numeroDespacho: editProcess?.numero_despacho || "",
+    dataDespacho: editProcess?.data_despacho ? new Date(editProcess?.data_despacho) : null,
+    dataRecebimento: editProcess?.data_recebimento ? new Date(editProcess?.data_recebimento) : null,
+    dataFato: editProcess?.data_fato ? new Date(editProcess?.data_fato) : null,
+    origemProcesso: editProcess?.origem_processo || "",
+    descricaoFatos: editProcess?.descricao_fatos || "",
+    diligenciasRealizadas: editProcess?.diligencias_realizadas || {},
+    desfechoFinal: editProcess?.desfecho_final || "",
+    redistribuicao: editProcess?.redistribuicao || "",
+    sugestoes: editProcess?.sugestoes || "",
+    statusFuncional: editProcess?.status_funcional || "",
+    tipoCrime: editProcess?.tipo_crime || "",
+    transgressao: editProcess?.transgressao || ""
+  });
+  const prevFormData = useRef(formData);
+
+  useEffect(() => {
+    // Só tenta salvar se não estiver salvando, não for modo edição e não existir processo salvo
+    if (isSavingDadosBasicos || isEditMode || savedProcessId) return;
+
+    // Verifica se todos os campos obrigatórios estão preenchidos
+    const obrigatorios = [
+      formData.numeroProcesso,
+      formData.tipoProcesso,
+      formData.prioridade,
+      formData.numeroDespacho,
+      formData.dataDespacho,
+      formData.dataRecebimento,
+      formData.dataFato,
+      formData.origemProcesso,
+      formData.statusFuncional,
+      formData.descricaoFatos
+    ];
+
+    const allFilled = obrigatorios.every(v =>
+      v instanceof Date ? !isNaN(v.getTime()) : v && v.toString().trim() !== ''
+    );
+
+    // Debounce para evitar salvamento intermitente enquanto digita
+    const handler = setTimeout(() => {
+      if (
+        allFilled &&
+        JSON.stringify(prevFormData.current) !== JSON.stringify(formData)
+      ) {
+        prevFormData.current = formData;
+        handleSaveDadosBasicos();
+      }
+    }, 1000); // 1 segundo de debounce
+
+    return () => clearTimeout(handler);
+  }, [formData, isSavingDadosBasicos, isEditMode, savedProcessId]);
 
   // Estado para múltiplos investigados e vítimas
   const [investigados, setInvestigados] = useState(() => {
@@ -77,25 +135,6 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
   // 2. Remover campos e lógica de vítima e idade_vitima dos objetos processData e dos fluxos de salvamento.
   // 3. Remover referências a vítima em RelatorioDados e relatórios IA.
   // 4. Remover qualquer campo de vítima do formulário e do JSX.
-
-  const [formData, setFormData] = useState({
-    numeroProcesso: editProcess?.numero_processo || "",
-    tipoProcesso: editProcess?.tipo_processo || "",
-    prioridade: editProcess?.prioridade || "",
-    numeroDespacho: editProcess?.numero_despacho || "",
-    dataDespacho: editProcess?.data_despacho ? new Date(editProcess.data_despacho) : null,
-    dataRecebimento: editProcess?.data_recebimento ? new Date(editProcess.data_recebimento) : null,
-    dataFato: editProcess?.data_fato ? new Date(editProcess.data_fato) : null,
-    origemProcesso: editProcess?.origem_processo || "",
-    descricaoFatos: editProcess?.descricao_fatos || "",
-    diligenciasRealizadas: editProcess?.diligencias_realizadas || {},
-    desfechoFinal: editProcess?.desfecho_final || "",
-    redistribuicao: editProcess?.redistribuicao || "",
-    sugestoes: editProcess?.sugestoes || "",
-    statusFuncional: editProcess?.status_funcional || "",
-    tipoCrime: editProcess?.tipo_crime || "",
-    transgressao: editProcess?.transgressao || ""
-  });
 
   // 1. Adicionar estado para tipificação criminal
   const [crimeSelecionado, setCrimeSelecionado] = useState(editProcess?.crime || "");
@@ -146,10 +185,6 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
     setInvestigados(investigados.map(inv => 
       inv.id === id ? { ...inv, [field]: value } : inv
     ));
-  };
-
-  const removeInvestigado = (id: number) => {
-    setInvestigados(investigados.filter(inv => inv.id !== id));
   };
 
   // Funções para gerenciar vítimas
@@ -322,10 +357,57 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
 
   // Salvar Dados Básicos (obrigatório para criar processo)
   const handleSaveDadosBasicos = async () => {
-    if (!formData.numeroProcesso || !formData.descricaoFatos) {
+    if (isSavingDadosBasicos) return;
+
+    const camposObrigatorios = [
+      { nome: "Número do Processo", valor: formData.numeroProcesso },
+      { nome: "Descrição dos Fatos", valor: formData.descricaoFatos }
+    ];
+
+    // Nova validação usando função utilitária
+    const obrigatoriosFaltando = validateRequiredFields(camposObrigatorios);
+    if (obrigatoriosFaltando.length > 0) {
       toast({
         title: "Dados obrigatórios",
-        description: "Preencha o número do processo e descrição dos fatos.",
+        description: `Preencha ${obrigatoriosFaltando.join(' e ')}.`,
+        variant: "destructive"
+      });
+      setIsSavingDadosBasicos(false);
+      return;
+    }
+
+    // Verificar se as informações principais estão preenchidas
+    const camposPrincipais = [
+      { nome: "Número do Processo", valor: formData.numeroProcesso },
+      { nome: "Tipo de Processo", valor: formData.tipoProcesso },
+      { nome: "Prioridade", valor: formData.prioridade },
+      { nome: "Número do Despacho", valor: formData.numeroDespacho },
+      { nome: "Data do Despacho", valor: formData.dataDespacho },
+      { nome: "Data de Recebimento", valor: formData.dataRecebimento },
+      { nome: "Data do Fato", valor: formData.dataFato },
+      { nome: "Origem do Processo", valor: formData.origemProcesso },
+      { nome: "Status Funcional", valor: formData.statusFuncional }
+    ];
+
+    const camposVazios = camposPrincipais.filter(campo => {
+      // Para campos de data, verificar se é uma instância válida de Date
+      if (campo.nome.includes('Data')) {
+        return !(campo.valor instanceof Date && !isNaN(campo.valor.getTime()));
+      }
+      
+      // Para outros campos, verificar se não estão vazios
+      if (campo.valor === null || campo.valor === undefined) {
+        return true;
+      }
+      
+      return campo.valor.toString().trim() === '';
+    });
+
+    if (camposVazios.length > 0) {
+      const camposFaltando = camposVazios.map(c => c.nome).join(', ');
+      toast({
+        title: "Informações Principais Incompletas",
+        description: `Preencha os seguintes campos: ${camposFaltando}`,
         variant: "destructive"
       });
       return;
@@ -334,9 +416,35 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
     setIsSavingDadosBasicos(true);
 
     try {
+      console.log('Iniciando salvamento de dados básicos...');
+      // Verificar se o usuário está autenticado
+      if (!user) {
+        console.error('Usuário não autenticado');
+        toast({
+          title: "Usuário Não Autenticado",
+          description: "Faça login para continuar.",
+          variant: "destructive"
+        });
+        setIsSavingDadosBasicos(false);
+        return;
+      }
       const internalUserId = await getUserId();
-      if (!internalUserId) return;
-
+      if (!internalUserId) {
+        console.error('Usuário não encontrado');
+        setIsSavingDadosBasicos(false);
+        return;
+      }
+      // Validar dados antes de criar o objeto processData
+      if (!formData.numeroProcesso || !formData.descricaoFatos) {
+        console.error('Dados obrigatórios não preenchidos');
+        toast({
+          title: "Dados Obrigatórios",
+          description: "Número do processo e descrição dos fatos são obrigatórios.",
+          variant: "destructive"
+        });
+        setIsSavingDadosBasicos(false);
+        return;
+      }
       const processData = {
         numero_processo: formData.numeroProcesso.trim(),
         tipo_processo: formData.tipoProcesso || null,
@@ -350,12 +458,10 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
         descricao_fatos: formData.descricaoFatos.trim(),
         status: 'tramitacao',
         user_id: internalUserId,
-        crime: crimeSelecionado || null,
-        legislacao: legislacaoSelecionada || null
+        tipo_crime: crimeSelecionado || null,
+        transgressao: formData.transgressao || null
       };
-
       let data, error;
-      
       if (savedProcessId) {
         // Atualizar processo existente
         const { data: updateData, error: updateError } = await supabase
@@ -364,25 +470,85 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
           .eq('id', savedProcessId)
           .select()
           .single();
-        
         data = updateData;
         error = updateError;
       } else {
-        // Criar novo processo
+        // Verificar se já existe um processo com o mesmo número
+        let existeProcesso = false;
+        try {
+          const { data: existingProcess, error: checkError, status } = await supabase
+            .from('processos' as any)
+            .select('id, numero_processo')
+            .eq('numero_processo', processData.numero_processo)
+            .maybeSingle();
+          if (checkError && status !== 406) {
+            console.error('Erro ao verificar processo existente:', checkError);
+            toast({
+              title: "Erro ao Verificar Processo",
+              description: "Erro ao verificar se o processo já existe.",
+              variant: "destructive"
+            });
+            setIsSavingDadosBasicos(false);
+            return;
+          }
+          if (existingProcess) {
+            existeProcesso = true;
+          }
+        } catch (e) {
+          console.error('Erro inesperado ao verificar duplicidade:', e);
+          toast({
+            title: "Erro ao Verificar Processo",
+            description: "Erro inesperado ao verificar duplicidade.",
+            variant: "destructive"
+          });
+          setIsSavingDadosBasicos(false);
+          return;
+        }
+        if (existeProcesso) {
+          toast({
+            title: "Processo Já Existe",
+            description: `Já existe um processo com o número ${processData.numero_processo}.`,
+            variant: "destructive"
+          });
+          setIsSavingDadosBasicos(false);
+          return;
+        }
+        // Criar novo processo automaticamente
         const { data: insertData, error: insertError } = await supabase
           .from('processos' as any)
           .insert([processData])
           .select()
           .single();
-        
-        data = insertData;
-        error = insertError;
-        
-        if (data?.id) {
-          setSavedProcessId(data.id);
+        if (insertError) {
+          console.error('Erro na inserção do processo:', insertError);
+          toast({
+            title: "Erro ao Criar Processo",
+            description: `Erro ao criar processo: ${insertError.message || 'Erro desconhecido'}`,
+            variant: "destructive"
+          });
+          setIsSavingDadosBasicos(false);
+          return;
+        }
+        // Checagem robusta do retorno
+        if (insertData !== null && typeof insertData === 'object' && 'id' in insertData) {
+          const safeData = insertData as { id: string; numero_processo?: string };
+          setSavedProcessId(safeData.id);
+          setProcessoCriadoAutomaticamente(true);
+          toast({
+            title: "Processo Criado Automaticamente!",
+            description: `Processo ${safeData.numero_processo || ''} foi criado com sucesso.`,
+          });
+        } else {
+          console.error('Insert não retornou objeto esperado:', insertData);
+          toast({
+            title: "Erro ao Criar Processo",
+            description: `O sistema não conseguiu obter o ID do novo processo. Tente novamente ou contate o suporte.`,
+            variant: "destructive"
+          });
+          setIsSavingDadosBasicos(false);
+          return;
         }
       }
-
       if (error) {
         console.error("Erro ao salvar dados básicos:", error);
         toast({
@@ -391,11 +557,17 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
           variant: "destructive"
         });
       } else {
-        console.log('Dados básicos salvos com sucesso:', data);
-        toast({
-          title: "Dados Básicos Salvos!",
-          description: "Dados básicos do processo foram salvos com sucesso.",
-        });
+        if (!savedProcessId) {
+          toast({
+            title: "Processo Criado com Sucesso!",
+            description: `Processo ${data?.numero_processo || ''} foi criado automaticamente.`,
+          });
+        } else {
+          toast({
+            title: "Dados Básicos Atualizados!",
+            description: "Dados básicos do processo foram atualizados com sucesso.",
+          });
+        }
       }
     } catch (err) {
       console.error('Erro inesperado:', err);
@@ -590,9 +762,26 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
     <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 z-50 overflow-auto">
       <div className="container mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-white">
-            {isEditMode ? `Editar Processo - ${editProcess?.numero_processo}` : 'Cadastrar Novo Processo'}
-          </h1>
+          <div>
+            <h1 className="text-3xl font-bold text-white">
+              {isEditMode 
+                ? `Editar Processo - ${editProcess?.numero_processo}` 
+                : savedProcessId 
+                  ? `Processo - ${formData.numeroProcesso}` 
+                  : 'Cadastrar Novo Processo'
+              }
+            </h1>
+            {processoCriadoAutomaticamente && !isEditMode && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  ✅ Processo Criado
+                </span>
+                <span className="text-green-400 text-sm">
+                  ID: {savedProcessId} | Número: {formData.numeroProcesso}
+                </span>
+              </div>
+            )}
+          </div>
           <Button onClick={onClose} variant="outline" className="text-white border-white">
             Fechar
           </Button>
@@ -605,15 +794,41 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                 <TabsTrigger value="dados-basicos" className="text-white data-[state=active]:bg-white/30">
                   Dados Básicos
                 </TabsTrigger>
-                <TabsTrigger value="detalhes" className="text-white data-[state=active]:bg-white/30">
+                <TabsTrigger 
+                  value="detalhes" 
+                  className={`text-white data-[state=active]:bg-white/30 ${(!savedProcessId && !editProcess?.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!savedProcessId && !editProcess?.id}
+                >
                   Detalhes
                 </TabsTrigger>
-                <TabsTrigger value="investigados" className="text-white data-[state=active]:bg-white/30">
+                <TabsTrigger 
+                  value="investigados" 
+                  className={`text-white data-[state=active]:bg-white/30 ${(!savedProcessId && !editProcess?.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!savedProcessId && !editProcess?.id}
+                >
                   Investigados
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="dados-basicos" className="space-y-6 mt-6">
+                {!savedProcessId && !editProcess?.id && (
+                  <div className="p-4 bg-blue-500/20 border border-blue-500/50 rounded-lg text-white">
+                    <div className="flex items-center">
+                      <span className="font-medium">📋 Informações Principais</span>
+                    </div>
+                    <p className="mt-1 text-white/80 text-sm">
+                      Preencha todas as informações principais. O processo será criado automaticamente assim que todos os campos obrigatórios forem preenchidos.
+                      Após a criação, as outras abas serão habilitadas.
+                    </p>
+                    {isSavingDadosBasicos && (
+                      <div className="flex items-center gap-2 mt-3 text-blue-200">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Criando processo, aguarde...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
                 <ProcessBasicDataForm
                   formData={formData}
                   setFormData={setFormData}
@@ -625,145 +840,18 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                   isInterpretandoIA={isInterpretandoIA}
                   interpretarTipificacaoIA={interpretarTipificacaoIA}
                 />
+                {/* Botão de Salvar Dados Básicos removido */}
               </TabsContent>
 
               <TabsContent value="detalhes" className="space-y-6 mt-6">
-                <div>
-                  <Label className="text-white">Desfecho Final (Sugestão do Encarregado)</Label>
-                  <Select value={formData.desfechoFinal} onValueChange={(value) => setFormData(prev => ({ ...prev, desfechoFinal: value }))}>
-                    <SelectTrigger className="bg-white/20 border-white/30 text-white">
-                      <SelectValue placeholder="Selecione o desfecho" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Arquivamento por Falta de Provas">Arquivamento por Falta de Provas</SelectItem>
-                      <SelectItem value="Arquivamento por Laudo IML Negativo">Arquivamento por Laudo IML Negativo</SelectItem>
-                      <SelectItem value="Arquivamento por Fato em Apuração por Outra Unidade">Arquivamento por Fato em Apuração por Outra Unidade</SelectItem>
-                      <SelectItem value="Arquivamento por Fato Já Apurado">Arquivamento por Fato Já Apurado</SelectItem>
-                      <SelectItem value="Arquivamento por Não Indiciamento do(s) Investigado(s)">Arquivamento por Não Indiciamento do(s) Investigado(s)</SelectItem>
-                      <SelectItem value="Arquivamento por Desinteresse da Vítima">Arquivamento por Desinteresse da Vítima</SelectItem>
-                      <SelectItem value="Arquivamento por Falta de Autoria">Arquivamento por Falta de Autoria</SelectItem>
-                      <SelectItem value="Arquivamento por Falta de Materialidade">Arquivamento por Falta de Materialidade</SelectItem>
-                      <SelectItem value="Redistribuição por Superior Hierárquico ao Encarregado">Redistribuição por Superior Hierárquico ao Encarregado</SelectItem>
-                      <SelectItem value="Instauração de SAD">Instauração de SAD</SelectItem>
-                      <SelectItem value="Instauração de IPM">Instauração de IPM</SelectItem>
-                      <SelectItem value="Instauração de Conselho de Disciplina">Instauração de Conselho de Disciplina</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-white">Diligências Realizadas</Label>
-                  <div className="max-h-96 overflow-y-auto p-4 bg-white/10 rounded-lg border border-white/20">
-                    <div className="space-y-4">
-                      {[
-                        { id: 'atestado_medico', label: 'Atestado Médico' },
-                        { id: 'bo_pcpe', label: 'BO PCPE' },
-                        { id: 'contato_whatsapp', label: 'Contato por WhatsApp' },
-                        { id: 'contato_telefonico', label: 'Contato Telefônico' },
-                        { id: 'email', label: 'E-mail' },
-                        { id: 'escala_servico', label: 'Escala de Serviço' },
-                        { id: 'extrato_certidao_conjunta', label: 'Extrato Certidão Conjunta PM/PC' },
-                        { id: 'extrato_cadastro_civil', label: 'Extrato do Cadastro Civil' },
-                        { id: 'extrato_infopol', label: 'Extrato INFOPOL' },
-                        { id: 'extrato_infoseg', label: 'Extrato INFOSEG' },
-                        { id: 'extrato_mppe', label: 'Extrato MPPE' },
-                        { id: 'extrato_tjpe', label: 'Extrato TJPE' },
-                        { id: 'fotos', label: 'Fotos' },
-                        { id: 'laudo_medico', label: 'Laudo Médico' },
-                        { id: 'laudo_pericial_iml_positivo', label: 'Laudo Pericial - IML - Laudo Positivo' },
-                        { id: 'laudo_pericial_iml_negativo', label: 'Laudo Pericial - IML - Negativo' },
-                        { id: 'mapa_lancamento_viaturas', label: 'Mapa de Lançamento de Viaturas' },
-                        { id: 'ouvida_testemunha', label: 'Ouvida da Testemunha' },
-                        { id: 'ouvida_vitima', label: 'Ouvida da Vítima' },
-                        { id: 'ouvida_investigado', label: 'Ouvida do Investigado' },
-                        { id: 'ouvida_sindicado', label: 'Ouvida do Sindicado' },
-                        { id: 'rastreamento_viaturas_com_registro', label: 'Rastreamento de Viaturas - Com Registro' },
-                        { id: 'rastreamento_viaturas_sem_registro', label: 'Rastreamento de Viaturas - Sem Registro' },
-                        { id: 'sgpm', label: 'SGPM' },
-                        { id: 'sigpad_fato_apuração_outra_unidade', label: 'SIGPAD - Fato em Apuração por Outra Unidade' },
-                        { id: 'sigpad_fato_ja_apurado', label: 'SIGPAD - Fato Já Apurado' },
-                        { id: 'sigpad_nada_consta', label: 'SIGPAD - Nada Consta' },
-                        { id: 'videos', label: 'Vídeos' }
-                      ].map((diligencia) => (
-                        <div key={diligencia.id} className="border-b border-white/20 pb-3 last:border-b-0">
-                          <div className="flex items-start space-x-3">
-                            <Checkbox
-                              id={diligencia.id}
-                              checked={formData.diligenciasRealizadas?.[diligencia.id]?.realizada || false}
-                              onCheckedChange={(checked) => setFormData(prev => ({
-                                ...prev,
-                                diligenciasRealizadas: {
-                                  ...prev.diligenciasRealizadas,
-                                  [diligencia.id]: {
-                                    ...prev.diligenciasRealizadas?.[diligencia.id],
-                                    realizada: checked
-                                  }
-                                }
-                              }))}
-                              className="mt-1"
-                            />
-                            <div className="flex-1">
-                              <Label htmlFor={diligencia.id} className="text-white text-sm cursor-pointer font-medium">
-                                {diligencia.label}
-                              </Label>
-                              
-                              {formData.diligenciasRealizadas?.[diligencia.id]?.realizada && (
-                                <div className="mt-2">
-                                  <Textarea
-                                    value={formData.diligenciasRealizadas?.[diligencia.id]?.observacao || ''}
-                                    onChange={(e) => setFormData(prev => ({
-                                      ...prev,
-                                      diligenciasRealizadas: {
-                                        ...prev.diligenciasRealizadas,
-                                        [diligencia.id]: {
-                                          ...prev.diligenciasRealizadas?.[diligencia.id],
-                                          observacao: e.target.value
-                                        }
-                                      }
-                                    }))}
-                                    className="bg-white/20 border-white/30 text-white placeholder:text-white/70 text-sm min-h-[80px]"
-                                    placeholder="Adicione observações sobre esta diligência..."
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-white">Sugestões</Label>
-                  <Textarea
-                    value={formData.sugestoes}
-                    onChange={(e) => setFormData(prev => ({ ...prev, sugestoes: e.target.value }))}
-                    className="bg-white/20 border-white/30 text-white placeholder:text-white/70 min-h-[100px]"
-                    placeholder="Sugestões adicionais..."
-                  />
-                </div>
-
-                {/* Botão de Salvar Detalhes */}
-                <div className="flex justify-end pt-4 border-t border-white/20">
-                  <Button
-                    onClick={handleSaveDetalhes}
-                    disabled={isSavingDetalhes || (!savedProcessId && !editProcess?.id)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-                  >
-                    {isSavingDetalhes ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Salvando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Salvar Detalhes
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <ProcessDetailsForm
+                  formData={formData}
+                  setFormData={setFormData}
+                  isSavingDetalhes={isSavingDetalhes}
+                  handleSaveDetalhes={handleSaveDetalhes}
+                  savedProcessId={savedProcessId}
+                  editProcess={editProcess}
+                />
               </TabsContent>
 
               <TabsContent value="investigados" className="space-y-6 mt-6">
@@ -793,7 +881,7 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                         <div className="flex justify-between items-center mb-4">
                           <Label className="text-white font-medium">Investigado {index + 1}</Label>
                           <Button 
-                            onClick={() => removeInvestigado(investigado.id)} 
+                            onClick={() => updateInvestigado(investigado.id, 'nome', '')} 
                             size="sm" 
                             variant="destructive"
                             className="h-8 w-8 p-0"
@@ -880,6 +968,27 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                     Após preencher todos os dados do processo, utilize estes botões para gerar análises jurídicas 
                     e relatórios completos baseados em IA.
                   </p>
+                </div>
+
+                {/* Botão de Salvar Investigados */}
+                <div className="flex justify-end pt-4 border-t border-white/20">
+                  <Button
+                    onClick={handleSaveInvestigados}
+                    disabled={isSavingInvestigados || (!savedProcessId && !editProcess?.id)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                  >
+                    {isSavingInvestigados ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Salvar Investigados
+                      </>
+                    )}
+                  </Button>
                 </div>
               </TabsContent>
             </Tabs>
