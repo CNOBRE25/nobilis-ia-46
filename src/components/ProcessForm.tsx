@@ -35,7 +35,7 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
   const { toast } = useToast();
   const { user } = useAuth();
   const { profile } = useRoles();
-  const { saveParecer } = usePareceres(user);
+  const { saveParecer } = usePareceres(user && user.id && user.email ? { id: user.id, email: user.email, role: (user as any).role || 'user' } : undefined);
   const { refreshStats: refreshCrimeStats } = useCrimeStats();
   const [isLoading, setIsLoading] = useState(false);
   const [showRelatorioIA, setShowRelatorioIA] = useState(false);
@@ -67,41 +67,9 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
   });
   const prevFormData = useRef(formData);
 
-  useEffect(() => {
-    // Só tenta salvar se não estiver salvando, não for modo edição e não existir processo salvo
-    if (isSavingDadosBasicos || isEditMode || savedProcessId) return;
-
-    // Verifica se todos os campos obrigatórios estão preenchidos
-    const obrigatorios = [
-      formData.numeroProcesso,
-      formData.tipoProcesso,
-      formData.prioridade,
-      formData.numeroDespacho,
-      formData.dataDespacho,
-      formData.dataRecebimento,
-      formData.dataFato,
-      formData.origemProcesso,
-      formData.statusFuncional,
-      formData.descricaoFatos
-    ];
-
-    const allFilled = obrigatorios.every(v =>
-      v instanceof Date ? !isNaN(v.getTime()) : v && v.toString().trim() !== ''
-    );
-
-    // Debounce para evitar salvamento intermitente enquanto digita
-    const handler = setTimeout(() => {
-      if (
-        allFilled &&
-        JSON.stringify(prevFormData.current) !== JSON.stringify(formData)
-      ) {
-        prevFormData.current = formData;
-        handleSaveDadosBasicos();
-      }
-    }, 1000); // 1 segundo de debounce
-
-    return () => clearTimeout(handler);
-  }, [formData, isSavingDadosBasicos, isEditMode, savedProcessId]);
+  // Remover useEffect de auto-save
+  // Remover handleSaveDadosBasicos e toda lógica de cadastro de novo processo
+  // Não remova lógica de edição, detalhes, investigados, ou integração IA
 
   // Estado para múltiplos investigados e vítimas
   const [investigados, setInvestigados] = useState(() => {
@@ -356,230 +324,8 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
   };
 
   // Salvar Dados Básicos (obrigatório para criar processo)
-  const handleSaveDadosBasicos = async () => {
-    if (isSavingDadosBasicos) return;
-
-    const camposObrigatorios = [
-      { nome: "Número do Processo", valor: formData.numeroProcesso },
-      { nome: "Descrição dos Fatos", valor: formData.descricaoFatos }
-    ];
-
-    // Nova validação usando função utilitária
-    const obrigatoriosFaltando = validateRequiredFields(camposObrigatorios);
-    if (obrigatoriosFaltando.length > 0) {
-      toast({
-        title: "Dados obrigatórios",
-        description: `Preencha ${obrigatoriosFaltando.join(' e ')}.`,
-        variant: "destructive"
-      });
-      setIsSavingDadosBasicos(false);
-      return;
-    }
-
-    // Verificar se as informações principais estão preenchidas
-    const camposPrincipais = [
-      { nome: "Número do Processo", valor: formData.numeroProcesso },
-      { nome: "Tipo de Processo", valor: formData.tipoProcesso },
-      { nome: "Prioridade", valor: formData.prioridade },
-      { nome: "Número do Despacho", valor: formData.numeroDespacho },
-      { nome: "Data do Despacho", valor: formData.dataDespacho },
-      { nome: "Data de Recebimento", valor: formData.dataRecebimento },
-      { nome: "Data do Fato", valor: formData.dataFato },
-      { nome: "Origem do Processo", valor: formData.origemProcesso },
-      { nome: "Status Funcional", valor: formData.statusFuncional }
-    ];
-
-    const camposVazios = camposPrincipais.filter(campo => {
-      // Para campos de data, verificar se é uma instância válida de Date
-      if (campo.nome.includes('Data')) {
-        return !(campo.valor instanceof Date && !isNaN(campo.valor.getTime()));
-      }
-      
-      // Para outros campos, verificar se não estão vazios
-      if (campo.valor === null || campo.valor === undefined) {
-        return true;
-      }
-      
-      return campo.valor.toString().trim() === '';
-    });
-
-    if (camposVazios.length > 0) {
-      const camposFaltando = camposVazios.map(c => c.nome).join(', ');
-      toast({
-        title: "Informações Principais Incompletas",
-        description: `Preencha os seguintes campos: ${camposFaltando}`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSavingDadosBasicos(true);
-
-    try {
-      console.log('Iniciando salvamento de dados básicos...');
-      // Verificar se o usuário está autenticado
-      if (!user) {
-        console.error('Usuário não autenticado');
-        toast({
-          title: "Usuário Não Autenticado",
-          description: "Faça login para continuar.",
-          variant: "destructive"
-        });
-        setIsSavingDadosBasicos(false);
-        return;
-      }
-      const internalUserId = await getUserId();
-      if (!internalUserId) {
-        console.error('Usuário não encontrado');
-        setIsSavingDadosBasicos(false);
-        return;
-      }
-      // Validar dados antes de criar o objeto processData
-      if (!formData.numeroProcesso || !formData.descricaoFatos) {
-        console.error('Dados obrigatórios não preenchidos');
-        toast({
-          title: "Dados Obrigatórios",
-          description: "Número do processo e descrição dos fatos são obrigatórios.",
-          variant: "destructive"
-        });
-        setIsSavingDadosBasicos(false);
-        return;
-      }
-      const processData = {
-        numero_processo: formData.numeroProcesso.trim(),
-        tipo_processo: formData.tipoProcesso || null,
-        prioridade: formData.prioridade || null,
-        numero_despacho: formData.numeroDespacho ? formData.numeroDespacho.trim() : null,
-        data_despacho: formData.dataDespacho ? formData.dataDespacho.toISOString() : null,
-        data_recebimento: formData.dataRecebimento ? formData.dataRecebimento.toISOString() : null,
-        data_fato: formData.dataFato ? formData.dataFato.toISOString() : null,
-        origem_processo: formData.origemProcesso ? formData.origemProcesso.trim() : null,
-        status_funcional: formData.statusFuncional || null,
-        descricao_fatos: formData.descricaoFatos.trim(),
-        status: 'tramitacao',
-        user_id: internalUserId,
-        tipo_crime: crimeSelecionado || null,
-        transgressao: formData.transgressao || null
-      };
-      let data, error;
-      if (savedProcessId) {
-        // Atualizar processo existente
-        const { data: updateData, error: updateError } = await supabase
-          .from('processos' as any)
-          .update(processData)
-          .eq('id', savedProcessId)
-          .select()
-          .single();
-        data = updateData;
-        error = updateError;
-      } else {
-        // Verificar se já existe um processo com o mesmo número
-        let existeProcesso = false;
-        try {
-          const { data: existingProcess, error: checkError, status } = await supabase
-            .from('processos' as any)
-            .select('id, numero_processo')
-            .eq('numero_processo', processData.numero_processo)
-            .maybeSingle();
-          if (checkError && status !== 406) {
-            console.error('Erro ao verificar processo existente:', checkError);
-            toast({
-              title: "Erro ao Verificar Processo",
-              description: "Erro ao verificar se o processo já existe.",
-              variant: "destructive"
-            });
-            setIsSavingDadosBasicos(false);
-            return;
-          }
-          if (existingProcess) {
-            existeProcesso = true;
-          }
-        } catch (e) {
-          console.error('Erro inesperado ao verificar duplicidade:', e);
-          toast({
-            title: "Erro ao Verificar Processo",
-            description: "Erro inesperado ao verificar duplicidade.",
-            variant: "destructive"
-          });
-          setIsSavingDadosBasicos(false);
-          return;
-        }
-        if (existeProcesso) {
-          toast({
-            title: "Processo Já Existe",
-            description: `Já existe um processo com o número ${processData.numero_processo}.`,
-            variant: "destructive"
-          });
-          setIsSavingDadosBasicos(false);
-          return;
-        }
-        // Criar novo processo automaticamente
-        const { data: insertData, error: insertError } = await supabase
-          .from('processos' as any)
-          .insert([processData])
-          .select()
-          .single();
-        if (insertError) {
-          console.error('Erro na inserção do processo:', insertError);
-          toast({
-            title: "Erro ao Criar Processo",
-            description: `Erro ao criar processo: ${insertError.message || 'Erro desconhecido'}`,
-            variant: "destructive"
-          });
-          setIsSavingDadosBasicos(false);
-          return;
-        }
-        // Checagem robusta do retorno
-        if (insertData !== null && typeof insertData === 'object' && 'id' in insertData) {
-          const safeData = insertData as { id: string; numero_processo?: string };
-          setSavedProcessId(safeData.id);
-          setProcessoCriadoAutomaticamente(true);
-          toast({
-            title: "Processo Criado Automaticamente!",
-            description: `Processo ${safeData.numero_processo || ''} foi criado com sucesso.`,
-          });
-        } else {
-          console.error('Insert não retornou objeto esperado:', insertData);
-          toast({
-            title: "Erro ao Criar Processo",
-            description: `O sistema não conseguiu obter o ID do novo processo. Tente novamente ou contate o suporte.`,
-            variant: "destructive"
-          });
-          setIsSavingDadosBasicos(false);
-          return;
-        }
-      }
-      if (error) {
-        console.error("Erro ao salvar dados básicos:", error);
-        toast({
-          title: "Erro ao Salvar",
-          description: `Erro ao salvar dados básicos: ${error.message || 'Erro desconhecido'}`,
-          variant: "destructive"
-        });
-      } else {
-        if (!savedProcessId) {
-          toast({
-            title: "Processo Criado com Sucesso!",
-            description: `Processo ${data?.numero_processo || ''} foi criado automaticamente.`,
-          });
-        } else {
-          toast({
-            title: "Dados Básicos Atualizados!",
-            description: "Dados básicos do processo foram atualizados com sucesso.",
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Erro inesperado:', err);
-      toast({
-        title: "Erro Inesperado",
-        description: `Erro inesperado ao salvar dados básicos: ${err instanceof Error ? err.message : 'Erro desconhecido'}`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsSavingDadosBasicos(false);
-    }
-  };
+  // Remover handleSaveDadosBasicos e toda lógica de cadastro de novo processo
+  // Não remova lógica de edição, detalhes, investigados, ou integração IA
 
   // Salvar Detalhes (requer processo já criado)
   const handleSaveDetalhes = async () => {
@@ -730,7 +476,8 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
     let sucesso = true;
     let mensagemErro = '';
     try {
-      await handleSaveDadosBasicos();
+      // Remover handleSaveDadosBasicos e toda lógica de cadastro de novo processo
+      // Não remova lógica de edição, detalhes, investigados, ou integração IA
       if (savedProcessId || editProcess?.id) {
         await handleSaveDetalhes();
         await handleSaveInvestigados();
@@ -745,7 +492,7 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
         toast({
           title: 'Processo salvo com sucesso!',
           description: 'Todos os dados do processo foram salvos e as estatísticas atualizadas.',
-          variant: 'success',
+          variant: 'default',
         });
         if (onProcessSaved) onProcessSaved();
       } else {
@@ -755,6 +502,105 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
           variant: 'destructive',
         });
       }
+    }
+  };
+
+  // Nova função para cadastrar novo processo
+  const handleCadastrarProcesso = async () => {
+    if (isLoading) return;
+    // Validação dos campos obrigatórios
+    const obrigatorios = [
+      { nome: "Número do Processo", valor: formData.numeroProcesso },
+      { nome: "Tipo de Processo", valor: formData.tipoProcesso },
+      { nome: "Prioridade", valor: formData.prioridade },
+      { nome: "Número do Despacho", valor: formData.numeroDespacho },
+      { nome: "Data do Despacho", valor: formData.dataDespacho },
+      { nome: "Data de Recebimento", valor: formData.dataRecebimento },
+      { nome: "Data do Fato", valor: formData.dataFato },
+      { nome: "Origem do Processo", valor: formData.origemProcesso },
+      { nome: "Status Funcional", valor: formData.statusFuncional },
+      { nome: "Descrição dos Fatos", valor: formData.descricaoFatos }
+    ];
+    const faltando = validateRequiredFields(obrigatorios);
+    if (faltando.length > 0) {
+      toast({
+        title: "Campos obrigatórios",
+        description: `Preencha: ${faltando.join(', ')}`,
+        variant: "destructive"
+      });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      // Verificar duplicidade
+      const { data: existente, error: erroCheck } = await supabase
+        .from('processos' as any)
+        .select('id')
+        .eq('numero_processo', formData.numeroProcesso.trim())
+        .maybeSingle();
+      if (erroCheck && erroCheck.code !== 'PGRST116') {
+        toast({
+          title: "Erro ao verificar duplicidade",
+          description: erroCheck.message,
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      if (existente) {
+        toast({
+          title: "Processo já existe",
+          description: `Já existe um processo com o número ${formData.numeroProcesso}`,
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      // Criar processo
+      const { data: novo, error: erroInsert } = await supabase
+        .from('processos' as any)
+        .insert([{
+          numero_processo: formData.numeroProcesso.trim(),
+          tipo_processo: formData.tipoProcesso,
+          prioridade: formData.prioridade,
+          numero_despacho: formData.numeroDespacho,
+          data_despacho: formData.dataDespacho ? formData.dataDespacho.toISOString() : null,
+          data_recebimento: formData.dataRecebimento ? formData.dataRecebimento.toISOString() : null,
+          data_fato: formData.dataFato ? formData.dataFato.toISOString() : null,
+          origem_processo: formData.origemProcesso,
+          status_funcional: formData.statusFuncional,
+          descricao_fatos: formData.descricaoFatos,
+          status: 'tramitacao',
+          user_id: user?.id || null,
+          tipo_crime: formData.tipoCrime || null,
+          transgressao: formData.transgressao || null
+        }])
+        .select()
+        .single();
+      if (erroInsert) {
+        toast({
+          title: "Erro ao cadastrar processo",
+          description: erroInsert.message,
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      setSavedProcessId((novo as any).id);
+      setProcessoCriadoAutomaticamente(true);
+      toast({
+        title: "Processo cadastrado com sucesso!",
+        description: `Processo ${(novo as any).numero_processo} foi criado.`,
+        variant: "default"
+      });
+    } catch (err) {
+      toast({
+        title: "Erro inesperado",
+        description: err instanceof Error ? err.message : 'Erro desconhecido',
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -817,15 +663,17 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
                       <span className="font-medium">📋 Informações Principais</span>
                     </div>
                     <p className="mt-1 text-white/80 text-sm">
-                      Preencha todas as informações principais. O processo será criado automaticamente assim que todos os campos obrigatórios forem preenchidos.
-                      Após a criação, as outras abas serão habilitadas.
+                      Preencha todas as informações principais. O processo será criado ao clicar em "Cadastrar Processo". Após a criação, as outras abas serão habilitadas.
                     </p>
-                    {isSavingDadosBasicos && (
-                      <div className="flex items-center gap-2 mt-3 text-blue-200">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Criando processo, aguarde...</span>
-                      </div>
-                    )}
+                    <div className="flex justify-end mt-4">
+                      <Button
+                        onClick={handleCadastrarProcesso}
+                        disabled={isLoading}
+                        className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                      >
+                        {isLoading ? 'Cadastrando...' : 'Cadastrar Processo'}
+                      </Button>
+                    </div>
                   </div>
                 )}
                 

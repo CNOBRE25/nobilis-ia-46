@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import React from "react"; // Added missing import
 
 interface ProcessBasicDataFormProps {
   formData: any;
@@ -33,6 +34,156 @@ export function ProcessBasicDataForm({
   isInterpretandoIA,
   interpretarTipificacaoIA
 }: ProcessBasicDataFormProps) {
+  // Lista de crimes agrupados por categoria
+  const crimes = {
+    "Crimes contra a Pessoa": [
+      "Homicídio simples",
+      "Homicídio qualificado",
+      "Homicídio culposo",
+      "Infanticídio",
+      "Aborto provocado pela gestante",
+      "Aborto provocado por terceiro",
+      "Lesão corporal",
+      "Sequestro e cárcere privado",
+      "Redução à condição análoga à de escravo",
+      "Ameaça",
+      "Induzimento ao suicídio",
+      "Morte em decorrencia de enfrentamento com agente de Estado"
+    ],
+    "Crimes contra a Mulher": [
+      "Violência doméstica",
+      "Feminicídio",
+      "Tortura (em contexto de violência contra mulher)",
+      "Violência sexual",
+      "Assédio sexual",
+      "Estupro",
+      "Estupro de vulnerável",
+      "Importunação sexual"
+    ],
+    "Crimes contra Criança e Adolescente": [
+      "Abuso sexual de criança",
+      "Exploração sexual de criança e adolescente",
+      "Violência física contra criança",
+      "Maus-tratos",
+      "Negligência",
+      "Aliciamento de menor",
+      "Tráfico de menores"
+    ],
+    "Crimes contra População Racial": [
+      "Racismo",
+      "Discriminação racial",
+      "Injúria racial",
+      "Incitação ao ódio racial",
+      "Lesão corporal por motivo racial"
+    ],
+    "Crimes contra LGBTQIA+": [
+      "Discriminação por orientação sexual",
+      "Lesão corporal por motivação LGBTfóbica",
+      "Homicídio motivado por LGBTfobia",
+      "Assédio sexual",
+      "Violência contra pessoas trans",
+      "Homofobia (tipificada como racismo)"
+    ],
+    "Crimes Cibernéticos / Informática": [
+      "Invasão de dispositivo informático",
+      "Divulgação de dados pessoais sem consentimento",
+      "Fraude eletrônica",
+      "Crimes contra a privacidade",
+      "Difamação e calúnia pela internet",
+      "Extorsão eletrônica",
+      "Phishing",
+      "Ataques de negação de serviço (DDoS)"
+    ],
+    "Crimes contra a Honra": [
+      "Calúnia",
+      "Difamação",
+      "Injúria"
+    ],
+    "Crimes contra a Liberdade Individual": [
+      "Constrangimento ilegal",
+      "Violação de domicílio",
+      "Violação de correspondência",
+      "Tráfico de pessoas"
+    ],
+    "Crimes contra a Dignidade Sexual": [
+      "Estupro",
+      "Estupro de vulnerável",
+      "Importunação sexual",
+      "Assédio sexual",
+      "Divulgação de cena de sexo sem consentimento",
+      "Corrupção de menores"
+    ],
+    "Crimes contra o Patrimônio": [
+      "Furto",
+      "Roubo",
+      "Extorsão",
+      "Estelionato",
+      "Apropriação indébita",
+      "Receptação",
+      "Dano"
+    ],
+    "Crimes contra a Fé Pública": [
+      "Falsidade ideológica",
+      "Falsificação de documento público",
+      "Falsificação de documento particular",
+      "Moeda falsa"
+    ],
+    "Crimes contra a Administração Pública": [
+      "Peculato",
+      "Corrupção passiva",
+      "Corrupção ativa",
+      "Concussão",
+      "Prevaricação",
+      "Violação de sigilo funcional",
+      "Desobediência"
+    ],
+    "Crimes contra a Administração da Justiça": [
+      "Desacato",
+      "Desobediência",
+      "Coação no curso do processo",
+      "Corrupção de testemunha",
+      "Fraude processual"
+    ],
+    "Crimes da Lei de Drogas (Lei 11.343/2006)": [
+      "Tráfico de drogas",
+      "Associação para o tráfico",
+      "Financiamento do tráfico",
+      "Porte para uso pessoal"
+    ],
+    "Crimes da Lei de Tortura (Lei 9.455/1997)": [
+      "Tortura física",
+      "Tortura psicológica",
+      "Tortura por discriminação racial ou religiosa"
+    ],
+    "Crimes da Lei de Lavagem de Dinheiro (Lei 9.613/1998)": [
+      "Lavagem de dinheiro"
+    ],
+    "Crimes da Lei Antiterrorismo (Lei 13.260/2016)": [
+      "Terrorismo"
+    ],
+    "Crimes Hediondos (Lei 8.072/1990)": [
+      "Homicídio qualificado",
+      "Latrocínio",
+      "Estupro",
+      "Estupro de vulnerável",
+      "Extorsão mediante sequestro com morte",
+      "Genocídio",
+      "Epidemia com resultado morte"
+    ],
+    "Crimes Militares (Código Penal Militar)": [
+      "Motim",
+      "Revolta",
+      "Insubordinação",
+      "Deserção",
+      "Abandono de posto",
+      "Violência contra superior",
+      "Furto de armamento",
+      "Recusa de obediência",
+      "Pederastia ou libidinagem em ambiente militar",
+      "Traição em tempo de guerra"
+    ]
+  };
+
   return (
     <div className="space-y-6">
       {/* Seção: Informações Principais */}
@@ -262,42 +413,38 @@ export function ProcessBasicDataForm({
         </CardContent>
       </Card>
 
-      {/* Seção: Tipificação Criminal IA */}
+      {/* Seção: Tipificação Criminal */}
       <Card className="bg-white/10 border-white/20">
         <CardHeader>
-          <CardTitle className="text-white text-lg font-semibold">Tipificação Criminal IA</CardTitle>
+          <CardTitle className="text-white text-lg font-semibold">Tipificação Criminal</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="mb-3 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg text-yellow-100 text-sm flex items-center">
+            <span className="font-medium">⚠️ Observação:</span> A tipificação criminal é opcional e pode ser preenchida ou ajustada posteriormente. O processo pode ser cadastrado normalmente sem este dado.
+          </div>
           <div className="space-y-4">
             <div>
-              <Label className="text-white text-sm font-medium">Descreva o crime, parte do fato ou artigo</Label>
-              <Textarea
-                value={textoTipificacao}
-                onChange={e => setTextoTipificacao(e.target.value)}
-                className="mt-1 bg-white/20 border-white/30 text-white placeholder:text-white/70 min-h-[80px] resize-none"
-                placeholder="Ex: 'Lesão corporal durante serviço', 'Art. 209 CPM', 'Apropriação de bem público', etc."
-              />
-              <Button
-                onClick={interpretarTipificacaoIA}
-                disabled={isInterpretandoIA || !textoTipificacao || !formData.dataFato}
-                className="mt-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+              <Label className="text-white text-sm font-medium">Selecione o crime (opcional)</Label>
+              <Select
+                value={formData.tipoCrime}
+                onValueChange={value => setFormData((prev: any) => ({ ...prev, tipoCrime: value }))}
               >
-                {isInterpretandoIA ? 'Interpretando...' : 'Interpretar IA'}
-              </Button>
+                <SelectTrigger className="mt-1 bg-white/20 border-white/30 text-white">
+                  <SelectValue placeholder="Selecione um crime" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(crimes).map(([categoria, lista]) => (
+                    <React.Fragment key={categoria}>
+                      <div className="px-2 py-1 text-xs text-gray-400 uppercase tracking-wide select-none">{categoria}</div>
+                      {lista.map(crime => (
+                        <SelectItem key={crime} value={crime}>{crime}</SelectItem>
+                      ))}
+                      <div className="my-1" />
+                    </React.Fragment>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            
-            {iaTipificacao && (
-              <div className="p-3 bg-green-500/20 border border-green-500/50 rounded-lg text-white">
-                <div className="font-medium text-green-300 mb-1">Tipificação sugerida:</div>
-                <div className="text-sm">{iaTipificacao}</div>
-                {iaPrescricao && (
-                  <div className="mt-2 pt-2 border-t border-green-500/30">
-                    <div className="font-medium text-green-300 text-sm">Data da prescrição:</div>
-                    <div className="text-sm">{iaPrescricao}</div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
