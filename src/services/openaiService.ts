@@ -26,6 +26,9 @@ export interface RelatorioIA {
 }
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+if (!OPENAI_API_KEY && import.meta.env.DEV) {
+  console.warn("A chave da OpenAI (VITE_OPENAI_API_KEY) não está definida. Adicione ao seu arquivo .env.local.");
+}
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 const PROMPT_TEMPLATE = `
@@ -137,6 +140,19 @@ const parsearRelatorio = (response: string): RelatorioIA => {
   };
 };
 
+// Fallback: Gera um relatório simulado para ambiente de desenvolvimento ou erro na API
+function gerarRelatorioSimulado(dados: RelatorioDados) {
+  return Promise.resolve({
+    cabecalho: 'RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR (SIMULADO)',
+    das_preliminares: 'Simulação: Preliminares do caso para ' + (dados.nome || 'NOME NÃO INFORMADO'),
+    dos_fatos: 'Simulação: Fatos do processo.',
+    das_diligencias: 'Simulação: Diligências realizadas.',
+    da_fundamentacao: 'Simulação: Fundamentação jurídica.',
+    da_conclusao: 'Simulação: Conclusão e encaminhamentos.',
+    raw_response: 'Este é um relatório simulado para ambiente de desenvolvimento.'
+  });
+}
+
 export const openaiService = {
   async gerarRelatorioJuridico(dados: RelatorioDados): Promise<RelatorioIA> {
     // Check if OpenAI API is configured
@@ -181,8 +197,8 @@ export const openaiService = {
               content: prompt
             }
           ],
-          max_tokens: 4000,
-          temperature: 0.3,
+          max_tokens: 1800,
+          temperature: 0.7,
         }),
       });
 
@@ -204,6 +220,60 @@ export const openaiService = {
       }
       // Fallback para relatório simulado em caso de erro
       return gerarRelatorioSimulado(dados);
+    }
+  },
+
+  // Novo método: interpretarTipificacao
+  /**
+   * Recebe um texto livre e a data do fato, retorna a tipificação penal sugerida e a data da prescrição.
+   */
+  async interpretarTipificacao({ texto, dataFato }: { texto: string, dataFato: Date }) {
+    if (!OPENAI_API_KEY) {
+      // Simulação para dev
+      return Promise.resolve({
+        tipificacao: 'Art. 209, CPM – Lesão Corporal',
+        dataPrescricao: '20/07/2029'
+      });
+    }
+    try {
+      const prompt = `Você é um analista jurídico militar.\n\nTexto do usuário: "${texto}"\nData do fato: ${dataFato instanceof Date ? dataFato.toLocaleDateString('pt-BR') : dataFato}\n\n1. Analise o texto e identifique a tipificação penal mais adequada (citar artigo e nome do crime, ex: "Art. 209, CPM – Lesão Corporal").\n2. Calcule a data da prescrição penal com base na data do fato, considerando a legislação militar brasileira.\n\nResponda no formato:\nTipificação: <tipificacao>\nData da prescrição: <data_prescricao>`;
+
+      const response = await fetch(OPENAI_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'Você é um analista jurídico militar especializado em tipificação penal e prescrição.' },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 300,
+          temperature: 0.2,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      }
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content || '';
+      // Extrair tipificação e data da prescrição do texto retornado
+      const tipMatch = content.match(/Tipificação:\s*(.*)/i);
+      const prescMatch = content.match(/Data da prescrição:\s*(.*)/i);
+      return {
+        tipificacao: tipMatch ? tipMatch[1].trim() : 'Não identificado',
+        dataPrescricao: prescMatch ? prescMatch[1].trim() : 'Não identificado'
+      };
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('Erro ao interpretar tipificação com IA:', error);
+      }
+      return {
+        tipificacao: 'Erro ao interpretar via IA',
+        dataPrescricao: ''
+      };
     }
   }
 }; 

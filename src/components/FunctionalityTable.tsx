@@ -256,7 +256,7 @@ export const FunctionalityTable = () => {
   }, [searchTerm, statusFilter, categoryFilter, priorityFilter]);
 
   const applyFilters = () => {
-    let filtered = functionalityData.filter(item => {
+    const filtered = functionalityData.filter(item => {
       const matchesSearch = 
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -4,26 +4,55 @@
 
 ### 1. Obter API Key da OpenAI
 
-1. Acesse [https://platform.openai.com/](https://platform.openai.com/)
-2. Faça login ou crie uma conta
-3. Vá em "API Keys" no menu lateral
-4. Clique em "Create new secret key"
-5. Copie a chave gerada
+1. Acesse [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. Copie sua chave secreta (começa com `sk-...`)
 
-### 2. Configurar Variável de Ambiente
+### 2. Crie o arquivo de variáveis de ambiente
 
-Crie um arquivo `.env.local` na raiz do projeto com o conteúdo:
+1. **Abra a raiz do seu projeto** (onde está o `package.json`).
+2. **Crie um novo arquivo** chamado:
+   ```
+   .env.local
+   ```
+   (Se já existir, apenas edite.)
 
-```env
-VITE_OPENAI_API_KEY=sua_chave_openai_aqui
-```
+### 3. Adicione a variável da OpenAI
 
-**Exemplo:**
-```env
-VITE_OPENAI_API_KEY=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
-```
+1. **Abra o arquivo `.env.local`**.
+2. **Cole a linha abaixo**, substituindo pelo valor real da sua chave:
+   ```
+   VITE_OPENAI_API_KEY=sua_chave_openai_aqui
+   ```
+   Exemplo real:
+   ```
+   VITE_OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   ```
 
-### 3. Funcionalidades Implementadas
+### 4. Salve o arquivo
+
+- Salve e feche o `.env.local`.
+
+### 5. Reinicie o servidor de desenvolvimento
+
+- Pare o servidor se estiver rodando (`Ctrl+C` no terminal).
+- Rode novamente:
+  ```
+  npm run dev
+  ```
+  ou
+  ```
+  yarn dev
+  ```
+
+### 6. Pronto!
+
+- Agora sua aplicação já pode acessar a chave via:
+  ```js
+  import.meta.env.VITE_OPENAI_API_KEY
+  ```
+- O sistema conseguirá se conectar à OpenAI normalmente.
+
+### 7. Funcionalidades Implementadas
 
 Com a API configurada, o sistema oferece:
 
@@ -33,18 +62,18 @@ Com a API configurada, o sistema oferece:
 - **Sugestões de Providências**
 - **Download e Impressão de Relatórios**
 
-### 4. Modo de Simulação
+### 8. Modo de Simulação
 
 Se a API key não for configurada, o sistema funcionará em **modo de simulação**, gerando relatórios com dados de exemplo para demonstração.
 
-### 5. Modelo Utilizado
+### 9. Modelo Utilizado
 
 - **Modelo:** GPT-4o Mini
 - **Especialização:** Análise jurídica militar
 - **Prompt:** Otimizado para legislação militar brasileira
 - **Saída:** Estruturada em seções técnicas
 
-### 6. Estrutura do Relatório Gerado
+### 10. Estrutura do Relatório Gerado
 
 Cada análise jurídica contém:
 
@@ -54,7 +83,7 @@ Cada análise jurídica contém:
 4. **Tipificação Penal** - Crimes identificados
 5. **Providências Sugeridas** - Recomendações
 
-### 7. Exemplo de Uso
+### 11. Exemplo de Uso
 
 1. Preencher dados do processo no formulário
 2. Clicar em "Análise Jurídica IA" 
@@ -62,21 +91,21 @@ Cada análise jurídica contém:
 4. Visualizar relatório completo
 5. Baixar/imprimir conforme necessário
 
-### 8. Segurança
+### 12. Segurança
 
 - ⚠️ **Importante**: Nunca commite a API key no repositório
 - ✅ Use sempre variáveis de ambiente
 - ✅ Restrinja o uso da API key ao domínio da aplicação
 - ✅ Monitore o uso para evitar custos excessivos
 
-### 9. Custos
+### 13. Custos
 
 O GPT-4o Mini é o modelo mais econômico da OpenAI:
 - **Entrada**: ~$0.15 por 1M tokens
 - **Saída**: ~$0.60 por 1M tokens
 - **Estimativa**: ~$0.01-0.02 por relatório
 
-### 10. Troubleshooting
+### 14. Troubleshooting
 
 **Problema**: Erro 401 - Unauthorized
 **Solução**: Verificar se a API key está correta

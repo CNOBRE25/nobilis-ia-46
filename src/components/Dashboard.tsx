@@ -33,8 +33,18 @@ import DatabaseDiffChecker from "./DatabaseDiffChecker";
 import { useProcessStats } from "../hooks/useProcessStats";
 import { useToast } from "../hooks/use-toast";
 
+interface User {
+  id: string;
+  email: string;
+  role: 'admin' | 'user' | 'advogado';
+  nome_completo?: string;
+  matricula?: string;
+  cargo_funcao?: string;
+  // ... outros campos relevantes
+}
+
 interface DashboardProps {
-  user: any;
+  user: User;
 }
 
 const Dashboard = ({ user }: DashboardProps) => {

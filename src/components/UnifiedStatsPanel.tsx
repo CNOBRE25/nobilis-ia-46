@@ -222,55 +222,6 @@ export function UnifiedStatsPanel() {
               </CardContent>
             </Card>
 
-            {/* Distribuição de Vítimas */}
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-blue-800">
-                  <Users className="h-5 w-5" />
-                  Distribuição de Vítimas
-                </CardTitle>
-                <CardDescription className="text-blue-700">
-                  Análise por sexo das vítimas
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {summary?.distribuicao_vitimas && summary.distribuicao_vitimas.total > 0 ? (
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <p className="text-3xl font-bold text-blue-600">{summary.distribuicao_vitimas.total}</p>
-                      <p className="text-sm text-blue-700">Total de Vítimas</p>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-blue-800">Femininas</span>
-                          <span className="text-sm font-bold text-pink-600">{summary.distribuicao_vitimas.femininas}</span>
-                        </div>
-                        <Progress 
-                          value={(summary.distribuicao_vitimas.femininas / summary.distribuicao_vitimas.total) * 100} 
-                          className="h-2 bg-pink-100"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-blue-800">Masculinas</span>
-                          <span className="text-sm font-bold text-blue-600">{summary.distribuicao_vitimas.masculinas}</span>
-                        </div>
-                        <Progress 
-                          value={(summary.distribuicao_vitimas.masculinas / summary.distribuicao_vitimas.total) * 100} 
-                          className="h-2 bg-blue-100"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-blue-700">Nenhum dado de vítimas disponível</p>
-                )}
-              </CardContent>
-            </Card>
-
             {/* Top Performers */}
             <Card>
               <CardHeader>
@@ -381,55 +332,6 @@ export function UnifiedStatsPanel() {
               </CardContent>
             </Card>
 
-            {/* Distribuição de Vítimas */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-blue-600" />
-                  Distribuição de Vítimas
-                </CardTitle>
-                <CardDescription>
-                  Análise por sexo das vítimas
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {summary?.distribuicao_vitimas && summary.distribuicao_vitimas.total > 0 ? (
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-600">{summary.distribuicao_vitimas.total}</p>
-                      <p className="text-sm text-muted-foreground">Total de Vítimas</p>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Vítimas Femininas</span>
-                          <span className="text-sm font-bold text-pink-600">{summary.distribuicao_vitimas.femininas}</span>
-                        </div>
-                        <Progress 
-                          value={(summary.distribuicao_vitimas.femininas / summary.distribuicao_vitimas.total) * 100} 
-                          className="h-2 bg-pink-100"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Vítimas Masculinas</span>
-                          <span className="text-sm font-bold text-blue-600">{summary.distribuicao_vitimas.masculinas}</span>
-                        </div>
-                        <Progress 
-                          value={(summary.distribuicao_vitimas.masculinas / summary.distribuicao_vitimas.total) * 100} 
-                          className="h-2 bg-blue-100"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">Nenhum dado de vítimas disponível</p>
-                )}
-              </CardContent>
-            </Card>
-
             {/* Unidades Mais Ativas */}
             <Card>
               <CardHeader>
@@ -503,14 +405,6 @@ export function UnifiedStatsPanel() {
                       <span>Unidade mais ativa:</span>
                       <span className="font-medium">
                         {summary?.unidades_mais_ativas?.[0]?.unidade || 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Maioria das vítimas:</span>
-                      <span className="font-medium">
-                        {summary?.distribuicao_vitimas ? 
-                          (summary.distribuicao_vitimas.femininas > summary.distribuicao_vitimas.masculinas ? 'Femininas' : 'Masculinas') 
-                          : 'N/A'}
                       </span>
                     </div>
                   </div>
@@ -719,28 +613,6 @@ export function UnifiedStatsPanel() {
                   </div>
                   
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Vítimas Femininas</span>
-                      <span>{userStats.reduce((sum, stat) => sum + stat.vitimas_femininas, 0)}</span>
-                    </div>
-                    <Progress 
-                      value={summary?.total_crimes ? (userStats.reduce((sum, stat) => sum + stat.vitimas_femininas, 0) / summary.total_crimes) * 100 : 0} 
-                      className="h-2"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Vítimas Masculinas</span>
-                      <span>{userStats.reduce((sum, stat) => sum + stat.vitimas_masculinas, 0)}</span>
-                    </div>
-                    <Progress 
-                      value={summary?.total_crimes ? (userStats.reduce((sum, stat) => sum + stat.vitimas_masculinas, 0) / summary.total_crimes) * 100 : 0} 
-                      className="h-2"
-                    />
-                  </div>
-
-                  <div className="pt-2 border-t">
                     <div className="flex items-center justify-between text-sm">
                       <span>Tipos de Crime Diferentes</span>
                       <span>{userStats.reduce((sum, stat) => sum + stat.tipos_crime_diferentes, 0)}</span>

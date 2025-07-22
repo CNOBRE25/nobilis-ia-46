@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { User } from '@/types/user';
+import { Parecer } from '@/types/parecer';
 
 export interface Parecer {
   id: string;
@@ -27,7 +29,7 @@ export interface Parecer {
   legislacao_aplicavel?: string;
 }
 
-export const usePareceres = (user: any) => {
+export const usePareceres = (user: User) => {
   const [pareceres, setPareceres] = useState<Parecer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,7 +57,7 @@ export const usePareceres = (user: any) => {
         return;
       }
 
-      setPareceres(data || []);
+      setPareceres((data as Parecer[]) || []);
     } catch (error) {
       console.error('Erro ao carregar pareceres:', error);
     } finally {
@@ -72,7 +74,7 @@ export const usePareceres = (user: any) => {
           ...parecerData,
           data_criacao: new Date().toISOString(),
           usuario_id: user?.id,
-          orgao: user?.orgao
+          orgao: (user as User)?.orgao // ajuste se necessário
         }])
         .select()
         .single();
@@ -82,8 +84,8 @@ export const usePareceres = (user: any) => {
         throw error;
       }
 
-      setPareceres(prev => [data, ...prev]);
-      return data;
+      setPareceres(prev => [data as Parecer, ...prev]);
+      return data as Parecer;
     } catch (error) {
       console.error('Erro ao salvar parecer:', error);
       throw error;

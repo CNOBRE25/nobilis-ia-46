@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import ProcessForm from "./ProcessForm";
+import { useCrimeStats } from "../hooks/useCrimeStats";
 
 interface Process {
   id: string;
@@ -40,7 +41,6 @@ interface Process {
   sugestoes?: string;
   matricula_investigado?: string;
   data_admissao?: string;
-  vitima?: string;
   numero_sigpad?: string;
 }
 
@@ -63,6 +63,7 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [processToDelete, setProcessToDelete] = useState<Process | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { refreshStats: refreshCrimeStats } = useCrimeStats();
 
   // Carregar processos do banco de dados e configurar sincronização em tempo real
   useEffect(() => {
@@ -253,6 +254,8 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
         // Fechar modal de edição
         setEditingProcess(null);
         setEditFormData({});
+        // Atualiza estatísticas de crimes automaticamente
+        await refreshCrimeStats();
       }
     } catch (err) {
       console.error('Erro inesperado ao atualizar processo:', err);
@@ -302,6 +305,8 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
           title: "Processo Reaberto",
           description: "Processo foi reaberto para nova análise."
         });
+        // Atualiza estatísticas de crimes automaticamente
+        await refreshCrimeStats();
       }
     } catch (err) {
       console.error('Erro inesperado ao reabrir processo:', err);
@@ -313,9 +318,32 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
     }
   };
 
-  const handleDeleteProcess = (process: Process) => {
-    setProcessToDelete(process);
-    setShowDeleteDialog(true);
+  const handleDeleteProcess = async (processToDelete: Process) => {
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('processos')
+        .delete()
+        .eq('id', processToDelete.id);
+      if (error) {
+        toast({
+          title: "Erro ao excluir",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        setProcesses(prev => prev.filter(p => p.id !== processToDelete.id));
+        toast({
+          title: "Processo Excluído",
+          description: "O processo foi removido com sucesso."
+        });
+        // Atualiza estatísticas de crimes automaticamente
+        await refreshCrimeStats();
+      }
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
   };
 
   const confirmDeleteProcess = async () => {
@@ -814,18 +842,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="vitima" className="text-sm font-medium text-card-foreground">Vítima</Label>
-                      <Input
-                        id="vitima"
-                        value={editFormData.vitima || ''}
-                        onChange={(e) => setEditFormData(prev => ({ ...prev, vitima: e.target.value }))}
-                        disabled={isEditing}
-                        className="mt-1 bg-background/50 border-border/60 focus:border-primary/60"
-                        placeholder="Nome da vítima..."
-                      />
-                    </div>
-
                     <div>
                       <Label htmlFor="numero_sigpad" className="text-sm font-medium text-card-foreground">Número SIGPAD</Label>
                       <Input

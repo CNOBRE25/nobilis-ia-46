@@ -497,26 +497,6 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
 
               <Card className="bg-white/10 backdrop-blur-sm border-white/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-white">Vítimas Femininas</CardTitle>
-                  <Users className="h-4 w-4 text-pink-400" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-white">
-                    {crimeLoading ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Carregando...</span>
-                      </div>
-                    ) : (
-                      sexoVitima.find(item => item.name === 'Feminino')?.count || 0
-                    )}
-                  </div>
-                  <p className="text-xs text-blue-200">Vítimas do sexo feminino</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-white">Unidades Ativas</CardTitle>
                   <MapPin className="h-4 w-4 text-green-400" />
                 </CardHeader>
@@ -625,51 +605,6 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
 
             {/* Gráficos Adicionais */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Gráfico de Sexo da Vítima */}
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-                <CardHeader>
-                  <CardTitle className="text-white">Distribuição por Sexo da Vítima</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {crimeLoading ? (
-                    <div className="flex items-center justify-center h-64">
-                      <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
-                    </div>
-                  ) : sexoVitima.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={250}>
-                      <PieChart>
-                        <Pie
-                          data={sexoVitima}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="count"
-                        >
-                          {sexoVitima.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'rgba(0,0,0,0.8)', 
-                            border: '1px solid #ffffff20',
-                            borderRadius: '8px',
-                            color: '#ffffff'
-                          }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="flex items-center justify-center h-64 text-blue-200">
-                      Nenhum dado disponível
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
               {/* Gráfico de Unidades do Investigado */}
               <Card className="bg-white/10 backdrop-blur-sm border-white/20">
                 <CardHeader>
