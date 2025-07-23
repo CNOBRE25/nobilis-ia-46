@@ -1,7 +1,9 @@
+require('dotenv').config({ path: '.env.local' });
+console.log('DEBUG OPENAI_API_KEY:', process.env.OPENAI_API_KEY);
 const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
-require('dotenv').config({ path: '.env.server' });
+require('dotenv').config({ path: '.env.local' });
 
 const app = express();
 const PORT = process.env.PORT || 3002;

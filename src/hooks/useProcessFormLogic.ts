@@ -134,7 +134,6 @@ export function useProcessFormLogic(editProcess?: any, isEditMode = false, onPro
     let sucesso = true;
     let mensagemErro = '';
     try {
-      // Exemplo: salvar processo (ajuste conforme sua lógica real)
       const { data, error } = await supabase
         .from('processos')
         .insert([
@@ -142,7 +141,6 @@ export function useProcessFormLogic(editProcess?: any, isEditMode = false, onPro
             ...state.formData,
             user_id: user?.id || null,
             status: 'tramitacao',
-            // Adicione outros campos necessários
           }
         ])
         .select()
@@ -170,55 +168,11 @@ export function useProcessFormLogic(editProcess?: any, isEditMode = false, onPro
     }
   };
 
+  // Função para cadastrar processo (exemplo)
   const handleCadastrarProcesso = async () => {
-    setIsLoading(true);
-    try {
-      // Validação básica (exemplo)
-      if (!state.formData.numeroProcesso || !state.formData.tipoProcesso) {
-        toast({
-          title: "Campos obrigatórios faltando",
-          description: "Preencha todos os campos obrigatórios.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('processos')
-        .insert([
-          {
-            ...state.formData,
-            user_id: user?.id || null,
-            status: 'tramitacao',
-          }
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Processo cadastrado com sucesso!",
-        description: `Número: ${state.formData.numeroProcesso}`,
-        variant: "default",
-      });
-
-      setSavedProcessId(data.id);
-      if (onProcessSaved) onProcessSaved();
-    } catch (err: any) {
-      toast({
-        title: "Erro ao cadastrar processo",
-        description: err.message || "Erro desconhecido.",
-        variant: "destructive",
-      });
-      console.error("Erro ao cadastrar processo:", err);
-    } finally {
-      setIsLoading(false);
-    }
+    // Implemente a lógica real de cadastro aqui
+    await handleSave();
   };
-
-  // ... Outras funções de manipulação, salvamento, etc. (handleSave, etc.)
 
   return {
     formData: state.formData,
@@ -257,19 +211,7 @@ export function useProcessFormLogic(editProcess?: any, isEditMode = false, onPro
     setIsSavingDetalhes,
     isSavingInvestigados,
     setIsSavingInvestigados,
-    processoCriadoAutomaticamente: false, // stub, ajuste conforme necessário
-    setProcessoCriadoAutomaticamente: () => {}, // stub
-    prevFormData: null, // stub
-    crimeSelecionado: '', // stub
-    setCrimeSelecionado: () => {}, // stub
-    legislacaoSelecionada: '', // stub
-    setLegislacaoSelecionada: () => {}, // stub
-    handleGerarRelatorioIA: () => {}, // stub
-    handleGerarRelatorio: () => {}, // stub
     handleSave,
-    handleCadastrarProcesso,
-    handleSaveDetalhes: () => {}, // stub
-    handleSaveInvestigados: () => {}, // stub
-    getUserId: () => {}, // stub
+    handleCadastrarProcesso
   };
 } 

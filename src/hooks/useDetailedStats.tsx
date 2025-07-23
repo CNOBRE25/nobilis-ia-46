@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
+import { useDebouncedAsync } from './useDebouncedAsync';
 
 interface ProcessStats {
   totalProcessos: number;
@@ -292,26 +293,9 @@ export function useDetailedStats() {
   }, [fetchDetailedStats]);
 
   // Função para atualizar estatísticas com debounce
-  const refreshStats = useCallback(() => {
-    // Limpar timer anterior se existir
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
+  const [debouncedRefreshStats] = useDebouncedAsync(() => fetchDetailedStats(true), 500);
 
-    // Debounce de 500ms
-    debounceTimerRef.current = setTimeout(() => {
-      fetchDetailedStats(true); // Força atualização
-    }, 500);
-  }, [fetchDetailedStats]);
-
-  // Cleanup do timer no unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
+  // Cleanup do timer no unmount removido (agora é responsabilidade do hook utilitário)
 
   return {
     stats,
@@ -323,7 +307,7 @@ export function useDetailedStats() {
     tiposProcessoData,
     loading,
     error,
-    refreshStats,
+    refreshStats: debouncedRefreshStats,
     lastUpdateTime
   };
 } 

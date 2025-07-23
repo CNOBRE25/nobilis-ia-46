@@ -1,4 +1,16 @@
-# Implementação da API OpenAI - NOBILIS-IA
+# Implementação da API OpenAI
+
+## Segurança
+- **NUNCA** coloque a chave da OpenAI em arquivos do frontend ou variáveis que começam com VITE_ (ex: VITE_OPENAI_API_KEY).
+- Configure a chave **apenas** no backend/serverless (ex: painel de variáveis do Vercel, Railway, etc) como OPENAI_API_KEY.
+
+## Como configurar
+1. Crie uma conta em https://platform.openai.com
+2. Copie sua chave secreta (começa com sk-...)
+3. No painel do seu provedor de backend/serverless, adicione:
+   OPENAI_API_KEY=sk-proj-sua-chave-aqui
+
+O frontend nunca deve acessar a OpenAI diretamente.
 
 ## 🚀 Configuração Completa da API ChatGPT 4o Mini
 
@@ -194,3 +206,50 @@ console.log('OpenAI Key configurada:', !!import.meta.env.VITE_OPENAI_API_KEY);
 ---
 
 **Sistema NOBILIS-IA - Análise Jurídica Inteligente** 🚀 
+
+---
+
+## **Local correto para inserir a chave da OpenAI**
+
+### 1. **Arquivo `.env.local` na raiz do projeto**
+
+- **Caminho:**  
+  ```
+  C:\Users\CRN\Documents\GitHub\nobilis-ia-46\.env.local
+  ```
+  (Ou seja, o mesmo local onde estão `package.json`, `server.cjs`, etc.)
+
+- **Conteúdo do arquivo:**  
+  ```env
+  OPENAI_API_KEY=sk-proj-sua-chave-aqui
+  ```
+  > Substitua `sk-proj-sua-chave-aqui` pela sua chave real da OpenAI.
+
+---
+
+### 2. **Nunca coloque a chave em arquivos do frontend!**
+- Não coloque em arquivos dentro de `src/`, `public/` ou qualquer variável que comece com `VITE_`.
+- O arquivo `.env.local` deve ficar **apenas na raiz do projeto** e nunca ser versionado (não subir para o Git).
+
+---
+
+### 3. **Exemplo visual da estrutura**
+
+```
+nobilis-ia-46/
+├── .env.local         <--- AQUI!
+├── package.json
+├── server.cjs
+├── api/
+│   └── openai.js
+├── src/
+│   └── ... (NUNCA coloque a chave aqui)
+└── ...
+```
+
+---
+
+**Depois de criar e salvar o arquivo, reinicie o backend para que ele leia a variável.**
+
+Se quiser, posso rodar o teste para garantir que está tudo certo!  
+Se precisar de um comando para criar o arquivo automaticamente, me avise! 

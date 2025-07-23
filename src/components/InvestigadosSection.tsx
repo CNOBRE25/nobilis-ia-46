@@ -30,8 +30,10 @@ const InvestigadoCard = React.memo(({ investigado, index, updateInvestigado }: {
           size="sm" 
           variant="destructive"
           className="h-8 w-8 p-0"
+          aria-label="Remover investigado"
         >
           <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Remover investigado</span>
         </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

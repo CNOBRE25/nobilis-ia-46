@@ -33,6 +33,12 @@ Consulte os arquivos:
 - Sistema de autenticação incompleto
 - Falta de variáveis de ambiente
 
+## 🚨 SEGURANÇA DA CHAVE OPENAI
+
+- **NUNCA** coloque a chave da OpenAI em arquivos do frontend ou variáveis que começam com VITE_ (ex: VITE_OPENAI_API_KEY).
+- A chave deve ser configurada **apenas** no backend/serverless (ex: painel de variáveis do Vercel, Railway, etc).
+- O frontend só deve se comunicar com o backend, que faz a chamada segura à OpenAI.
+
 ## 🛠️ **TECNOLOGIAS UTILIZADAS**
 
 - **Frontend**: React 18 + TypeScript

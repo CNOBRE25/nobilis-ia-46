@@ -1,56 +1,16 @@
-# Configuração da OpenAI API - NOBILIS-IA
+# Configuração da API OpenAI
 
-## Como Configurar a Integração ChatGPT 4o Mini
+## Segurança
+- **NUNCA** coloque a chave da OpenAI em arquivos do frontend ou variáveis que começam com VITE_ (ex: VITE_OPENAI_API_KEY).
+- Configure a chave **apenas** no backend/serverless (ex: painel de variáveis do Vercel, Railway, etc) como OPENAI_API_KEY.
 
-### 1. Obter API Key da OpenAI
+## Como obter sua chave
+1. Crie uma conta em https://platform.openai.com
+2. Copie sua chave secreta (começa com sk-...)
+3. No painel do seu provedor de backend/serverless, adicione:
+   OPENAI_API_KEY=sk-proj-sua-chave-aqui
 
-1. Acesse [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-2. Copie sua chave secreta (começa com `sk-...`)
-
-### 2. Crie o arquivo de variáveis de ambiente
-
-1. **Abra a raiz do seu projeto** (onde está o `package.json`).
-2. **Crie um novo arquivo** chamado:
-   ```
-   .env.local
-   ```
-   (Se já existir, apenas edite.)
-
-### 3. Adicione a variável da OpenAI
-
-1. **Abra o arquivo `.env.local`**.
-2. **Cole a linha abaixo**, substituindo pelo valor real da sua chave:
-   ```
-   VITE_OPENAI_API_KEY=sua_chave_openai_aqui
-   ```
-   Exemplo real:
-   ```
-   VITE_OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-   ```
-
-### 4. Salve o arquivo
-
-- Salve e feche o `.env.local`.
-
-### 5. Reinicie o servidor de desenvolvimento
-
-- Pare o servidor se estiver rodando (`Ctrl+C` no terminal).
-- Rode novamente:
-  ```
-  npm run dev
-  ```
-  ou
-  ```
-  yarn dev
-  ```
-
-### 6. Pronto!
-
-- Agora sua aplicação já pode acessar a chave via:
-  ```js
-  import.meta.env.VITE_OPENAI_API_KEY
-  ```
-- O sistema conseguirá se conectar à OpenAI normalmente.
+Pronto! O frontend nunca deve acessar a OpenAI diretamente.
 
 ### 7. Funcionalidades Implementadas
 

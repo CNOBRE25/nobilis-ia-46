@@ -238,8 +238,7 @@ export const openaiService = {
       return parsearRelatorio(data.relatorio);
     } catch (error) {
       console.error('❌ Erro ao gerar relatório:', error);
-      // Fallback para relatório simulado em caso de erro
-      return gerarRelatorioSimulado(dados);
+      throw error;
     }
   },
 
@@ -288,18 +287,7 @@ export const openaiService = {
       };
     } catch (error) {
       console.error('❌ Erro ao interpretar tipificação:', error);
-      
-      // Fallback: dados simulados para demonstração
-      return {
-        tipificacao: 'Art. 209, CPM – Lesão Corporal',
-        fundamentacao: 'Simulação: Lesão corporal durante serviço militar.',
-        tipificacoesAlternativas: 'Art. 129, CP – Lesão Corporal (Justiça Comum)',
-        tipificacoesDisciplinares: 'Art. 25, RD-PE – Falta Grave',
-        dataPrescricao: '20/07/2029',
-        dataPrescricaoAdm: '20/07/2034',
-        competencia: 'Justiça Militar Estadual',
-        observacoes: 'Simulação para ambiente de desenvolvimento.'
-      };
+      throw error;
     }
   }
 }; 

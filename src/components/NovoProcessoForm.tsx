@@ -11,7 +11,60 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { openaiService } from "@/services/openaiService";
 import { useAuth } from "@/hooks/useAuth";
-// Removido import direto do JSON
+import DadosBasicosForm from './NovoProcessoForm/DadosBasicosForm';
+import InvestigadosForm from './NovoProcessoForm/InvestigadosForm';
+import DiligenciasForm from './NovoProcessoForm/DiligenciasForm';
+import RelatorioIASection from './NovoProcessoForm/RelatorioIASection';
+import { ProcessFormProvider } from './NovoProcessoForm/ProcessFormContext';
+
+interface NovoProcessoFormProps {
+  onProcessCreated?: () => void;
+  processo?: ProcessFormData;
+}
+
+export interface ProcessFormData {
+  numeroProcesso: string;
+  tipoProcesso: string;
+  prioridade: string;
+  numeroDespacho: string;
+  dataDespacho: string;
+  dataRecebimento: string;
+  dataFato: string;
+  origemProcesso: string;
+  statusFuncional: string;
+  descricaoFatos: string;
+  tipificacaoCriminal: string;
+  diligenciasRealizadas: Record<string, any>;
+  nomeInvestigado: string;
+  cargoInvestigado: string;
+  unidadeInvestigado: string;
+  matriculaInvestigado: string;
+  dataAdmissao: string;
+  vitima: string;
+  numeroSigpad: string;
+}
+
+const initialForm: ProcessFormData = {
+  numeroProcesso: "",
+  tipoProcesso: "",
+  prioridade: "",
+  numeroDespacho: "",
+  dataDespacho: "",
+  dataRecebimento: "",
+  dataFato: "",
+  origemProcesso: "",
+  statusFuncional: "",
+  descricaoFatos: "",
+  tipificacaoCriminal: "",
+  diligenciasRealizadas: {},
+  nomeInvestigado: "",
+  cargoInvestigado: "",
+  unidadeInvestigado: "",
+  matriculaInvestigado: "",
+  dataAdmissao: "",
+  vitima: "",
+  numeroSigpad: "",
+};
 
 const DILIGENCIAS = [
   { id: 'atestado_medico', label: 'Atestado Médico' },
@@ -72,71 +125,45 @@ const desfechosFinais = [
   "Instauração de Conselho de Disciplina"
 ];
 
-const initialForm = {
-  numeroProcesso: "",
-  tipoProcesso: "",
-  prioridade: "",
-  numeroDespacho: "",
-  dataDespacho: "",
-  dataRecebimento: "",
-  dataFato: "",
-  origemProcesso: "",
-  statusFuncional: "",
-  descricaoFatos: "",
-  tipificacaoCriminal: "",
-  diligenciasRealizadas: {},
-  // Campos adicionais para o relatório
-  nomeInvestigado: "",
-  cargoInvestigado: "",
-  unidadeInvestigado: "",
-  matriculaInvestigado: "",
-  dataAdmissao: "",
-  vitima: "",
-  numeroSigpad: "",
-};
-
-
-
-export default function NovoProcessoForm({ onProcessCreated, processo }: { onProcessCreated?: () => void, processo?: any }) {
+export default function NovoProcessoForm({ onProcessCreated, processo }: NovoProcessoFormProps) {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [form, setForm] = useState(initialForm);
-  const [aba, setAba] = useState("dados-basicos");
-  const [isLoading, setIsLoading] = useState(false);
-  const [processoCriado, setProcessoCriado] = useState(false);
-  const [desfechoFinal, setDesfechoFinal] = useState("");
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [prescricaoIA, setPrescricaoIA] = useState("");
-  const [iaFundamentacao, setIaFundamentacao] = useState("");
-  const [prescricaoAdmIA, setPrescricaoAdmIA] = useState("");
-  const [iaObservacoes, setIaObservacoes] = useState("");
-  const [iaTipificacoesAlternativas, setIaTipificacoesAlternativas] = useState("");
-  const [iaTipificacoesDisciplinares, setIaTipificacoesDisciplinares] = useState("");
-  const [iaCompetencia, setIaCompetencia] = useState("");
-  const [crimesData, setCrimesData] = useState<any>(null);
+  const [form, setForm] = useState<ProcessFormData>(initialForm);
+  const [aba, setAba] = useState<string>("dados-basicos");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [processoCriado, setProcessoCriado] = useState<boolean>(false);
+  const [desfechoFinal, setDesfechoFinal] = useState<string>("");
+  const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
+  const [prescricaoIA, setPrescricaoIA] = useState<string>("");
+  const [iaFundamentacao, setIaFundamentacao] = useState<string>("");
+  const [prescricaoAdmIA, setPrescricaoAdmIA] = useState<string>("");
+  const [iaObservacoes, setIaObservacoes] = useState<string>("");
+  const [iaTipificacoesAlternativas, setIaTipificacoesAlternativas] = useState<string>("");
+  const [iaTipificacoesDisciplinares, setIaTipificacoesDisciplinares] = useState<string>("");
+  const [iaCompetencia, setIaCompetencia] = useState<string>("");
+  const [crimesData, setCrimesData] = useState<Record<string, any> | null>(null);
 
   useEffect(() => {
     if (processo) setForm({
-      numeroProcesso: processo.numero_processo || "",
-      tipoProcesso: processo.tipo_processo || "",
+      numeroProcesso: processo.numeroProcesso || "",
+      tipoProcesso: processo.tipoProcesso || "",
       prioridade: processo.prioridade || "",
-      numeroDespacho: processo.numero_despacho || "",
-      dataDespacho: processo.data_despacho || "",
-      dataRecebimento: processo.data_recebimento || "",
-      dataFato: processo.data_fato || "",
-      origemProcesso: processo.origem_processo || "",
-      statusFuncional: processo.status_funcional || "",
-      descricaoFatos: processo.descricao_fatos || "",
-      tipificacaoCriminal: processo.tipo_crime || "",
-      diligenciasRealizadas: processo.diligencias_realizadas || {},
-      // Campos adicionais para o relatório
-      nomeInvestigado: processo.nome_investigado || "",
-      cargoInvestigado: processo.cargo_investigado || "",
-      unidadeInvestigado: processo.unidade_investigado || "",
-      matriculaInvestigado: processo.matricula_investigado || "",
-      dataAdmissao: processo.data_admissao || "",
+      numeroDespacho: processo.numeroDespacho || "",
+      dataDespacho: processo.dataDespacho || "",
+      dataRecebimento: processo.dataRecebimento || "",
+      dataFato: processo.dataFato || "",
+      origemProcesso: processo.origemProcesso || "",
+      statusFuncional: processo.statusFuncional || "",
+      descricaoFatos: processo.descricaoFatos || "",
+      tipificacaoCriminal: processo.tipificacaoCriminal || "",
+      diligenciasRealizadas: processo.diligenciasRealizadas || {},
+      nomeInvestigado: processo.nomeInvestigado || "",
+      cargoInvestigado: processo.cargoInvestigado || "",
+      unidadeInvestigado: processo.unidadeInvestigado || "",
+      matriculaInvestigado: processo.matriculaInvestigado || "",
+      dataAdmissao: processo.dataAdmissao || "",
       vitima: processo.vitima || "",
-      numeroSigpad: processo.numero_sigpad || ""
+      numeroSigpad: processo.numeroSigpad || ""
     });
   }, [processo]);
 
@@ -154,7 +181,7 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
     setForm({ ...form, [name]: value });
   };
 
-  const handleSelect = (field: string, value: string) => {
+  const handleSelect = (field: keyof ProcessFormData, value: string) => {
     setForm({ ...form, [field]: value });
   };
 
@@ -324,19 +351,19 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
 
       // Preparar dados para o relatório
       const dadosRelatorio = {
-        nome: processo?.nome_investigado || "Não informado",
-        cargo: processo?.cargo_investigado || "Não informado",
-        unidade: processo?.unidade_investigado || "Não informado",
-        data_fato: form.dataFato || processo?.data_fato || "Não informado",
-        tipo_investigado: form.tipoProcesso || processo?.tipo_processo || "Não informado",
-        descricao: form.descricaoFatos || processo?.descricao_fatos || "Não informado",
-        numero_sigpad: processo?.numero_sigpad || "Não informado",
-        numero_despacho: form.numeroDespacho || processo?.numero_despacho || "Não informado",
-        data_despacho: form.dataDespacho || processo?.data_despacho || "Não informado",
-        origem: form.origemProcesso || processo?.origem_processo || "Não informado",
+        nome: processo?.nomeInvestigado || "Não informado",
+        cargo: processo?.cargoInvestigado || "Não informado",
+        unidade: processo?.unidadeInvestigado || "Não informado",
+        data_fato: form.dataFato || processo?.dataFato || "Não informado",
+        tipo_investigado: form.tipoProcesso || processo?.tipoProcesso || "Não informado",
+        descricao: form.descricaoFatos || processo?.descricaoFatos || "Não informado",
+        numero_sigpad: processo?.numeroSigpad || "Não informado",
+        numero_despacho: form.numeroDespacho || processo?.numeroDespacho || "Não informado",
+        data_despacho: form.dataDespacho || processo?.dataDespacho || "Não informado",
+        origem: form.origemProcesso || processo?.origemProcesso || "Não informado",
         vitima: processo?.vitima || "Não informado",
-        matricula: processo?.matricula_investigado || "Não informado",
-        data_admissao: processo?.data_admissao || "Não informado"
+        matricula: processo?.matriculaInvestigado || "Não informado",
+        data_admissao: processo?.dataAdmissao || "Não informado"
       };
 
       // Gerar relatório com IA
@@ -381,277 +408,31 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
   };
 
   return (
-    <div className="max-w-2xl mx-auto mt-8">
+    <ProcessFormProvider initialForm={form}>
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardContent className="p-6">
           <Tabs value={aba} onValueChange={setAba} className="w-full">
             <TabsList className="grid w-full grid-cols-3 bg-white/20">
               <TabsTrigger value="dados-basicos" className="text-white data-[state=active]:bg-white/30">Dados Básicos</TabsTrigger>
-              <TabsTrigger value="descricao-fatos" className="text-white data-[state=active]:bg-white/30" disabled={!processoCriado && !processo}>Descrição dos Fatos</TabsTrigger>
-              <TabsTrigger value="tipificacao-criminal" className="text-white data-[state=active]:bg-white/30" disabled={!processoCriado && !processo}>Tipificação Criminal</TabsTrigger>
+              <TabsTrigger value="investigados" className="text-white data-[state=active]:bg-white/30">Investigados</TabsTrigger>
+              <TabsTrigger value="diligencias" className="text-white data-[state=active]:bg-white/30">Diligências</TabsTrigger>
+              <TabsTrigger value="relatorio-ia" className="text-white data-[state=active]:bg-white/30">Relatório IA</TabsTrigger>
             </TabsList>
             <TabsContent value="dados-basicos" className="space-y-6 mt-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="numeroProcesso" className="text-white">Número do Processo *</Label>
-                  <Input id="numeroProcesso" name="numeroProcesso" value={form.numeroProcesso} onChange={handleChange} className="bg-white/20 text-white" required maxLength={15} />
-                </div>
-                <div>
-                  <Label htmlFor="tipoProcesso" className="text-white">Tipo de Processo *</Label>
-                  <Select value={form.tipoProcesso} onValueChange={v => handleSelect("tipoProcesso", v)}>
-                    <SelectTrigger className="bg-white/20 text-white">
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tipoProcessoOptions.map(opt => (
-                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="prioridade" className="text-white">Prioridade</Label>
-                  <Select value={form.prioridade} onValueChange={v => handleSelect("prioridade", v)}>
-                    <SelectTrigger className="bg-white/20 text-white">
-                      <SelectValue placeholder="Selecione a prioridade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {prioridadeOptions.map(opt => (
-                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="numeroDespacho" className="text-white">Número do Despacho</Label>
-                  <Input id="numeroDespacho" name="numeroDespacho" value={form.numeroDespacho} onChange={handleChange} className="bg-white/20 text-white" maxLength={6} />
-                </div>
-                <div>
-                  <Label htmlFor="dataDespacho" className="text-white">Data do Despacho</Label>
-                  <Input id="dataDespacho" name="dataDespacho" type="date" value={form.dataDespacho ? form.dataDespacho.split('T')[0] : ''} onChange={handleChange} className="bg-white/20 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="dataRecebimento" className="text-white">Data de Recebimento</Label>
-                  <Input id="dataRecebimento" name="dataRecebimento" type="date" value={form.dataRecebimento ? form.dataRecebimento.split('T')[0] : ''} onChange={handleChange} className="bg-white/20 text-white" />
-                </div>
-                <div>
-                  <Label htmlFor="dataFato" className="text-white">Data do Fato *</Label>
-                  <Input id="dataFato" name="dataFato" type="date" value={form.dataFato ? form.dataFato.split('T')[0] : ''} onChange={handleChange} className="bg-white/20 text-white" required />
-                </div>
-                <div>
-                  <Label htmlFor="origemProcesso" className="text-white">Origem do Procedimento</Label>
-                  <Select value={form.origemProcesso} onValueChange={v => handleSelect("origemProcesso", v)}>
-                    <SelectTrigger className="bg-white/20 text-white">
-                      <SelectValue placeholder="Selecione a origem" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {origemOptions.map(opt => (
-                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="statusFuncional" className="text-white">Status Funcional</Label>
-                  <Select value={form.statusFuncional} onValueChange={v => handleSelect("statusFuncional", v)}>
-                    <SelectTrigger className="bg-white/20 text-white">
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusFuncionalOptions.map(opt => (
-                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex justify-end mt-6">
-                <Button onClick={handleSubmit} disabled={isLoading} className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50">
-                  {isLoading ? (processo ? "Salvando..." : "Cadastrando...") : (processo ? "Salvar Alterações" : "Cadastrar Processo")}
-                </Button>
-              </div>
+              <DadosBasicosForm />
             </TabsContent>
-            <TabsContent value="descricao-fatos" className="space-y-6 mt-6">
-              <Label htmlFor="descricaoFatos" className="text-white">Descrição dos Fatos</Label>
-              <Textarea id="descricaoFatos" name="descricaoFatos" value={form.descricaoFatos} onChange={handleChange} className="bg-white/20 text-white min-h-[120px]" />
-              <Label className="text-white">Diligências Realizadas</Label>
-              <div className="max-h-96 overflow-y-auto p-4 bg-white/10 rounded-lg border border-white/20">
-                <div className="space-y-4">
-                  {DILIGENCIAS.map((diligencia) => (
-                    <div key={diligencia.id} className="border-b border-white/20 pb-3 last:border-b-0">
-                      <div className="flex items-start space-x-3">
-                        <Checkbox
-                          id={diligencia.id}
-                          checked={form.diligenciasRealizadas?.[diligencia.id]?.realizada || false}
-                          onCheckedChange={(checked) => handleDiligenciaChange(diligencia.id, checked as boolean)}
-                          className="mt-1"
-                        />
-                        <div className="flex-1">
-                          <Label htmlFor={diligencia.id} className="text-white text-sm cursor-pointer font-medium">
-                            {diligencia.label}
-                          </Label>
-                          {form.diligenciasRealizadas?.[diligencia.id]?.realizada && (
-                            <div className="mt-2">
-                              <Textarea
-                                value={form.diligenciasRealizadas?.[diligencia.id]?.observacao || ''}
-                                onChange={(e) => handleDiligenciaObsChange(diligencia.id, e.target.value)}
-                                className="bg-white/20 border-white/30 text-white placeholder:text-white/70 text-sm min-h-[80px]"
-                                placeholder="Adicione observações sobre esta diligência..."
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="flex justify-end mt-6">
-                <Button onClick={() => setAba("tipificacao-criminal")} disabled={!processoCriado && !processo} className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50">
-                  Próxima: Tipificação Criminal
-                </Button>
-              </div>
-
-              {/* Botão IA: Analisar Fatos */}
-              <div className="flex flex-col items-end mt-4 gap-2">
-                <Button
-                  type="button"
-                  className="bg-purple-700 hover:bg-purple-800 text-white"
-                  disabled={!form.descricaoFatos || !form.dataFato || isLoading}
-                  onClick={async () => {
-                    setIsLoading(true);
-                    toast({ title: "Analisando fatos com IA...", description: "Aguarde a sugestão de tipificação e prescrição." });
-                    try {
-                      const result = await openaiService.interpretarTipificacao({
-                        texto: form.descricaoFatos,
-                        dataFato: new Date(form.dataFato)
-                      });
-                      setForm(f => ({ ...f, tipificacaoCriminal: result.tipificacao }));
-                      setPrescricaoIA(result.dataPrescricao || "");
-                      setIaFundamentacao(result.fundamentacao || "");
-                      setPrescricaoAdmIA(result.dataPrescricaoAdm || "");
-                      setIaObservacoes(result.observacoes || "");
-                      setIaTipificacoesAlternativas(result.tipificacoesAlternativas || "");
-                      setIaTipificacoesDisciplinares(result.tipificacoesDisciplinares || "");
-                      setIaCompetencia(result.competencia || "");
-                      toast({ title: "Sugestão da IA aplicada!", description: `Tipificação: ${result.tipificacao} | Prescrição: ${result.dataPrescricao}` });
-                    } catch (err) {
-                      toast({ title: "Erro na IA", description: "Não foi possível obter sugestão automática.", variant: "destructive" });
-                    } finally {
-                      setIsLoading(false);
-                    }
-                  }}
-                >
-                  Analisar Fatos com IA
-                </Button>
-                {form.tipificacaoCriminal && (
-                  <div className="w-full bg-purple-100 border border-purple-300 rounded p-3 mt-2 text-purple-900">
-                    <div className="font-bold text-base mb-2 text-purple-800">📋 ANÁLISE JURÍDICA INTELIGENTE</div>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <div className="font-bold text-sm text-purple-700">⚖️ Tipificação Principal:</div>
-                        <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{form.tipificacaoCriminal}</div>
-                      </div>
-
-                      {iaFundamentacao && (
-                        <div>
-                          <div className="font-bold text-sm text-purple-700">📚 Fundamentação:</div>
-                          <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400 whitespace-pre-line">{iaFundamentacao}</div>
-                        </div>
-                      )}
-
-                      {iaTipificacoesAlternativas && (
-                        <div>
-                          <div className="font-bold text-sm text-purple-700">🔄 Tipificações Alternativas:</div>
-                          <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{iaTipificacoesAlternativas}</div>
-                        </div>
-                      )}
-
-                      {iaTipificacoesDisciplinares && (
-                        <div>
-                          <div className="font-bold text-sm text-purple-700">🎖️ Tipificações Disciplinares:</div>
-                          <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{iaTipificacoesDisciplinares}</div>
-                        </div>
-                      )}
-
-                      {iaCompetencia && (
-                        <div>
-                          <div className="font-bold text-sm text-purple-700">⚡ Competência:</div>
-                          <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{iaCompetencia}</div>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {prescricaoIA && (
-                          <div>
-                            <div className="font-bold text-sm text-purple-700">⏰ Prescrição Penal:</div>
-                            <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{prescricaoIA}</div>
-                          </div>
-                        )}
-                        {prescricaoAdmIA && (
-                          <div>
-                            <div className="font-bold text-sm text-purple-700">📅 Prescrição Administrativa:</div>
-                            <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{prescricaoAdmIA}</div>
-                          </div>
-                        )}
-                      </div>
-
-                      {iaObservacoes && (
-                        <div>
-                          <div className="font-bold text-sm text-purple-700">💡 Observações:</div>
-                          <div className="text-xs bg-purple-50 p-2 rounded border-l-4 border-purple-400 text-purple-700">{iaObservacoes}</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+            <TabsContent value="investigados" className="space-y-6 mt-6">
+              <InvestigadosForm />
             </TabsContent>
-            <TabsContent value="tipificacao-criminal" className="space-y-6 mt-6">
-              <Label htmlFor="tipificacaoCriminal" className="text-white">Tipificação Criminal</Label>
-              <Select value={form.tipificacaoCriminal} onValueChange={v => setForm({ ...form, tipificacaoCriminal: v })}>
-                <SelectTrigger className="bg-white/20 text-white">
-                  <SelectValue placeholder="Selecione o crime" />
-                </SelectTrigger>
-                <SelectContent>
-                  {crimesData ? Object.entries(crimesData).map(([categoria, crimes]) => (
-                    <div key={categoria}>
-                      <div className="px-2 py-1 text-xs font-bold text-blue-300 uppercase bg-white/5 border-b border-white/10">{categoria}</div>
-                      {(crimes as string[]).map((crime) => (
-                        <SelectItem key={crime} value={crime}>{crime}</SelectItem>
-                      ))}
-                    </div>
-                  )) : (
-                    <SelectItem value="" disabled>Carregando crimes...</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              <Label htmlFor="desfechoFinal" className="text-white">Desfecho Final</Label>
-              <Select value={desfechoFinal} onValueChange={setDesfechoFinal}>
-                <SelectTrigger className="bg-white/20 text-white">
-                  <SelectValue placeholder="Selecione o desfecho" />
-                </SelectTrigger>
-                <SelectContent>
-                  {desfechosFinais.map((d) => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex justify-end mt-6">
-                <Button onClick={() => setAba("dados-basicos")} className="bg-gray-600 hover:bg-gray-700 text-white">
-                  Voltar
-                </Button>
-              </div>
-              <div className="flex justify-end mt-6">
-                <Button onClick={handleSubmit} disabled={isLoading} className="bg-green-700 hover:bg-green-800 text-white">
-                  {isLoading ? "Salvando..." : "Salvar"}
-                </Button>
-              </div>
+            <TabsContent value="diligencias" className="space-y-6 mt-6">
+              <DiligenciasForm />
+            </TabsContent>
+            <TabsContent value="relatorio-ia" className="space-y-6 mt-6">
+              <RelatorioIASection iaFundamentacao={iaFundamentacao} prescricaoIA={prescricaoIA} />
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
-    </div>
+    </ProcessFormProvider>
   );
 } 

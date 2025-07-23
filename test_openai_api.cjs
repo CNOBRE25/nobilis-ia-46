@@ -7,12 +7,12 @@ async function testOpenAIAPI() {
   console.log('🧪 Iniciando teste da API OpenAI...');
   
   // Verificar se a chave da API está disponível
-  const apiKey = process.env.VITE_OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   
   if (!apiKey) {
-    console.log('❌ VITE_OPENAI_API_KEY não encontrada nas variáveis de ambiente');
-    console.log('💡 Dica: Crie um arquivo .env.local com: VITE_OPENAI_API_KEY=sua-chave-aqui');
-    return;
+    console.log('❌ OPENAI_API_KEY não encontrada nas variáveis de ambiente');
+    console.log('💡 Dica: Crie um arquivo .env.local ou configure no painel do backend/serverless: OPENAI_API_KEY=sua-chave-aqui');
+    process.exit(1);
   }
   
   console.log('✅ Chave da API encontrada');
@@ -27,7 +27,12 @@ async function testOpenAIAPI() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
+      body: {
+        "dadosProcesso": {
+          "nome": "Teste Final",
+          "descricao": "Teste final de integração com a OpenAI."
+        }
+      }JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
           {

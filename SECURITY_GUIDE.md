@@ -171,3 +171,8 @@ Se encontrar problemas de segurança:
 2. Gere uma nova chave
 3. Atualize as variáveis de ambiente
 4. Verifique os logs de acesso 
+
+## Segurança da Chave OpenAI
+- **NUNCA** coloque a chave da OpenAI em arquivos do frontend ou variáveis que começam com VITE_ (ex: VITE_OPENAI_API_KEY).
+- Configure a chave **apenas** no backend/serverless (ex: painel de variáveis do Vercel, Railway, etc) como OPENAI_API_KEY.
+- O frontend nunca deve acessar a OpenAI diretamente. 

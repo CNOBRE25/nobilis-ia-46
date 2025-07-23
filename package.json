@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"node server.cjs\"",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "build:prod": "vite build --mode production",
@@ -20,7 +20,8 @@
     "production:build": "vite build --mode production",
     "production:preview": "vite preview --mode production",
     "deploy:staging": "npm run security:test && npm run staging:build",
-    "deploy:production": "npm run security:test && npm run production:build"
+    "deploy:production": "npm run security:test && npm run production:build",
+    "prebuild": "node scripts/security-check-openai.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -91,8 +92,10 @@
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.2.0",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
