@@ -1,0 +1,147 @@
+{
+    "Crimes contra a Pessoa": [
+        "Homicídio simples",
+        "Homicídio qualificado",
+        "Homicídio culposo",
+        "Infanticídio",
+        "Aborto provocado pela gestante",
+        "Aborto provocado por terceiro",
+        "Lesão corporal",
+        "Sequestro e cárcere privado",
+        "Redução à condição análoga à de escravo",
+        "Ameaça",
+        "Induzimento ao suicídio"
+    ],
+    "Crimes contra a Honra": [
+        "Calúnia",
+        "Difamação",
+        "Injúria"
+    ],
+    "Crimes contra a Liberdade Individual": [
+        "Constrangimento ilegal",
+        "Violação de domicílio",
+        "Violação de correspondência",
+        "Tráfico de pessoas"
+    ],
+    "Crimes contra a Dignidade Sexual": [
+        "Estupro",
+        "Estupro de vulnerável",
+        "Importunação sexual",
+        "Assédio sexual",
+        "Divulgação de cena de sexo sem consentimento",
+        "Corrupção de menores"
+    ],
+    "Crimes contra o Patrimônio": [
+        "Furto",
+        "Roubo",
+        "Extorsão",
+        "Estelionato",
+        "Apropriação indébita",
+        "Receptação",
+        "Dano"
+    ],
+    "Crimes contra a Fé Pública": [
+        "Falsidade ideológica",
+        "Falsificação de documento público",
+        "Falsificação de documento particular",
+        "Moeda falsa"
+    ],
+    "Crimes contra a Administração Pública": [
+        "Peculato",
+        "Corrupção passiva",
+        "Corrupção ativa",
+        "Concussão",
+        "Prevaricação",
+        "Violação de sigilo funcional",
+        "Desobediência"
+    ],
+    "Crimes contra a Administração da Justiça": [
+        "Desacato",
+        "Desobediência",
+        "Coação no curso do processo",
+        "Corrupção de testemunha",
+        "Fraude processual"
+    ],
+    "Crimes da Lei de Drogas (Lei 11.343/2006)": [
+        "Tráfico de drogas",
+        "Associação para o tráfico",
+        "Financiamento do tráfico",
+        "Porte para uso pessoal"
+    ],
+    "Crimes da Lei de Tortura (Lei 9.455/1997)": [
+        "Tortura física",
+        "Tortura psicológica",
+        "Tortura por discriminação racial ou religiosa"
+    ],
+    "Crimes da Lei de Lavagem de Dinheiro (Lei 9.613/1998)": [
+        "Lavagem de dinheiro"
+    ],
+    "Crimes da Lei Antiterrorismo (Lei 13.260/2016)": [
+        "Terrorismo"
+    ],
+    "Crimes Hediondos (Lei 8.072/1990)": [
+        "Homicídio qualificado",
+        "Latrocínio",
+        "Estupro",
+        "Estupro de vulnerável",
+        "Extorsão mediante sequestro com morte",
+        "Genocídio",
+        "Epidemia com resultado morte"
+    ],
+    "Crimes Militares (Código Penal Militar)": [
+        "Motim",
+        "Revolta",
+        "Insubordinação",
+        "Deserção",
+        "Abandono de posto",
+        "Violência contra superior",
+        "Furto de armamento",
+        "Recusa de obediência",
+        "Pederastia ou libidinagem em ambiente militar",
+        "Traição em tempo de guerra"
+    ],
+    "Crimes contra a Mulher": [
+        "Violência doméstica",
+        "Feminicídio",
+        "Tortura (em contexto de violência contra mulher)",
+        "Violência sexual",
+        "Assédio sexual",
+        "Estupro",
+        "Estupro de vulnerável",
+        "Importunação sexual"
+    ],
+    "Crimes contra Criança e Adolescente": [
+        "Abuso sexual de criança",
+        "Exploração sexual de criança e adolescente",
+        "Violência física contra criança",
+        "Maus-tratos",
+        "Negligência",
+        "Aliciamento de menor",
+        "Tráfico de menores"
+    ],
+    "Crimes contra População Racial": [
+        "Racismo",
+        "Discriminação racial",
+        "Injúria racial",
+        "Incitação ao ódio racial",
+        "Lesão corporal por motivo racial"
+    ],
+    "Crimes contra LGBTQIA+": [
+        "Discriminação por orientação sexual",
+        "Lesão corporal por motivação LGBTfóbica",
+        "Homicídio motivado por LGBTfobia",
+        "Assédio sexual",
+        "Violência contra pessoas trans",
+        "Homofobia (tipificada como racismo)"
+    ],
+    "Crimes Cibernéticos / Informática": [
+        "Invasão de dispositivo informático",
+        "Divulgação de dados pessoais sem consentimento",
+        "Fraude eletrônica",
+        "Crimes contra a privacidade",
+        "Difamação e calúnia pela internet",
+        "Extorsão eletrônica",
+        "Phishing",
+        "Ataques de negação de serviço (DDoS)"
+    ]
+} 

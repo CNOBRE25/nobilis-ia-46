@@ -21,7 +21,8 @@ import {
   Target,
   Shield,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Archive
 } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import ProcessList from "./ProcessList";
@@ -84,8 +85,8 @@ const Dashboard = ({ user }: DashboardProps) => {
         return <NovoProcessoForm onProcessCreated={() => { closeModal(); refreshStats(); }} />;
       case 'processos-tramitacao':
         return <ProcessList type="tramitacao" onClose={closeModal} />;
-      case 'processos-concluidos':
-        return <ProcessList type="concluidos" onClose={closeModal} />;
+      case 'processos-arquivados':
+        return <ProcessList type="arquivados" onClose={closeModal} />;
       case 'estatisticas':
         return <StatisticsPage onClose={closeModal} onProcessSaved={refreshStats} />;
       case 'admin-panel':
@@ -190,9 +191,9 @@ const Dashboard = ({ user }: DashboardProps) => {
 
           <Card className="ai-card group hover:ai-glow-soft transition-all duration-500 rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-card-foreground">Concluídos</CardTitle>
+              <CardTitle className="text-sm font-medium text-card-foreground">Finalizados</CardTitle>
               <div className="relative">
-                <CheckCircle className="h-5 w-5 text-[hsl(var(--ai-green))] group-hover:scale-105 transition-transform" />
+                <Archive className="h-5 w-5 text-[hsl(var(--ai-green))] group-hover:scale-105 transition-transform" />
                 <div className="absolute inset-0 bg-[hsl(var(--ai-green))]/10 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-green))]/20 transition-all"></div>
               </div>
             </CardHeader>
@@ -204,12 +205,12 @@ const Dashboard = ({ user }: DashboardProps) => {
                     <span>Carregando...</span>
                   </div>
                 ) : (
-                  stats.processosConcluidos
+                  stats.processosFinalizados
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <Target className="h-3 w-3 text-[hsl(var(--ai-green))]" />
-                <p className="text-xs text-muted-foreground">Processos finalizados</p>
+                <Archive className="h-3 w-3 text-[hsl(var(--ai-green))]" />
+                <p className="text-xs text-muted-foreground">Concluídos e arquivados</p>
               </div>
             </CardContent>
           </Card>
@@ -327,16 +328,16 @@ const Dashboard = ({ user }: DashboardProps) => {
           </Button>
 
           <Button
-            onClick={() => setActiveModal('processos-concluidos')}
+            onClick={() => setActiveModal('processos-arquivados')}
             className="ai-button group h-auto p-6 flex flex-col items-center gap-3 transition-all duration-500"
           >
             <div className="relative">
-              <CheckCircle className="h-8 w-8 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 bg-[hsl(var(--ai-orange))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-orange))]/30 transition-all"></div>
+              <Archive className="h-8 w-8 group-hover:scale-110 transition-transform" />
+              <div className="absolute inset-0 bg-[hsl(var(--ai-gray))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-gray))]/30 transition-all"></div>
             </div>
             <div className="text-center">
-              <div className="font-semibold">Concluídos</div>
-              <div className="text-xs opacity-80">Processos finalizados</div>
+              <div className="font-semibold">Processos Finalizados</div>
+              <div className="text-xs opacity-80">Concluídos e arquivados</div>
             </div>
           </Button>
 

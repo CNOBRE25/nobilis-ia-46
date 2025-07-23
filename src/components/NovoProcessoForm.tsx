@@ -9,8 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import crimesData from "../../public/leis_crimes_militares_pe.json";
-const crimesMilitares = crimesData.crimes_militares.map((c: any) => `${c.crime} (${c.artigo})`);
+import { openaiService } from "@/services/openaiService";
+import { useAuth } from "@/hooks/useAuth";
+// Removido import direto do JSON
 
 const DILIGENCIAS = [
   { id: 'atestado_medico', label: 'Atestado Médico' },
@@ -56,6 +57,21 @@ const statusFuncionalOptions = [
   "MILITAR DE SERVIÇO", "MILITAR DE FOLGA", "POLICIAL CIVIL", "POLICIAL PENAL"
 ];
 
+const desfechosFinais = [
+  "Arquivamento por Falta de Provas",
+  "Arquivamento por Laudo IML Negativo",
+  "Arquivamento por Fato em Apuração por Outra Unidade",
+  "Arquivamento por Fato Já Apurado",
+  "Arquivamento por Não Indiciamento do(s) Investigado(s)",
+  "Arquivamento por Desinteresse da Vítima",
+  "Arquivamento por Falta de Autoria",
+  "Arquivamento por Falta de Materialidade",
+  "Redistribuição por Superior Hierárquico ao Encarregado",
+  "Instauração de SAD",
+  "Instauração de IPM",
+  "Instauração de Conselho de Disciplina"
+];
+
 const initialForm = {
   numeroProcesso: "",
   tipoProcesso: "",
@@ -69,166 +85,32 @@ const initialForm = {
   descricaoFatos: "",
   tipificacaoCriminal: "",
   diligenciasRealizadas: {},
+  // Campos adicionais para o relatório
+  nomeInvestigado: "",
+  cargoInvestigado: "",
+  unidadeInvestigado: "",
+  matriculaInvestigado: "",
+  dataAdmissao: "",
+  vitima: "",
+  numeroSigpad: "",
 };
 
-// Crimes agrupados por categoria
-const crimesPorCategoria = {
-  "Crimes contra a Pessoa": [
-    "Aborto provocado pela gestante",
-    "Aborto provocado por terceiro",
-    "Ameaça",
-    "Homicídio culposo",
-    "Homicídio qualificado",
-    "Homicídio simples",
-    "Homicídio decorrente de enfrentamento com agente de segurança",
-    "Induzimento ao suicídio",
-    "Infanticídio",
-    "Lesão corporal",
-    "Lesão corporal decorrente de enfrentamento com agente de segurança",
-    "Redução à condição análoga à de escravo",
-    "Sequestro e cárcere privado"
-  ],
-  "Crimes contra a Honra": [
-    "Calúnia",
-    "Difamação",
-    "Injúria"
-  ],
-  "Crimes contra a Liberdade Individual": [
-    "Constrangimento ilegal",
-    "Violação de domicílio",
-    "Violação de correspondência",
-    "Tráfico de pessoas"
-  ],
-  "Crimes contra a Dignidade Sexual": [
-    "Estupro",
-    "Estupro de vulnerável",
-    "Importunação sexual",
-    "Assédio sexual",
-    "Divulgação de cena de sexo sem consentimento",
-    "Corrupção de menores"
-  ],
-  "Crimes contra o Patrimônio": [
-    "Furto",
-    "Roubo",
-    "Extorsão",
-    "Estelionato",
-    "Apropriação indébita",
-    "Receptação",
-    "Dano"
-  ],
-  "Crimes contra a Fé Pública": [
-    "Falsidade ideológica",
-    "Falsificação de documento público",
-    "Falsificação de documento particular",
-    "Moeda falsa"
-  ],
-  "Crimes contra a Administração Pública": [
-    "Peculato",
-    "Corrupção passiva",
-    "Corrupção ativa",
-    "Concussão",
-    "Prevaricação",
-    "Violação de sigilo funcional",
-    "Desobediência"
-  ],
-  "Crimes contra a Administração da Justiça": [
-    "Desacato",
-    "Desobediência",
-    "Coação no curso do processo",
-    "Corrupção de testemunha",
-    "Fraude processual"
-  ],
-  "Crimes da Lei de Drogas (Lei 11.343/2006)": [
-    "Tráfico de drogas",
-    "Associação para o tráfico",
-    "Financiamento do tráfico",
-    "Porte para uso pessoal"
-  ],
-  "Crimes da Lei de Tortura (Lei 9.455/1997)": [
-    "Tortura física",
-    "Tortura psicológica",
-    "Tortura por discriminação racial ou religiosa"
-  ],
-  "Crimes da Lei de Lavagem de Dinheiro (Lei 9.613/1998)": [
-    "Lavagem de dinheiro"
-  ],
-  "Crimes da Lei Antiterrorismo (Lei 13.260/2016)": [
-    "Terrorismo"
-  ],
-  "Crimes Hediondos (Lei 8.072/1990)": [
-    "Homicídio qualificado",
-    "Latrocínio",
-    "Estupro",
-    "Estupro de vulnerável",
-    "Extorsão mediante sequestro com morte",
-    "Genocídio",
-    "Epidemia com resultado morte"
-  ],
-  "Crimes Militares (Código Penal Militar)": [
-    "Motim",
-    "Revolta",
-    "Insubordinação",
-    "Deserção",
-    "Abandono de posto",
-    "Violência contra superior",
-    "Furto de armamento",
-    "Recusa de obediência",
-    "Pederastia ou libidinagem em ambiente militar",
-    "Traição em tempo de guerra"
-  ],
-  "Crimes contra a Mulher": [
-    "Violência doméstica",
-    "Feminicídio",
-    "Tortura (em contexto de violência contra mulher)",
-    "Violência sexual",
-    "Assédio sexual",
-    "Estupro",
-    "Estupro de vulnerável",
-    "Importunação sexual"
-  ],
-  "Crimes contra Criança e Adolescente": [
-    "Abuso sexual de criança",
-    "Exploração sexual de criança e adolescente",
-    "Violência física contra criança",
-    "Maus-tratos",
-    "Negligência",
-    "Aliciamento de menor",
-    "Tráfico de menores"
-  ],
-  "Crimes contra População Racial": [
-    "Racismo",
-    "Discriminação racial",
-    "Injúria racial",
-    "Incitação ao ódio racial",
-    "Lesão corporal por motivo racial"
-  ],
-  "Crimes contra LGBTQIA+": [
-    "Discriminação por orientação sexual",
-    "Lesão corporal por motivação LGBTfóbica",
-    "Homicídio motivado por LGBTfobia",
-    "Assédio sexual",
-    "Violência contra pessoas trans",
-    "Homofobia (tipificada como racismo)"
-  ],
-  "Crimes Cibernéticos / Informática": [
-    "Invasão de dispositivo informático",
-    "Divulgação de dados pessoais sem consentimento",
-    "Fraude eletrônica",
-    "Crimes contra a privacidade",
-    "Difamação e calúnia pela internet",
-    "Extorsão eletrônica",
-    "Phishing",
-    "Ataques de negação de serviço (DDoS)"
-  ]
-};
+
 
 export default function NovoProcessoForm({ onProcessCreated, processo }: { onProcessCreated?: () => void, processo?: any }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [aba, setAba] = useState("dados-basicos");
   const [isLoading, setIsLoading] = useState(false);
   const [processoCriado, setProcessoCriado] = useState(false);
   const [desfechoFinal, setDesfechoFinal] = useState("");
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [prescricaoIA, setPrescricaoIA] = useState("");
+  const [iaFundamentacao, setIaFundamentacao] = useState("");
+  const [prescricaoAdmIA, setPrescricaoAdmIA] = useState("");
+  const [iaObservacoes, setIaObservacoes] = useState("");
+  const [crimesData, setCrimesData] = useState<any>(null);
 
   useEffect(() => {
     if (processo) setForm({
@@ -243,9 +125,24 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
       statusFuncional: processo.status_funcional || "",
       descricaoFatos: processo.descricao_fatos || "",
       tipificacaoCriminal: processo.tipo_crime || "",
-      diligenciasRealizadas: processo.diligencias_realizadas || {}
+      diligenciasRealizadas: processo.diligencias_realizadas || {},
+      // Campos adicionais para o relatório
+      nomeInvestigado: processo.nome_investigado || "",
+      cargoInvestigado: processo.cargo_investigado || "",
+      unidadeInvestigado: processo.unidade_investigado || "",
+      matriculaInvestigado: processo.matricula_investigado || "",
+      dataAdmissao: processo.data_admissao || "",
+      vitima: processo.vitima || "",
+      numeroSigpad: processo.numero_sigpad || ""
     });
   }, [processo]);
+
+  useEffect(() => {
+    fetch("/crimes_brasil.json")
+      .then(res => res.json())
+      .then(setCrimesData)
+      .catch(() => setCrimesData(null));
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -356,6 +253,8 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
 
   const handleSaveAndConclude = async () => {
     setIsLoading(true);
+    setIsGeneratingReport(true);
+    
     if (!form.numeroProcesso || !form.tipoProcesso || !form.dataFato) {
       toast({
         title: "Preencha todos os campos obrigatórios!",
@@ -363,11 +262,16 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
         variant: "destructive"
       });
       setIsLoading(false);
+      setIsGeneratingReport(false);
       return;
     }
+
     try {
+      let processoId = processo?.id;
+      
+      // Primeiro, salvar o processo
       if (processo) {
-        // update e concluir
+        // update, concluir e arquivar automaticamente
         const { error } = await supabase.from("processos").update({
           numero_processo: form.numeroProcesso,
           tipo_processo: form.tipoProcesso,
@@ -382,16 +286,12 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
           tipo_crime: form.tipificacaoCriminal,
           diligencias_realizadas: form.diligenciasRealizadas,
           desfecho_final: desfechoFinal,
-          status: 'concluido'
+          status: 'arquivado'
         }).eq("id", processo.id);
         if (error) throw error;
-        toast({
-          title: "Processo concluído!",
-          description: `Processo ${form.numeroProcesso} foi concluído e relatório gerado.`
-        });
       } else {
-        // insert e concluir
-        const { error } = await supabase.from("processos").insert([
+        // insert, concluir e arquivar automaticamente
+        const { data, error } = await supabase.from("processos").insert([
           {
             numero_processo: form.numeroProcesso,
             tipo_processo: form.tipoProcesso,
@@ -406,24 +306,74 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
             tipo_crime: form.tipificacaoCriminal,
             diligencias_realizadas: form.diligenciasRealizadas,
             desfecho_final: desfechoFinal,
-            status: 'concluido'
+            status: 'arquivado'
           }
-        ]);
+        ]).select().single();
         if (error) throw error;
+        processoId = data.id;
+      }
+
+      // Agora gerar o relatório final automaticamente
+      toast({
+        title: "Gerando relatório final...",
+        description: "Processo salvo. Gerando relatório com IA...",
+      });
+
+      // Preparar dados para o relatório
+      const dadosRelatorio = {
+        nome: processo?.nome_investigado || "Não informado",
+        cargo: processo?.cargo_investigado || "Não informado",
+        unidade: processo?.unidade_investigado || "Não informado",
+        data_fato: form.dataFato || processo?.data_fato || "Não informado",
+        tipo_investigado: form.tipoProcesso || processo?.tipo_processo || "Não informado",
+        descricao: form.descricaoFatos || processo?.descricao_fatos || "Não informado",
+        numero_sigpad: processo?.numero_sigpad || "Não informado",
+        numero_despacho: form.numeroDespacho || processo?.numero_despacho || "Não informado",
+        data_despacho: form.dataDespacho || processo?.data_despacho || "Não informado",
+        origem: form.origemProcesso || processo?.origem_processo || "Não informado",
+        vitima: processo?.vitima || "Não informado",
+        matricula: processo?.matricula_investigado || "Não informado",
+        data_admissao: processo?.data_admissao || "Não informado"
+      };
+
+      // Gerar relatório com IA
+      const relatorioIA = await openaiService.gerarRelatorioJuridico(dadosRelatorio);
+
+      // Salvar o relatório no banco de dados
+      const { error: relatorioError } = await supabase
+        .from("processos")
+        .update({
+          relatorio_final: relatorioIA,
+          data_relatorio_final: new Date().toISOString(),
+          relatorio_gerado_por: user?.id || null
+        })
+        .eq("id", processoId);
+
+      if (relatorioError) {
+        console.error("Erro ao salvar relatório:", relatorioError);
         toast({
-          title: "Processo concluído!",
-          description: `Processo ${form.numeroProcesso} foi concluído e relatório gerado.`
+          title: "Aviso",
+          description: "Processo finalizado, mas houve erro ao salvar o relatório.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Processo finalizado com sucesso!",
+          description: `Processo ${form.numeroProcesso} foi concluído, arquivado e relatório final gerado automaticamente.`
         });
       }
+
       if (onProcessCreated) onProcessCreated();
     } catch (err: any) {
+      console.error("Erro ao finalizar processo:", err);
       toast({
-        title: "Erro ao concluir processo",
+        title: "Erro ao finalizar processo",
         description: err.message || "Erro desconhecido.",
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
+      setIsGeneratingReport(false);
     }
   };
 
@@ -475,15 +425,15 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
                 </div>
                 <div>
                   <Label htmlFor="dataDespacho" className="text-white">Data do Despacho</Label>
-                  <Input id="dataDespacho" name="dataDespacho" type="date" value={form.dataDespacho} onChange={handleChange} className="bg-white/20 text-white" />
+                  <Input id="dataDespacho" name="dataDespacho" type="date" value={form.dataDespacho ? form.dataDespacho.split('T')[0] : ''} onChange={handleChange} className="bg-white/20 text-white" />
                 </div>
                 <div>
                   <Label htmlFor="dataRecebimento" className="text-white">Data de Recebimento</Label>
-                  <Input id="dataRecebimento" name="dataRecebimento" type="date" value={form.dataRecebimento} onChange={handleChange} className="bg-white/20 text-white" />
+                  <Input id="dataRecebimento" name="dataRecebimento" type="date" value={form.dataRecebimento ? form.dataRecebimento.split('T')[0] : ''} onChange={handleChange} className="bg-white/20 text-white" />
                 </div>
                 <div>
                   <Label htmlFor="dataFato" className="text-white">Data do Fato *</Label>
-                  <Input id="dataFato" name="dataFato" type="date" value={form.dataFato} onChange={handleChange} className="bg-white/20 text-white" required />
+                  <Input id="dataFato" name="dataFato" type="date" value={form.dataFato ? form.dataFato.split('T')[0] : ''} onChange={handleChange} className="bg-white/20 text-white" required />
                 </div>
                 <div>
                   <Label htmlFor="origemProcesso" className="text-white">Origem do Procedimento</Label>
@@ -558,6 +508,58 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
                   Próxima: Tipificação Criminal
                 </Button>
               </div>
+
+              {/* Botão IA: Analisar Fatos */}
+              <div className="flex flex-col items-end mt-4 gap-2">
+                <Button
+                  type="button"
+                  className="bg-purple-700 hover:bg-purple-800 text-white"
+                  disabled={!form.descricaoFatos || !form.dataFato || isLoading}
+                  onClick={async () => {
+                    setIsLoading(true);
+                    toast({ title: "Analisando fatos com IA...", description: "Aguarde a sugestão de tipificação e prescrição." });
+                    try {
+                      const result = await openaiService.interpretarTipificacao({
+                        texto: form.descricaoFatos,
+                        dataFato: new Date(form.dataFato)
+                      });
+                      setForm(f => ({ ...f, tipificacaoCriminal: result.tipificacao }));
+                      setPrescricaoIA(result.dataPrescricao || "");
+                      setIaFundamentacao(result.fundamentacao || "");
+                      setPrescricaoAdmIA(result.dataPrescricaoAdm || "");
+                      setIaObservacoes(result.observacoes || "");
+                      toast({ title: "Sugestão da IA aplicada!", description: `Tipificação: ${result.tipificacao} | Prescrição: ${result.dataPrescricao}` });
+                    } catch (err) {
+                      toast({ title: "Erro na IA", description: "Não foi possível obter sugestão automática.", variant: "destructive" });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                >
+                  Analisar Fatos com IA
+                </Button>
+                {form.tipificacaoCriminal && (
+                  <div className="w-full bg-purple-100 border border-purple-300 rounded p-3 mt-2 text-purple-900">
+                    <div className="font-bold text-base mb-1">Tipificação sugerida:</div>
+                    <div className="mb-2">{form.tipificacaoCriminal}</div>
+                    {iaFundamentacao && (
+                      <>
+                        <div className="font-bold text-base mt-2">Fundamentação:</div>
+                        <div className="mb-2 whitespace-pre-line">{iaFundamentacao}</div>
+                      </>
+                    )}
+                    {prescricaoIA && (
+                      <div className="mb-1"><b>Prescrição penal:</b> {prescricaoIA}</div>
+                    )}
+                    {prescricaoAdmIA && (
+                      <div className="mb-1"><b>Prescrição administrativa:</b> {prescricaoAdmIA}</div>
+                    )}
+                    {iaObservacoes && (
+                      <div className="mt-2 text-xs text-purple-700"><b>Observações:</b> {iaObservacoes}</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </TabsContent>
             <TabsContent value="tipificacao-criminal" className="space-y-6 mt-6">
               <Label htmlFor="tipificacaoCriminal" className="text-white">Tipificação Criminal</Label>
@@ -566,14 +568,16 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
                   <SelectValue placeholder="Selecione o crime" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(crimesPorCategoria).map(([categoria, crimes]) => (
-                    <React.Fragment key={categoria}>
+                  {crimesData ? Object.entries(crimesData).map(([categoria, crimes]) => (
+                    <div key={categoria}>
                       <div className="px-2 py-1 text-xs font-bold text-blue-300 uppercase bg-white/5 border-b border-white/10">{categoria}</div>
-                      {crimes.map((crime) => (
+                      {(crimes as string[]).map((crime) => (
                         <SelectItem key={crime} value={crime}>{crime}</SelectItem>
                       ))}
-                    </React.Fragment>
-                  ))}
+                    </div>
+                  )) : (
+                    <SelectItem value="" disabled>Carregando crimes...</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
               <Label htmlFor="desfechoFinal" className="text-white">Desfecho Final</Label>
@@ -593,8 +597,8 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
                 </Button>
               </div>
               <div className="flex justify-end mt-6">
-                <Button onClick={handleSaveAndConclude} disabled={isLoading || !desfechoFinal} className="bg-green-700 hover:bg-green-800 text-white mt-4">
-                  {isLoading ? "Salvando..." : "Salvar e Gerar Relatório Final"}
+                <Button onClick={handleSubmit} disabled={isLoading} className="bg-green-700 hover:bg-green-800 text-white">
+                  {isLoading ? "Salvando..." : "Salvar"}
                 </Button>
               </div>
             </TabsContent>

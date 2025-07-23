@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Edit, Eye, RotateCcw, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, Brain, EyeOff, Trash2, AlertTriangle } from "lucide-react";
+import { Edit, Eye, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, Brain, EyeOff, Trash2, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCrimeStats } from "../hooks/useCrimeStats";
 import NovoProcessoForm from "./NovoProcessoForm";
+
+// Importar DILIGENCIAS do NovoProcessoForm
+const DILIGENCIAS = [
+  { id: "diligencia_1", label: "Oitiva da vítima" },
+  { id: "diligencia_2", label: "Oitiva de testemunhas" },
+  { id: "diligencia_3", label: "Oitiva do investigado" },
+  { id: "diligencia_4", label: "Coleta de provas materiais" },
+  { id: "diligencia_5", label: "Análise de documentos" },
+  { id: "diligencia_6", label: "Inspeção local" },
+  { id: "diligencia_7", label: "Reconhecimento fotográfico" },
+  { id: "diligencia_8", label: "Perícia técnica" },
+  { id: "diligencia_9", label: "Interceptação telefônica" },
+  { id: "diligencia_10", label: "Busca e apreensão" },
+  { id: "diligencia_11", label: "Quebra de sigilo bancário" },
+  { id: "diligencia_12", label: "Quebra de sigilo telefônico" },
+  { id: "diligencia_13", label: "Quebra de sigilo fiscal" },
+  { id: "diligencia_14", label: "Colaboração premiada" },
+  { id: "diligencia_15", label: "Ação controlada" },
+  { id: "diligencia_16", label: "Infiltração de agentes" },
+  { id: "diligencia_17", label: "Monitoramento eletrônico" },
+  { id: "diligencia_18", label: "Análise de dados digitais" },
+  { id: "diligencia_19", label: "Cooperação internacional" },
+  { id: "diligencia_20", label: "Outras diligências" }
+];
 
 interface Process {
   id: string;
@@ -42,14 +66,19 @@ interface Process {
   matricula_investigado?: string;
   data_admissao?: string;
   numero_sigpad?: string;
+  vitima?: string; // Adicionado para a visualização
+  // Campos do relatório final
+  relatorio_final?: any;
+  data_relatorio_final?: string;
+  relatorio_gerado_por?: string;
 }
 
 interface ProcessListProps {
-  type: 'tramitacao' | 'concluidos';
+  type: 'tramitacao' | 'arquivados';
   onClose: () => void;
 }
 
-const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProcessoLabel, handleEditProcess, handleDeleteProcess, handleViewProcess, handleReopenProcess, calculateDaysInProcess }: any) => (
+const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProcessoLabel, handleEditProcess, handleDeleteProcess, handleViewProcess, calculateDaysInProcess }: any) => (
   <Card key={process.id} className="bg-white/10 backdrop-blur-sm border-white/20">
     <CardContent className="p-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -57,6 +86,12 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
           <div className="flex items-center gap-3">
             <h3 className="text-xl font-bold text-white">{process.numero_processo}</h3>
             {getPriorityBadge(process.prioridade)}
+            {process.status === 'arquivado' && (
+              <Badge className="bg-gray-600 text-white">Arquivado</Badge>
+            )}
+            {process.status === 'concluido' && (
+              <Badge className="bg-green-600 text-white">Concluído</Badge>
+            )}
           </div>
           <p className="text-blue-200">{getTipoProcessoLabel(process.tipo_processo)}</p>
           {process.nome_investigado && (
@@ -76,13 +111,13 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
                 {calculateDaysInProcess(process.data_recebimento)} dias em tramitação
               </span>
             )}
-            {type === 'concluidos' && process.updated_at && (
+            {type === 'arquivados' && process.updated_at && (
               <span>
-                Concluído: {new Date(process.updated_at).toLocaleDateString('pt-BR')}
+                {process.status === 'concluido' ? 'Concluído' : 'Arquivado'}: {new Date(process.updated_at).toLocaleDateString('pt-BR')}
               </span>
             )}
           </div>
-          {type === 'concluidos' && process.desfecho_final && (
+          {type === 'arquivados' && process.desfecho_final && (
             <p className="text-green-300">
               <strong>Desfecho:</strong> {process.desfecho_final}
             </p>
@@ -100,18 +135,17 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
                 Excluir
               </Button>
             </>
-          ) : (
+          ) : type === 'arquivados' ? (
             <>
-              <Button onClick={() => handleViewProcess(process.id)} className="bg-green-600 hover:bg-green-700 text-white">
+              <Button onClick={() => {
+                console.log('Clicou em Consultar para processo:', process.id, process.numero_processo);
+                handleViewProcess(process.id);
+              }} className="bg-green-600 hover:bg-green-700 text-white">
                 <Eye className="h-4 w-4 mr-2" />
-                Visualizar
-              </Button>
-              <Button onClick={() => handleReopenProcess(process.id)} className="bg-orange-600 hover:bg-orange-700 text-white">
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Solicitar Reabertura
+                Consultar
               </Button>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </CardContent>
@@ -132,6 +166,8 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [processToDelete, setProcessToDelete] = useState<Process | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [viewingProcess, setViewingProcess] = useState<Process | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
   const { refreshStats: refreshCrimeStats } = useCrimeStats();
 
   // Carregar processos do banco de dados e configurar sincronização em tempo real
@@ -156,7 +192,11 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
           if (payload.eventType === 'INSERT') {
             // Novo processo adicionado
             const newProcess = payload.new as Process;
-            if (newProcess.status === (type === 'tramitacao' ? 'tramitacao' : 'concluido')) {
+            const shouldInclude = type === 'tramitacao' 
+              ? newProcess.status === 'tramitacao'
+              : newProcess.status === 'concluido' || newProcess.status === 'arquivado';
+            
+            if (shouldInclude) {
               setProcesses(prev => [newProcess, ...prev]);
               toast({
                 title: "Novo Processo",
@@ -168,17 +208,34 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
             const updatedProcess = payload.new as Process;
             const oldProcess = payload.old as Process;
             
+            console.log('UPDATE detectado:', {
+              oldStatus: oldProcess.status,
+              newStatus: updatedProcess.status,
+              processId: updatedProcess.id,
+              currentType: type
+            });
+            
             setProcesses(prev => {
               // Se o status mudou, remover da lista atual se necessário
               if (oldProcess.status !== updatedProcess.status) {
+                console.log('Status mudou, removendo processo da lista atual');
                 const filtered = prev.filter(p => p.id !== updatedProcess.id);
                 // Se o novo status corresponde ao tipo atual, adicionar
-                if (updatedProcess.status === (type === 'tramitacao' ? 'tramitacao' : 'concluido')) {
+                const shouldInclude = type === 'tramitacao' 
+                  ? updatedProcess.status === 'tramitacao'
+                  : updatedProcess.status === 'concluido' || updatedProcess.status === 'arquivado';
+                
+                console.log('Deve incluir na lista atual?', shouldInclude);
+                
+                if (shouldInclude) {
+                  console.log('Adicionando processo atualizado à lista');
                   return [updatedProcess, ...filtered];
                 }
+                console.log('Processo não deve estar na lista atual');
                 return filtered;
               }
               // Se apenas dados foram atualizados, atualizar o processo
+              console.log('Apenas dados atualizados, mantendo processo na lista');
               return prev.map(p => p.id === updatedProcess.id ? updatedProcess : p);
             });
             
@@ -213,16 +270,16 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     setError(null);
 
     try {
-      // Determinar o status baseado no tipo
-      const statusFilter = type === 'tramitacao' ? 'tramitacao' : 'concluido';
-      console.log('Filtro de status:', statusFilter);
-
-      // Carregar processos do Supabase
-      const { data, error } = await supabase
-        .from('processos')
-        .select('*')
-        .eq('status', statusFilter)
-        .order('created_at', { ascending: false });
+      let query = supabase.from('processos').select('*');
+      
+      if (type === 'tramitacao') {
+        query = query.eq('status', 'tramitacao');
+      } else if (type === 'arquivados') {
+        // Incluir tanto processos concluídos quanto arquivados
+        query = query.in('status', ['concluido', 'arquivado']);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
         console.error('Erro ao carregar processos:', error);
@@ -230,9 +287,14 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
         
         // Fallback para localStorage
         const processosLocais = JSON.parse(localStorage.getItem('processos') || '[]');
-        const processosFiltrados = processosLocais.filter((p: any) => 
-          p.status === statusFilter
-        );
+        let processosFiltrados;
+        if (type === 'tramitacao') {
+          processosFiltrados = processosLocais.filter((p: any) => p.status === 'tramitacao');
+        } else {
+          processosFiltrados = processosLocais.filter((p: any) => 
+            p.status === 'concluido' || p.status === 'arquivado'
+          );
+        }
         setProcesses(processosFiltrados);
         
         toast({
@@ -241,6 +303,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
         });
       } else {
         console.log('Processos carregados com sucesso:', data?.length || 0, 'processos');
+        console.log('Status dos processos carregados:', data?.map(p => ({ id: p.id, numero: p.numero_processo, status: p.status })));
         setProcesses(data || []);
       }
     } catch (err) {
@@ -252,8 +315,13 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     }
   };
 
-  const filteredProcesses = processes.filter(p => p.status === type);
+  const filteredProcesses = type === 'tramitacao' 
+    ? processes.filter(p => p.status === 'tramitacao')
+    : processes.filter(p => p.status === 'concluido' || p.status === 'arquivado');
   console.log('Processos filtrados:', filteredProcesses.length, 'de', processes.length, 'total');
+  console.log('Tipo atual:', type);
+  console.log('Status dos processos filtrados:', filteredProcesses.map(p => ({ id: p.id, numero: p.numero_processo, status: p.status })));
+  console.log('Todos os processos:', processes.map(p => ({ id: p.id, numero: p.numero_processo, status: p.status })));
 
   const getPriorityBadge = (prioridade: string) => {
     switch (prioridade) {
@@ -344,46 +412,91 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     setIsEditing(false);
   };
 
-  const handleViewProcess = (processId: string) => {
-    console.log("Visualizando processo:", processId);
-    toast({
-      title: "Visualizando Processo",
-      description: "Processo aberto para visualização."
-    });
-  };
-
-  const handleReopenProcess = async (processId: string) => {
-    try {
-      const { error } = await supabase
-        .from('processos')
-        .update({ status: 'tramitacao' })
-        .eq('id', processId);
-
-      if (error) {
-        console.error('Erro ao reabrir processo:', error);
+  const handleViewProcess = async (processId: string) => {
+    console.log('Tentando visualizar processo:', processId);
+    console.log('Processos disponíveis:', processes.map(p => ({ id: p.id, numero: p.numero_processo, status: p.status })));
+    
+    // Primeiro, tentar encontrar na lista local
+    let process = processes.find(p => p.id === processId);
+    
+    if (!process) {
+      console.log('Processo não encontrado na lista local, buscando no banco...');
+      // Se não encontrou na lista local, buscar diretamente no banco
+      try {
+        const { data, error } = await supabase
+          .from('processos')
+          .select('*')
+          .eq('id', processId)
+          .single();
+        
+        if (error) {
+          console.error('Erro ao buscar processo no banco:', error);
+          toast({
+            title: "Erro",
+            description: "Erro ao buscar processo no banco de dados.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        if (data) {
+          process = data;
+          console.log('Processo encontrado no banco:', data);
+        }
+      } catch (err) {
+        console.error('Erro inesperado ao buscar processo:', err);
         toast({
           title: "Erro",
-          description: "Erro ao reabrir processo.",
+          description: "Erro inesperado ao buscar processo.",
           variant: "destructive"
         });
-      } else {
-        console.log("Processo reaberto:", processId);
-        toast({
-          title: "Processo Reaberto",
-          description: "Processo foi reaberto para nova análise."
-        });
-        // Atualiza estatísticas de crimes automaticamente
-        await refreshCrimeStats();
+        return;
       }
-    } catch (err) {
-      console.error('Erro inesperado ao reabrir processo:', err);
+    } else {
+      // Se encontrou na lista local, buscar dados completos no banco para garantir
+      console.log('Processo encontrado na lista local, buscando dados completos no banco...');
+      try {
+        const { data, error } = await supabase
+          .from('processos')
+          .select('*')
+          .eq('id', processId)
+          .single();
+        
+        if (!error && data) {
+          process = data;
+          console.log('Dados completos carregados do banco:', data);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar dados completos:', err);
+        // Continuar com os dados da lista local
+      }
+    }
+    
+    if (process) {
+      console.log('Dados do processo para visualização:', {
+        id: process.id,
+        numero: process.numero_processo,
+        status: process.status,
+        desfecho_final: process.desfecho_final,
+        descricao_fatos: process.descricao_fatos,
+        diligencias_realizadas: process.diligencias_realizadas,
+        sugestoes: process.sugestoes
+      });
+      
+      setViewingProcess(process);
+      setShowViewDialog(true);
+      console.log("Visualizando processo:", processId, process);
+    } else {
+      console.error('Processo não encontrado nem na lista local nem no banco:', processId);
       toast({
         title: "Erro",
-        description: "Erro inesperado ao reabrir processo.",
+        description: "Processo não encontrado.",
         variant: "destructive"
       });
     }
   };
+
+
 
   const handleDeleteProcess = async (processToDelete: Process) => {
     setIsDeleting(true);
@@ -468,12 +581,13 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     return diffDays;
   };
 
+
+
+  const memoizedGetPriorityBadge = useCallback(getPriorityBadge, []);
+  const memoizedGetTipoProcessoLabel = useCallback(getTipoProcessoLabel, []);
   const memoizedEditProcess = useCallback(handleEditProcess, []);
   const memoizedDeleteProcess = useCallback(handleDeleteProcess, []);
   const memoizedViewProcess = useCallback(handleViewProcess, []);
-  const memoizedReopenProcess = useCallback(handleReopenProcess, []);
-  const memoizedGetPriorityBadge = useCallback(getPriorityBadge, []);
-  const memoizedGetTipoProcessoLabel = useCallback(getTipoProcessoLabel, []);
   const memoizedCalculateDaysInProcess = useCallback(calculateDaysInProcess, []);
 
   if (loading) {
@@ -493,7 +607,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
         <div className="container mx-auto p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-white">
-              {type === 'tramitacao' ? 'Processos em Tramitação' : 'Processos Concluídos'}
+              {type === 'tramitacao' ? 'Processos em Tramitação' : 'Processos Finalizados'}
             </h1>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-green-400 text-sm">
@@ -525,7 +639,6 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
                 handleEditProcess={memoizedEditProcess}
                 handleDeleteProcess={memoizedDeleteProcess}
                 handleViewProcess={memoizedViewProcess}
-                handleReopenProcess={memoizedReopenProcess}
                 calculateDaysInProcess={memoizedCalculateDaysInProcess}
               />
             ))}
@@ -534,7 +647,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
               <Card className="bg-white/10 backdrop-blur-sm border-white/20">
                 <CardContent className="p-8 text-center">
                   <p className="text-white text-lg">
-                    Nenhum processo {type === 'tramitacao' ? 'em tramitação' : 'concluído'} encontrado.
+                    Nenhum processo {type === 'tramitacao' ? 'em tramitação' : 'finalizado'} encontrado.
                   </p>
                   {error && (
                     <p className="text-red-300 text-sm mt-2">
@@ -599,6 +712,237 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
                   Excluir Processo
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Visualização Detalhada */}
+      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+        <DialogContent className="bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 border-white/20 max-w-6xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white text-2xl">
+              <Eye className="h-6 w-6" />
+              Consulta de Processo Finalizado
+            </DialogTitle>
+            <DialogDescription className="text-blue-200">
+              Visualização completa do processo {viewingProcess?.numero_processo} - Apenas para consulta
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewingProcess && (
+            <div className="space-y-6">
+
+
+              {/* Informações Básicas */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <h4 className="font-bold text-white text-lg border-b border-blue-500 pb-2">Informações Básicas</h4>
+                  <div className="space-y-2 text-blue-200">
+                    <p><strong className="text-white">Número:</strong> {viewingProcess.numero_processo}</p>
+                    <p><strong className="text-white">Tipo:</strong> {getTipoProcessoLabel(viewingProcess.tipo_processo)}</p>
+                    <p><strong className="text-white">Prioridade:</strong> {getPriorityBadge(viewingProcess.prioridade)}</p>
+                    <p><strong className="text-white">Status:</strong> 
+                      {viewingProcess.status === 'arquivado' ? (
+                        <Badge className="bg-gray-600 text-white ml-2">Arquivado</Badge>
+                      ) : viewingProcess.status === 'concluido' ? (
+                        <Badge className="bg-green-600 text-white ml-2">Concluído</Badge>
+                      ) : (
+                        <Badge className="bg-yellow-600 text-white ml-2">Em Tramitação</Badge>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <h4 className="font-bold text-white text-lg border-b border-blue-500 pb-2">Datas</h4>
+                  <div className="space-y-2 text-blue-200">
+                    <p><strong className="text-white">Criado:</strong> {new Date(viewingProcess.created_at).toLocaleDateString('pt-BR')}</p>
+                    <p><strong className="text-white">Atualizado:</strong> {new Date(viewingProcess.updated_at).toLocaleDateString('pt-BR')}</p>
+                    {viewingProcess.data_recebimento && (
+                      <p><strong className="text-white">Recebimento:</strong> {new Date(viewingProcess.data_recebimento).toLocaleDateString('pt-BR')}</p>
+                    )}
+                    {viewingProcess.data_fato && (
+                      <p><strong className="text-white">Data do Fato:</strong> {new Date(viewingProcess.data_fato).toLocaleDateString('pt-BR')}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Investigado */}
+              {viewingProcess.nome_investigado && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-white text-lg border-b border-blue-500 pb-2">Investigado</h4>
+                  <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-lg">
+                    <div className="space-y-2 text-blue-200">
+                      <p><strong className="text-white">Nome:</strong> {viewingProcess.nome_investigado}</p>
+                      {viewingProcess.cargo_investigado && (
+                        <p><strong className="text-white">Cargo:</strong> {viewingProcess.cargo_investigado}</p>
+                      )}
+                      {viewingProcess.unidade_investigado && (
+                        <p><strong className="text-white">Unidade:</strong> {viewingProcess.unidade_investigado}</p>
+                      )}
+                      {viewingProcess.matricula_investigado && (
+                        <p><strong className="text-white">Matrícula:</strong> {viewingProcess.matricula_investigado}</p>
+                      )}
+                      {viewingProcess.data_admissao && (
+                        <p><strong className="text-white">Data de Admissão:</strong> {new Date(viewingProcess.data_admissao).toLocaleDateString('pt-BR')}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Vítima */}
+              {viewingProcess.vitima && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-white text-lg border-b border-blue-500 pb-2">Vítima</h4>
+                  <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-lg">
+                    <p className="text-blue-200">{viewingProcess.vitima}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Descrição dos Fatos */}
+              {viewingProcess.descricao_fatos && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-white text-lg border-b border-blue-500 pb-2">Descrição dos Fatos</h4>
+                  <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-lg">
+                    <p className="text-blue-200 whitespace-pre-wrap">{viewingProcess.descricao_fatos}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Modus Operandi */}
+              {viewingProcess.modus_operandi && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-white text-lg border-b border-blue-500 pb-2">Modus Operandi</h4>
+                  <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-lg">
+                    <p className="text-blue-200 whitespace-pre-wrap">{viewingProcess.modus_operandi}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Diligências Realizadas */}
+              {viewingProcess.diligencias_realizadas && Object.keys(viewingProcess.diligencias_realizadas).length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-white text-lg border-b border-blue-500 pb-2">Diligências Realizadas</h4>
+                  <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-lg">
+                    <div className="space-y-4">
+                      {Object.entries(viewingProcess.diligencias_realizadas).map(([id, diligencia]: [string, any]) => (
+                        diligencia.realizada && (
+                          <div key={id} className="border-l-4 border-blue-500 pl-4">
+                            <p className="font-semibold text-white text-base">
+                              {DILIGENCIAS.find(d => d.id === id)?.label || id}
+                            </p>
+                            {diligencia.observacao && (
+                              <p className="text-blue-200 mt-2 whitespace-pre-wrap">
+                                {diligencia.observacao}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Desfecho Final */}
+              {viewingProcess.desfecho_final && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-white text-lg border-b border-green-500 pb-2">Desfecho Final</h4>
+                  <div className="bg-green-500/20 border border-green-500/30 p-4 rounded-lg">
+                    <p className="text-green-200 text-base">{viewingProcess.desfecho_final}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Relatório Final */}
+              {viewingProcess.relatorio_final && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-white text-lg border-b border-purple-500 pb-2 flex items-center gap-2">
+                    <Brain className="h-5 w-5" />
+                    Relatório Final - Análise IA
+                    {viewingProcess.data_relatorio_final && (
+                      <Badge className="bg-purple-600 text-white text-xs">
+                        {new Date(viewingProcess.data_relatorio_final).toLocaleDateString('pt-BR')}
+                      </Badge>
+                    )}
+                  </h4>
+                  <div className="bg-purple-500/10 border border-purple-500/30 p-4 rounded-lg">
+                    <div className="space-y-4">
+                      {/* Cabeçalho */}
+                      {viewingProcess.relatorio_final.cabecalho && (
+                        <div className="border-b border-purple-500/30 pb-3">
+                          <h5 className="font-semibold text-purple-200 text-base mb-2">Cabeçalho</h5>
+                          <p className="text-purple-100 whitespace-pre-wrap text-sm">{viewingProcess.relatorio_final.cabecalho}</p>
+                        </div>
+                      )}
+
+                      {/* Das Preliminares */}
+                      {viewingProcess.relatorio_final.das_preliminares && (
+                        <div className="border-b border-purple-500/30 pb-3">
+                          <h5 className="font-semibold text-purple-200 text-base mb-2">I – Das Preliminares</h5>
+                          <p className="text-purple-100 whitespace-pre-wrap text-sm">{viewingProcess.relatorio_final.das_preliminares}</p>
+                        </div>
+                      )}
+
+                      {/* Dos Fatos */}
+                      {viewingProcess.relatorio_final.dos_fatos && (
+                        <div className="border-b border-purple-500/30 pb-3">
+                          <h5 className="font-semibold text-purple-200 text-base mb-2">II – Dos Fatos</h5>
+                          <p className="text-purple-100 whitespace-pre-wrap text-sm">{viewingProcess.relatorio_final.dos_fatos}</p>
+                        </div>
+                      )}
+
+                      {/* Das Diligências */}
+                      {viewingProcess.relatorio_final.das_diligencias && (
+                        <div className="border-b border-purple-500/30 pb-3">
+                          <h5 className="font-semibold text-purple-200 text-base mb-2">III – Das Diligências</h5>
+                          <p className="text-purple-100 whitespace-pre-wrap text-sm">{viewingProcess.relatorio_final.das_diligencias}</p>
+                        </div>
+                      )}
+
+                      {/* Da Fundamentação */}
+                      {viewingProcess.relatorio_final.da_fundamentacao && (
+                        <div className="border-b border-purple-500/30 pb-3">
+                          <h5 className="font-semibold text-purple-200 text-base mb-2">IV – Da Fundamentação</h5>
+                          <p className="text-purple-100 whitespace-pre-wrap text-sm">{viewingProcess.relatorio_final.da_fundamentacao}</p>
+                        </div>
+                      )}
+
+                      {/* Da Conclusão */}
+                      {viewingProcess.relatorio_final.da_conclusao && (
+                        <div>
+                          <h5 className="font-semibold text-purple-200 text-base mb-2">V – Da Conclusão</h5>
+                          <p className="text-purple-100 whitespace-pre-wrap text-sm">{viewingProcess.relatorio_final.da_conclusao}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Sugestões */}
+              {viewingProcess.sugestoes && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-white text-lg border-b border-blue-500 pb-2">Sugestões</h4>
+                  <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-lg">
+                    <p className="text-blue-200 whitespace-pre-wrap">{viewingProcess.sugestoes}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowViewDialog(false)}
+              className="border-white/30 text-white hover:bg-white/10"
+            >
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>

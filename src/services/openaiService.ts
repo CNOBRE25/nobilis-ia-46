@@ -26,6 +26,11 @@ export interface RelatorioIA {
 }
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+
+// Debug: Verificar se a chave está sendo carregada
+console.log('🔍 Debug - VITE_OPENAI_API_KEY:', OPENAI_API_KEY ? 'Configurada' : 'Não configurada');
+console.log('🔍 Debug - Chave (primeiros 20 chars):', OPENAI_API_KEY ? OPENAI_API_KEY.substring(0, 20) + '...' : 'N/A');
+
 if (!OPENAI_API_KEY && import.meta.env.DEV) {
   console.warn("A chave da OpenAI (VITE_OPENAI_API_KEY) não está definida. Adicione ao seu arquivo .env.local.");
 }
@@ -232,11 +237,12 @@ export const openaiService = {
       // Simulação para dev
       return Promise.resolve({
         tipificacao: 'Art. 209, CPM – Lesão Corporal',
-        dataPrescricao: '20/07/2029'
+        dataPrescricao: '20/07/2029',
+        fundamentacao: 'Simulação: Lesão corporal durante serviço militar.'
       });
     }
     try {
-      const prompt = `Você é um analista jurídico militar.\n\nTexto do usuário: "${texto}"\nData do fato: ${dataFato instanceof Date ? dataFato.toLocaleDateString('pt-BR') : dataFato}\n\n1. Analise o texto e identifique a tipificação penal mais adequada (citar artigo e nome do crime, ex: "Art. 209, CPM – Lesão Corporal").\n2. Calcule a data da prescrição penal com base na data do fato, considerando a legislação militar brasileira.\n\nResponda no formato:\nTipificação: <tipificacao>\nData da prescrição: <data_prescricao>`;
+      const prompt = `Você é um analista jurídico militar brasileiro, especialista em Direito Penal Militar, Direito Disciplinar e prescrição penal/administrativa.\n\nAnalise o seguinte caso:\n\nDescrição dos fatos: "${texto}"\nData do fato: ${dataFato instanceof Date ? dataFato.toLocaleDateString('pt-BR') : dataFato}\n\nSua tarefa:\n1. Identifique TODAS as possíveis tipificações penais e disciplinares aplicáveis (CPM, CP, Código Disciplinar, Estatuto, etc), citando artigo, nome do crime/transgressão e fundamentação.\n2. Explique, de forma técnica e fundamentada, por que chegou a cada tipificação.\n3. Calcule a data da prescrição penal e administrativa, explicando o cálculo e citando os artigos usados.\n4. Responda de forma estruturada, assim:\n\nTipificação penal sugerida: <tipificacao>\nFundamentação: <explicacao detalhada>\nData da prescrição penal: <data_prescricao_penal>\nData da prescrição administrativa: <data_prescricao_adm>\nObservações: <observacoes se houver>\n`;
 
       const response = await fetch(OPENAI_API_URL, {
         method: 'POST',
@@ -247,10 +253,10 @@ export const openaiService = {
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: 'Você é um analista jurídico militar especializado em tipificação penal e prescrição.' },
+            { role: 'system', content: 'Você é um analista jurídico militar especializado em tipificação penal, disciplinar e prescrição.' },
             { role: 'user', content: prompt }
           ],
-          max_tokens: 300,
+          max_tokens: 600,
           temperature: 0.2,
         }),
       });
@@ -259,12 +265,18 @@ export const openaiService = {
       }
       const data = await response.json();
       const content = data.choices[0]?.message?.content || '';
-      // Extrair tipificação e data da prescrição do texto retornado
-      const tipMatch = content.match(/Tipificação:\s*(.*)/i);
-      const prescMatch = content.match(/Data da prescrição:\s*(.*)/i);
+      // Extrair tipificação, fundamentação e datas do texto retornado
+      const tipMatch = content.match(/Tipificação penal sugerida:\s*(.*)/i);
+      const fundMatch = content.match(/Fundamentação:\s*([\s\S]*?)\nData da prescrição penal:/i);
+      const prescPenalMatch = content.match(/Data da prescrição penal:\s*(.*)/i);
+      const prescAdmMatch = content.match(/Data da prescrição administrativa:\s*(.*)/i);
+      const obsMatch = content.match(/Observações:\s*(.*)/i);
       return {
         tipificacao: tipMatch ? tipMatch[1].trim() : 'Não identificado',
-        dataPrescricao: prescMatch ? prescMatch[1].trim() : 'Não identificado'
+        fundamentacao: fundMatch ? fundMatch[1].trim() : '',
+        dataPrescricao: prescPenalMatch ? prescPenalMatch[1].trim() : '',
+        dataPrescricaoAdm: prescAdmMatch ? prescAdmMatch[1].trim() : '',
+        observacoes: obsMatch ? obsMatch[1].trim() : ''
       };
     } catch (error) {
       if (import.meta.env.DEV) {
@@ -272,7 +284,10 @@ export const openaiService = {
       }
       return {
         tipificacao: 'Erro ao interpretar via IA',
-        dataPrescricao: ''
+        dataPrescricao: '',
+        fundamentacao: '',
+        dataPrescricaoAdm: '',
+        observacoes: ''
       };
     }
   }
