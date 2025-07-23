@@ -1,6 +1,12 @@
-# 🏛️ NOBILIS-IA - Sistema de Gestão Jurídica
+# Nobilis IA - Sistema de Análise Jurídica Militar
 
-**Sistema inteligente para gestão de processos jurídicos e análise de pareceres.**
+**Última atualização:** $(Get-Date -Format "dd/MM/yyyy HH:mm:ss")
+
+## 🚀 Deploy Status
+
+- **Frontend**: https://nobilis-ia-46.vercel.app ✅
+- **API Serverless**: Configurada para produção
+- **Segurança**: Chave da API protegida no backend
 
 ## 📋 **OVERVIEW**
 
