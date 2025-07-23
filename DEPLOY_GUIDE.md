@@ -1,5 +1,7 @@
 # 🚀 Guia de Deploy - Vercel
 
+**Última atualização:** $(Get-Date -Format "dd/MM/yyyy HH:mm:ss")
+
 ## ✅ Deploy Automático
 
 O projeto está configurado para deploy automático no Vercel. Quando você fizer push para a branch `main`, o Vercel irá automaticamente:
@@ -33,77 +35,36 @@ O projeto já está configurado com:
 - **Framework**: Vite
 - **Build Command**: `npm run build`
 - **Output Directory**: `dist`
-- **Node.js Version**: 18.x
+- **Install Command**: `npm install`
 
-## 📁 Estrutura de Deploy
+## 🌐 URLs do Deploy
 
-```
-nobilis-ia-46/
-├── src/                    # Frontend React
-├── api/                    # API Serverless Functions
-│   └── openai.js          # Proxy para OpenAI
-├── vercel.json            # Configuração do Vercel
-└── package.json           # Dependências
-```
+- **Frontend**: https://nobilis-ia-46.vercel.app
+- **API Health**: https://nobilis-ia-46.vercel.app/api/health
+- **API OpenAI**: https://nobilis-ia-46.vercel.app/api/openai
 
-## 🔐 Segurança
+## 🔄 Forçar Deploy
 
-- ✅ Chave da API protegida no backend
-- ✅ Rate limiting configurado
-- ✅ CORS configurado
-- ✅ Headers de segurança
+Para forçar um novo deploy:
 
-## 🌐 URLs
+1. Faça uma pequena alteração em qualquer arquivo
+2. Commit e push para a branch `main`
+3. O Vercel detectará automaticamente e fará o deploy
 
-- **Frontend**: `https://nobilis-ia-46.vercel.app`
-- **API Health**: `https://nobilis-ia-46.vercel.app/api/health`
-- **API OpenAI**: `https://nobilis-ia-46.vercel.app/api/openai/*`
+## 📋 Checklist de Deploy
 
-## 🧪 Testando o Deploy
+- [x] Frontend configurado
+- [x] API serverless criada
+- [x] Variáveis de ambiente configuradas
+- [x] CORS configurado
+- [x] Rate limiting implementado
+- [x] Documentação criada
 
-1. **Health Check**:
-   ```bash
-   curl https://nobilis-ia-46.vercel.app/api/health
-   ```
+## 🚨 Troubleshooting
 
-2. **Teste da API**:
-   ```bash
-   curl -X POST https://nobilis-ia-46.vercel.app/api/openai/interpretar-tipificacao \
-     -H "Content-Type: application/json" \
-     -d '{"descricaoCrime": "Teste", "contexto": "Teste"}'
-   ```
+Se o deploy falhar:
 
-## 🔄 Atualizações
-
-Para atualizar o deploy:
-
-1. Faça as mudanças no código
-2. Commit e push para `main`
-3. O Vercel fará deploy automático
-
-## 📊 Monitoramento
-
-- **Logs**: Dashboard do Vercel > Functions
-- **Performance**: Analytics do Vercel
-- **Erros**: Function Logs no dashboard
-
-## 🆘 Troubleshooting
-
-### Erro de Build
-- Verifique se todas as dependências estão no `package.json`
-- Confirme se o Node.js version está correto
-
-### Erro de API
-- Verifique se a variável `OPENAI_API_KEY` está configurada
-- Confirme se a chave da API é válida
-
-### CORS Errors
-- Verifique se o domínio está na lista de origens permitidas
-- Confirme se o CORS está configurado corretamente
-
-## 📞 Suporte
-
-Se houver problemas:
 1. Verifique os logs no dashboard do Vercel
-2. Teste localmente primeiro
-3. Consulte a documentação do Vercel 
+2. Confirme se as variáveis de ambiente estão configuradas
+3. Teste localmente com `npm run build`
+4. Verifique se não há erros de sintaxe 
