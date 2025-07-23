@@ -21,7 +21,7 @@
     "production:preview": "vite preview --mode production",
     "deploy:staging": "npm run security:test && npm run staging:build",
     "deploy:production": "npm run security:test && npm run production:build",
-    "prebuild": "node scripts/security-check-openai.js"
+    "prebuild": "node scripts/security-check-openai.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
