@@ -37,5 +37,10 @@
   ],
   "env": {
     "VITE_APP_ENVIRONMENT": "production"
+  },
+  "functions": {
+    "server.cjs": {
+      "runtime": "nodejs18.x"
+    }
   }
 } 

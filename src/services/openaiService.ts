@@ -26,7 +26,9 @@ export interface RelatorioIA {
 }
 
 // Configuração do Backend
-const BACKEND_URL = 'http://localhost:3002';
+const BACKEND_URL = import.meta.env.PROD 
+  ? 'https://nobilis-ia-46.vercel.app' 
+  : 'http://localhost:3002';
 
 // Debug: Verificar se o backend está disponível
 console.log('🔍 Debug - Backend URL:', BACKEND_URL);
