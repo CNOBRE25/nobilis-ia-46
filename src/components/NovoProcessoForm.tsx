@@ -110,6 +110,9 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
   const [iaFundamentacao, setIaFundamentacao] = useState("");
   const [prescricaoAdmIA, setPrescricaoAdmIA] = useState("");
   const [iaObservacoes, setIaObservacoes] = useState("");
+  const [iaTipificacoesAlternativas, setIaTipificacoesAlternativas] = useState("");
+  const [iaTipificacoesDisciplinares, setIaTipificacoesDisciplinares] = useState("");
+  const [iaCompetencia, setIaCompetencia] = useState("");
   const [crimesData, setCrimesData] = useState<any>(null);
 
   useEffect(() => {
@@ -528,6 +531,9 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
                       setIaFundamentacao(result.fundamentacao || "");
                       setPrescricaoAdmIA(result.dataPrescricaoAdm || "");
                       setIaObservacoes(result.observacoes || "");
+                      setIaTipificacoesAlternativas(result.tipificacoesAlternativas || "");
+                      setIaTipificacoesDisciplinares(result.tipificacoesDisciplinares || "");
+                      setIaCompetencia(result.competencia || "");
                       toast({ title: "Sugestão da IA aplicada!", description: `Tipificação: ${result.tipificacao} | Prescrição: ${result.dataPrescricao}` });
                     } catch (err) {
                       toast({ title: "Erro na IA", description: "Não foi possível obter sugestão automática.", variant: "destructive" });
@@ -540,23 +546,64 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
                 </Button>
                 {form.tipificacaoCriminal && (
                   <div className="w-full bg-purple-100 border border-purple-300 rounded p-3 mt-2 text-purple-900">
-                    <div className="font-bold text-base mb-1">Tipificação sugerida:</div>
-                    <div className="mb-2">{form.tipificacaoCriminal}</div>
-                    {iaFundamentacao && (
-                      <>
-                        <div className="font-bold text-base mt-2">Fundamentação:</div>
-                        <div className="mb-2 whitespace-pre-line">{iaFundamentacao}</div>
-                      </>
-                    )}
-                    {prescricaoIA && (
-                      <div className="mb-1"><b>Prescrição penal:</b> {prescricaoIA}</div>
-                    )}
-                    {prescricaoAdmIA && (
-                      <div className="mb-1"><b>Prescrição administrativa:</b> {prescricaoAdmIA}</div>
-                    )}
-                    {iaObservacoes && (
-                      <div className="mt-2 text-xs text-purple-700"><b>Observações:</b> {iaObservacoes}</div>
-                    )}
+                    <div className="font-bold text-base mb-2 text-purple-800">📋 ANÁLISE JURÍDICA INTELIGENTE</div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <div className="font-bold text-sm text-purple-700">⚖️ Tipificação Principal:</div>
+                        <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{form.tipificacaoCriminal}</div>
+                      </div>
+
+                      {iaFundamentacao && (
+                        <div>
+                          <div className="font-bold text-sm text-purple-700">📚 Fundamentação:</div>
+                          <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400 whitespace-pre-line">{iaFundamentacao}</div>
+                        </div>
+                      )}
+
+                      {iaTipificacoesAlternativas && (
+                        <div>
+                          <div className="font-bold text-sm text-purple-700">🔄 Tipificações Alternativas:</div>
+                          <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{iaTipificacoesAlternativas}</div>
+                        </div>
+                      )}
+
+                      {iaTipificacoesDisciplinares && (
+                        <div>
+                          <div className="font-bold text-sm text-purple-700">🎖️ Tipificações Disciplinares:</div>
+                          <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{iaTipificacoesDisciplinares}</div>
+                        </div>
+                      )}
+
+                      {iaCompetencia && (
+                        <div>
+                          <div className="font-bold text-sm text-purple-700">⚡ Competência:</div>
+                          <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{iaCompetencia}</div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {prescricaoIA && (
+                          <div>
+                            <div className="font-bold text-sm text-purple-700">⏰ Prescrição Penal:</div>
+                            <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{prescricaoIA}</div>
+                          </div>
+                        )}
+                        {prescricaoAdmIA && (
+                          <div>
+                            <div className="font-bold text-sm text-purple-700">📅 Prescrição Administrativa:</div>
+                            <div className="text-sm bg-purple-50 p-2 rounded border-l-4 border-purple-400">{prescricaoAdmIA}</div>
+                          </div>
+                        )}
+                      </div>
+
+                      {iaObservacoes && (
+                        <div>
+                          <div className="font-bold text-sm text-purple-700">💡 Observações:</div>
+                          <div className="text-xs bg-purple-50 p-2 rounded border-l-4 border-purple-400 text-purple-700">{iaObservacoes}</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
