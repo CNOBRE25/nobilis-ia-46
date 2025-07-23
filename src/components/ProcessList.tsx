@@ -354,7 +354,28 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
   };
 
   const handleEditProcess = (process: Process) => {
-    setProcessoParaEditar(process);
+    setProcessoParaEditar({
+      numeroProcesso: process.numero_processo || "",
+      tipoProcesso: process.tipo_processo || "",
+      prioridade: process.prioridade || "",
+      numeroDespacho: process.numero_despacho || "",
+      dataDespacho: process.data_despacho || "",
+      dataRecebimento: process.data_recebimento || "",
+      dataFato: process.data_fato || "",
+      origemProcesso: process.origem_processo || "",
+      statusFuncional: process.status_funcional || "",
+      descricaoFatos: process.descricao_fatos || "",
+      tipificacaoCriminal: process.tipo_crime || "",
+      diligenciasRealizadas: process.diligencias_realizadas || {},
+      nomeInvestigado: process.nome_investigado || "",
+      cargoInvestigado: process.cargo_investigado || "",
+      unidadeInvestigado: process.unidade_investigado || "",
+      matriculaInvestigado: process.matricula_investigado || "",
+      dataAdmissao: process.data_admissao || "",
+      vitima: process.vitima || "",
+      numeroSigpad: process.numero_sigpad || "",
+      id: process.id // importante para update
+    });
   };
 
   const handleSaveEdit = async () => {
