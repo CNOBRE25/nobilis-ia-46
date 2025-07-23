@@ -42,6 +42,7 @@ export interface ProcessFormData {
   dataAdmissao: string;
   vitima: string;
   numeroSigpad: string;
+  id?: string; // Adicionado para identificar o processo ao editar
 }
 
 const initialForm: ProcessFormData = {
@@ -144,27 +145,31 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: NovoPro
   const [crimesData, setCrimesData] = useState<Record<string, any> | null>(null);
 
   useEffect(() => {
-    if (processo) setForm({
-      numeroProcesso: processo.numeroProcesso || "",
-      tipoProcesso: processo.tipoProcesso || "",
-      prioridade: processo.prioridade || "",
-      numeroDespacho: processo.numeroDespacho || "",
-      dataDespacho: processo.dataDespacho || "",
-      dataRecebimento: processo.dataRecebimento || "",
-      dataFato: processo.dataFato || "",
-      origemProcesso: processo.origemProcesso || "",
-      statusFuncional: processo.statusFuncional || "",
-      descricaoFatos: processo.descricaoFatos || "",
-      tipificacaoCriminal: processo.tipificacaoCriminal || "",
-      diligenciasRealizadas: processo.diligenciasRealizadas || {},
-      nomeInvestigado: processo.nomeInvestigado || "",
-      cargoInvestigado: processo.cargoInvestigado || "",
-      unidadeInvestigado: processo.unidadeInvestigado || "",
-      matriculaInvestigado: processo.matriculaInvestigado || "",
-      dataAdmissao: processo.dataAdmissao || "",
-      vitima: processo.vitima || "",
-      numeroSigpad: processo.numeroSigpad || ""
-    });
+    if (processo) {
+      console.log("[DEBUG NovoProcessoForm] Recebendo processo para edição:", processo);
+      setForm({
+        numeroProcesso: processo.numeroProcesso || "",
+        tipoProcesso: processo.tipoProcesso || "",
+        prioridade: processo.prioridade || "",
+        numeroDespacho: processo.numeroDespacho || "",
+        dataDespacho: processo.dataDespacho || "",
+        dataRecebimento: processo.dataRecebimento || "",
+        dataFato: processo.dataFato || "",
+        origemProcesso: processo.origemProcesso || "",
+        statusFuncional: processo.statusFuncional || "",
+        descricaoFatos: processo.descricaoFatos || "",
+        tipificacaoCriminal: processo.tipificacaoCriminal || "",
+        diligenciasRealizadas: processo.diligenciasRealizadas || {},
+        nomeInvestigado: processo.nomeInvestigado || "",
+        cargoInvestigado: processo.cargoInvestigado || "",
+        unidadeInvestigado: processo.unidadeInvestigado || "",
+        matriculaInvestigado: processo.matriculaInvestigado || "",
+        dataAdmissao: processo.dataAdmissao || "",
+        vitima: processo.vitima || "",
+        numeroSigpad: processo.numeroSigpad || "",
+        id: processo.id
+      });
+    }
   }, [processo]);
 
   useEffect(() => {
@@ -407,8 +412,10 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: NovoPro
     }
   };
 
+  console.log("[DEBUG NovoProcessoForm] Renderizando. Processo:", processo);
+
   return (
-    <ProcessFormProvider initialForm={form}>
+    <ProcessFormProvider initialForm={processo ? processo : initialForm}>
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardContent className="p-6">
           <Tabs value={aba} onValueChange={setAba} className="w-full">
@@ -419,6 +426,8 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: NovoPro
               <TabsTrigger value="relatorio-ia" className="text-white data-[state=active]:bg-white/30">Relatório IA</TabsTrigger>
             </TabsList>
             <TabsContent value="dados-basicos" className="space-y-6 mt-6">
+              {/* Log para depuração do subcomponente */}
+              {(() => { console.log("[DEBUG DadosBasicosForm] Renderizando"); return null; })()}
               <DadosBasicosForm />
             </TabsContent>
             <TabsContent value="investigados" className="space-y-6 mt-6">
