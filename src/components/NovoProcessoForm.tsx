@@ -426,8 +426,6 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: NovoPro
               <TabsTrigger value="relatorio-ia" className="text-white data-[state=active]:bg-white/30">Relatório IA</TabsTrigger>
             </TabsList>
             <TabsContent value="dados-basicos" className="space-y-6 mt-6">
-              {/* Log para depuração do subcomponente */}
-              {(() => { console.log("[DEBUG DadosBasicosForm] Renderizando"); return null; })()}
               <DadosBasicosForm />
             </TabsContent>
             <TabsContent value="investigados" className="space-y-6 mt-6">

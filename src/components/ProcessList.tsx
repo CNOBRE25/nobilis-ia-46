@@ -354,7 +354,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
   };
 
   const handleEditProcess = (process: Process) => {
-    setProcessoParaEditar({
+    const mapped = {
       numeroProcesso: process.numero_processo || "",
       tipoProcesso: process.tipo_processo || "",
       prioridade: process.prioridade || "",
@@ -374,9 +374,18 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
       dataAdmissao: process.data_admissao || "",
       vitima: process.vitima || "",
       numeroSigpad: process.numero_sigpad || "",
-      id: process.id // importante para update
-    });
+      id: process.id
+    };
+    console.log("[DEBUG] Editando processo:", mapped);
+    setProcessoParaEditar(mapped);
   };
+
+  // Garantir que o modal de edição sempre abre quando processoParaEditar for definido
+  useEffect(() => {
+    if (processoParaEditar) {
+      console.log("[DEBUG] Modal de edição aberto para processo:", processoParaEditar);
+    }
+  }, [processoParaEditar]);
 
   const handleSaveEdit = async () => {
     if (!editingProcess) {

@@ -1,7 +1,9 @@
-import { useProcessFormContext } from './ProcessFormContext';
-// ... outros imports ...
+import React from 'react';
 
 export default function InvestigadosForm() {
-  const { form, setForm } = useProcessFormContext();
-  // ... restante do componente ...
+  return (
+    <div style={{ color: 'black', background: '#fff', padding: 16 }}>
+      <label>Nome do Investigado: <input type="text" /></label>
+    </div>
+  );
 } 
