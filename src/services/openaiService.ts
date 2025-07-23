@@ -25,16 +25,11 @@ export interface RelatorioIA {
   raw_response: string;
 }
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+// Configuração do Backend
+const BACKEND_URL = 'http://localhost:3002';
 
-// Debug: Verificar se a chave está sendo carregada
-console.log('🔍 Debug - VITE_OPENAI_API_KEY:', OPENAI_API_KEY ? 'Configurada' : 'Não configurada');
-console.log('🔍 Debug - Chave (primeiros 20 chars):', OPENAI_API_KEY ? OPENAI_API_KEY.substring(0, 20) + '...' : 'N/A');
-
-if (!OPENAI_API_KEY && import.meta.env.DEV) {
-  console.warn("A chave da OpenAI (VITE_OPENAI_API_KEY) não está definida. Adicione ao seu arquivo .env.local.");
-}
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+// Debug: Verificar se o backend está disponível
+console.log('🔍 Debug - Backend URL:', BACKEND_URL);
 
 const PROMPT_TEMPLATE = `
 Você é um ANALISTA JURÍDICO MILITAR ESPECIALIZADO na elaboração de RELATÓRIOS DE INVESTIGAÇÃO PRELIMINAR (IP) da Polícia Militar de Pernambuco, com expertise em:
@@ -216,69 +211,31 @@ function gerarRelatorioSimulado(dados: RelatorioDados) {
 
 export const openaiService = {
   async gerarRelatorioJuridico(dados: RelatorioDados): Promise<RelatorioIA> {
-    // Check if OpenAI API is configured
-    if (!OPENAI_API_KEY) {
-      if (import.meta.env.DEV) {
-        console.warn('OpenAI API Key não configurada. Usando modo de simulação.');
-      }
-      return gerarRelatorioSimulado(dados);
-    }
-
     try {
-      const prompt = PROMPT_TEMPLATE
-        .replace(/{nome}/g, dados.nome || 'Não informado')
-        .replace(/{cargo}/g, dados.cargo || 'Não informado')
-        .replace(/{unidade}/g, dados.unidade || 'Não informado')
-        .replace(/{data_fato}/g, dados.data_fato || 'Não informado')
-        .replace(/{tipo_investigado}/g, dados.tipo_investigado || 'Não informado')
-        .replace(/{descricao}/g, dados.descricao || 'Não informado')
-        .replace(/{numero_sigpad}/g, dados.numero_sigpad || 'Não informado')
-        .replace(/{numero_despacho}/g, dados.numero_despacho || 'Não informado')
-        .replace(/{data_despacho}/g, dados.data_despacho || 'Não informado')
-        .replace(/{origem}/g, dados.origem || 'Não informado')
-        .replace(/{vitima}/g, dados.vitima || 'Não informado')
-        .replace(/{matricula}/g, dados.matricula || 'Não informado')
-        .replace(/{data_admissao}/g, dados.data_admissao || 'Não informado');
-
-      const response = await fetch(OPENAI_API_URL, {
+      console.log('🔍 Iniciando geração de relatório via backend...');
+      
+      const response = await fetch(`${BACKEND_URL}/api/openai/gerar-relatorio`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'Você é um analista jurídico militar especializado em investigações preliminares da PM-PE.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: 1800,
-          temperature: 0.7,
+          dadosProcesso: dados
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+        const errorData = await response.json();
+        console.error('❌ Erro no backend:', errorData);
+        throw new Error(`Erro no backend: ${errorData.error || response.statusText}`);
       }
 
       const data = await response.json();
-      const content = data.choices[0]?.message?.content;
-
-      if (!content) {
-        throw new Error('Resposta vazia da API OpenAI');
-      }
-
-      return parsearRelatorio(content);
+      console.log('✅ Relatório recebido do backend');
+      
+      return parsearRelatorio(data.relatorio);
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('Erro ao gerar relatório com IA:', error);
-      }
+      console.error('❌ Erro ao gerar relatório:', error);
       // Fallback para relatório simulado em caso de erro
       return gerarRelatorioSimulado(dados);
     }
@@ -289,9 +246,49 @@ export const openaiService = {
    * Recebe um texto livre e a data do fato, retorna a tipificação penal sugerida e a data da prescrição.
    */
   async interpretarTipificacao({ texto, dataFato }: { texto: string, dataFato: Date }) {
-    if (!OPENAI_API_KEY) {
-      // Simulação para dev
-      return Promise.resolve({
+    try {
+      console.log('🔍 Iniciando análise de tipificação via backend...');
+      
+      const response = await fetch(`${BACKEND_URL}/api/openai/interpretar-tipificacao`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          descricaoCrime: texto,
+          contexto: `Data do fato: ${dataFato instanceof Date ? dataFato.toLocaleDateString('pt-BR') : dataFato}`
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ Erro no backend:', errorData);
+        throw new Error(`Erro no backend: ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Resposta recebida do backend');
+      
+      // Converter formato do backend para o formato esperado pelo frontend
+      return {
+        tipificacao: data.tipificacao_principal || 'Não identificado',
+        fundamentacao: data.fundamentacao || '',
+        tipificacoesAlternativas: Array.isArray(data.tipificacoes_alternativas) 
+          ? data.tipificacoes_alternativas.join(', ') 
+          : data.tipificacoes_alternativas || '',
+        tipificacoesDisciplinares: Array.isArray(data.tipificacoes_disciplinares) 
+          ? data.tipificacoes_disciplinares.join(', ') 
+          : data.tipificacoes_disciplinares || '',
+        dataPrescricao: data.prescricao_penal || '',
+        dataPrescricaoAdm: data.prescricao_administrativa || '',
+        competencia: data.competencia || '',
+        observacoes: data.observacoes || ''
+      };
+    } catch (error) {
+      console.error('❌ Erro ao interpretar tipificação:', error);
+      
+      // Fallback: dados simulados para demonstração
+      return {
         tipificacao: 'Art. 209, CPM – Lesão Corporal',
         fundamentacao: 'Simulação: Lesão corporal durante serviço militar.',
         tipificacoesAlternativas: 'Art. 129, CP – Lesão Corporal (Justiça Comum)',
@@ -300,116 +297,6 @@ export const openaiService = {
         dataPrescricaoAdm: '20/07/2034',
         competencia: 'Justiça Militar Estadual',
         observacoes: 'Simulação para ambiente de desenvolvimento.'
-      });
-    }
-    try {
-      const prompt = `Você é um ANALISTA JURÍDICO MILITAR ESPECIALIZADO em Direito Penal Militar, Direito Disciplinar e prescrição penal/administrativa, com expertise em:
-
-• Código Penal Militar (Decreto-Lei nº 1.001/69)
-• Código Penal Comum (Lei nº 2.848/40)
-• Regulamento Disciplinar da PM-PE (Decreto nº 11.817/86)
-• Estatuto dos Militares Estaduais (Lei nº 6.880/80)
-• Código de Processo Penal Militar (Decreto-Lei nº 1.002/69)
-• Jurisprudência dos Tribunais Superiores (STF, STJ, STM)
-
-ANALISE O SEGUINTE CASO:
-
-**Descrição dos fatos:** "${texto}"
-**Data do fato:** ${dataFato instanceof Date ? dataFato.toLocaleDateString('pt-BR') : dataFato}
-
-SUA ANÁLISE DEVE SER ESTRUTURADA E FUNDAMENTADA:
-
-1. **TIPIFICAÇÃO PENAL PRINCIPAL:**
-   - Identifique a tipificação penal mais adequada (CPM ou CP)
-   - Cite o artigo específico e o nome do crime
-   - Fundamente por que esta tipificação é a mais aplicável
-
-2. **TIPIFICAÇÕES ALTERNATIVAS:**
-   - Liste outras possíveis tipificações penais aplicáveis
-   - Cite artigos e fundamentação para cada uma
-
-3. **TIPIFICAÇÕES DISCIPLINARES:**
-   - Identifique possíveis transgressões disciplinares
-   - Cite artigos do Regulamento Disciplinar ou Estatuto
-   - Fundamente a aplicabilidade
-
-4. **CÁLCULO DE PRESCRIÇÃO:**
-   - Calcule a prescrição penal com base na data do fato
-   - Calcule a prescrição administrativa/disciplinar
-   - Cite os artigos utilizados no cálculo
-   - Indique se o fato está prescrito ou não
-
-5. **COMPETÊNCIA JURISDICIONAL:**
-   - Defina se é competência da Justiça Militar Estadual, Justiça Comum, ou ambas
-   - Fundamente a competência
-
-RESPONDA NO SEGUINTE FORMATO ESTRUTURADO:
-
-**Tipificação penal sugerida:** [Artigo, Código - Nome do Crime]
-**Fundamentação:** [Explicação técnica detalhada com citação de artigos e fundamentação jurídica]
-**Tipificações alternativas:** [Lista de outras tipificações aplicáveis]
-**Tipificações disciplinares:** [Transgressões disciplinares identificadas]
-**Prescrição penal:** [Data calculada - DD/MM/AAAA]
-**Prescrição administrativa:** [Data calculada - DD/MM/AAAA]
-**Competência:** [Justiça Militar Estadual / Justiça Comum / Ambas]
-**Observações:** [Observações técnicas relevantes, se houver]
-
-SEJA TÉCNICO, OBJETIVO E FUNDAMENTADO EM SUA ANÁLISE.`;
-
-      const response = await fetch(OPENAI_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: 'Você é um analista jurídico militar especializado em tipificação penal, disciplinar e prescrição.' },
-            { role: 'user', content: prompt }
-          ],
-          max_tokens: 600,
-          temperature: 0.2,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
-      }
-      const data = await response.json();
-      const content = data.choices[0]?.message?.content || '';
-      // Extrair todos os campos estruturados do texto retornado
-      const tipMatch = content.match(/\*\*Tipificação penal sugerida:\*\*\s*(.*?)(?=\n\*\*|$)/i);
-      const fundMatch = content.match(/\*\*Fundamentação:\*\*\s*([\s\S]*?)(?=\n\*\*|$)/i);
-      const tipAltMatch = content.match(/\*\*Tipificações alternativas:\*\*\s*([\s\S]*?)(?=\n\*\*|$)/i);
-      const tipDiscMatch = content.match(/\*\*Tipificações disciplinares:\*\*\s*([\s\S]*?)(?=\n\*\*|$)/i);
-      const prescPenalMatch = content.match(/\*\*Prescrição penal:\*\*\s*(.*?)(?=\n\*\*|$)/i);
-      const prescAdmMatch = content.match(/\*\*Prescrição administrativa:\*\*\s*(.*?)(?=\n\*\*|$)/i);
-      const competenciaMatch = content.match(/\*\*Competência:\*\*\s*(.*?)(?=\n\*\*|$)/i);
-      const obsMatch = content.match(/\*\*Observações:\*\*\s*([\s\S]*?)(?=\n\*\*|$)/i);
-      
-      return {
-        tipificacao: tipMatch ? tipMatch[1].trim() : 'Não identificado',
-        fundamentacao: fundMatch ? fundMatch[1].trim() : '',
-        tipificacoesAlternativas: tipAltMatch ? tipAltMatch[1].trim() : '',
-        tipificacoesDisciplinares: tipDiscMatch ? tipDiscMatch[1].trim() : '',
-        dataPrescricao: prescPenalMatch ? prescPenalMatch[1].trim() : '',
-        dataPrescricaoAdm: prescAdmMatch ? prescAdmMatch[1].trim() : '',
-        competencia: competenciaMatch ? competenciaMatch[1].trim() : '',
-        observacoes: obsMatch ? obsMatch[1].trim() : ''
-      };
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('Erro ao interpretar tipificação com IA:', error);
-      }
-      return {
-        tipificacao: 'Erro ao interpretar via IA',
-        fundamentacao: '',
-        tipificacoesAlternativas: '',
-        tipificacoesDisciplinares: '',
-        dataPrescricao: '',
-        dataPrescricaoAdm: '',
-        competencia: '',
-        observacoes: ''
       };
     }
   }
