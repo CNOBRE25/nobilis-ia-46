@@ -9,6 +9,7 @@ import { Eye, EyeOff, KeyRound } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { newPasswordSchema } from "@/utils/validation";
 import { z } from "zod";
+import { useNavigate } from 'react-router-dom';
 
 type ChangePasswordFormData = z.infer<typeof newPasswordSchema>;
 
@@ -19,7 +20,8 @@ interface ChangePasswordDialogProps {
 }
 
 export default function ChangePasswordDialog({ children, open, onOpenChange }: ChangePasswordDialogProps) {
-  const { updatePassword } = useAuth();
+  const { updatePassword, signOut } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   
   // Use controlled state if provided, otherwise use internal state
@@ -42,8 +44,11 @@ export default function ChangePasswordDialog({ children, open, onOpenChange }: C
     try {
       const { error } = await updatePassword(data.password);
       if (!error) {
+        await signOut();
         setDialogOpen(false);
         form.reset();
+        // Redirecionar para login com mensagem
+        navigate('/login', { state: { passwordChanged: true } });
       }
     } finally {
       setIsLoading(false);

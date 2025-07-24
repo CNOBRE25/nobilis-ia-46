@@ -1,18 +1,5 @@
 export interface RelatorioDados {
-  nome: string;
-  tipo_investigado: string;
-  cargo: string;
-  unidade: string;
-  data_fato: string;
-  descricao: string;
-  numero_sigpad?: string;
-  numero_despacho?: string;
-  data_despacho?: string;
-  origem?: string;
-  vitima?: string;
-  matricula?: string;
-  data_admissao?: string;
-  diligencias_realizadas?: string[];
+  [key: string]: any; // Permitir todos os campos dinamicamente
 }
 
 export interface RelatorioIA {
@@ -272,16 +259,16 @@ export const openaiService = {
       
       // Converter formato do backend para o formato esperado pelo frontend
       return {
-        tipificacao: data.tipificacao_principal || 'Não identificado',
+        tipificacao_principal: data.tipificacao_principal || 'Não identificado',
         fundamentacao: data.fundamentacao || '',
-        tipificacoesAlternativas: Array.isArray(data.tipificacoes_alternativas) 
-          ? data.tipificacoes_alternativas.join(', ') 
-          : data.tipificacoes_alternativas || '',
-        tipificacoesDisciplinares: Array.isArray(data.tipificacoes_disciplinares) 
-          ? data.tipificacoes_disciplinares.join(', ') 
-          : data.tipificacoes_disciplinares || '',
-        dataPrescricao: data.prescricao_penal || '',
-        dataPrescricaoAdm: data.prescricao_administrativa || '',
+        tipificacoes_alternativas: Array.isArray(data.tipificacoes_alternativas) 
+          ? data.tipificacoes_alternativas 
+          : (data.tipificacoes_alternativas ? [data.tipificacoes_alternativas] : []),
+        tipificacoes_disciplinares: Array.isArray(data.tipificacoes_disciplinares) 
+          ? data.tipificacoes_disciplinares 
+          : (data.tipificacoes_disciplinares ? [data.tipificacoes_disciplinares] : []),
+        prescricao_penal: data.prescricao_penal || '',
+        prescricao_administrativa: data.prescricao_administrativa || '',
         competencia: data.competencia || '',
         observacoes: data.observacoes || ''
       };

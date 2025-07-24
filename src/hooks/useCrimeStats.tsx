@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../integrations/supabase/client';
 
 interface CrimeStats {
@@ -18,6 +18,11 @@ const colors = [
   '#8dd1e1', '#d084d0', '#ffc0cb', '#dda0dd', '#98fb98'
 ];
 
+// Função para gerar hash dos dados
+const generateDataHash = (data: any): string => {
+  return JSON.stringify(data);
+};
+
 export function useCrimeStats(): CrimeStats {
   const [tiposCrime, setTiposCrime] = useState<Array<{ name: string; count: number; color: string }>>([]);
   const [transgressoes, setTransgressoes] = useState<Array<{ name: string; count: number; color: string }>>([]);
@@ -27,7 +32,28 @@ export function useCrimeStats(): CrimeStats {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
 
-  const fetchCrimeStats = useCallback(async () => {
+  // Refs para controle de cache e debounce
+  const dataHashRef = useRef<string>('');
+  const isUpdatingRef = useRef(false);
+  const lastFetchTimeRef = useRef<number>(0);
+
+  const fetchCrimeStats = useCallback(async (forceUpdate = false) => {
+    // Evitar múltiplas chamadas simultâneas
+    if (isUpdatingRef.current && !forceUpdate) {
+      console.log('Atualização de crimes já em andamento, ignorando...');
+      return;
+    }
+
+    // Debounce para evitar muitas chamadas em sequência
+    const now = Date.now();
+    if (now - lastFetchTimeRef.current < 2000 && !forceUpdate) { // 2 segundos de debounce
+      console.log('Debounce crimes: muito rápido, ignorando...');
+      return;
+    }
+
+    isUpdatingRef.current = true;
+    lastFetchTimeRef.current = now;
+
     try {
       setLoading(true);
       setError(null);
@@ -45,6 +71,17 @@ export function useCrimeStats(): CrimeStats {
       }
 
       const processosList = processos || [];
+
+      // Gerar hash dos dados para verificar se mudaram
+      const newDataHash = generateDataHash(processosList);
+      if (newDataHash === dataHashRef.current && !forceUpdate) {
+        console.log('Dados de crimes não mudaram, ignorando atualização...');
+        setLoading(false);
+        isUpdatingRef.current = false;
+        return;
+      }
+
+      dataHashRef.current = newDataHash;
 
       // 1. Estatísticas por Tipo de Crime
       const tiposCrimeCount: { [key: string]: number } = {};
@@ -135,16 +172,17 @@ export function useCrimeStats(): CrimeStats {
       setError('Erro ao carregar estatísticas de crimes');
     } finally {
       setLoading(false);
+      isUpdatingRef.current = false;
     }
   }, []);
 
   const refreshStats = useCallback(async () => {
-    await fetchCrimeStats();
+    await fetchCrimeStats(true); // Passa true para forçar a atualização
   }, [fetchCrimeStats]);
 
   useEffect(() => {
     fetchCrimeStats();
-  }, [fetchCrimeStats]);
+  }, []); // Removido fetchCrimeStats das dependências
 
   return {
     tiposCrime,

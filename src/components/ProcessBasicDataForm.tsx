@@ -6,10 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { CalendarIcon, Brain, Loader2, AlertTriangle, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import React from "react"; // Added missing import
+import React, { useState } from "react";
+import { openaiService } from "@/services/openaiService";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProcessBasicDataFormProps {
   formData: any;
@@ -34,6 +38,108 @@ export function ProcessBasicDataForm({
   isInterpretandoIA,
   interpretarTipificacaoIA
 }: ProcessBasicDataFormProps) {
+  const { toast } = useToast();
+  const [isAnalisandoFatos, setIsAnalisandoFatos] = useState(false);
+  const [analiseFatos, setAnaliseFatos] = useState<{
+    crimes: string[];
+    tipificacao: string;
+    prescricao: string;
+    competencia: string;
+  } | null>(null);
+
+  // Função para analisar automaticamente os fatos
+  const analisarFatosAutomaticamente = async () => {
+    if (!formData.descricaoFatos || formData.descricaoFatos.trim().length < 10) {
+      toast({
+        title: "Descrição insuficiente",
+        description: "A descrição dos fatos deve ter pelo menos 10 caracteres para análise.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.dataFato) {
+      toast({
+        title: "Data do fato obrigatória",
+        description: "É necessário informar a data do fato para calcular a prescrição.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsAnalisandoFatos(true);
+    setAnaliseFatos(null);
+
+    try {
+      // Preparar dados para análise
+      const dadosAnalise = {
+        descricaoFatos: formData.descricaoFatos,
+        dataFato: formData.dataFato instanceof Date 
+          ? formData.dataFato.toISOString().split('T')[0]
+          : formData.dataFato,
+        nomeInvestigado: formData.nomeInvestigado || "Não informado",
+        cargoInvestigado: formData.cargoInvestigado || "Não informado",
+        unidadeInvestigado: formData.unidadeInvestigado || "Não informado",
+        vitima: formData.vitima || "Não informado"
+      };
+
+      // Chamar IA para análise
+      const resultado = await openaiService.interpretarTipificacao({
+        texto: formData.descricaoFatos,
+        dataFato: formData.dataFato instanceof Date ? formData.dataFato : new Date(formData.dataFato)
+      });
+
+      // Processar resultado
+      if (resultado) {
+        setAnaliseFatos({
+          crimes: resultado.tipificacoes_alternativas || [],
+          tipificacao: resultado.tipificacao_principal || "Não identificada",
+          prescricao: resultado.prescricao_penal || "Não calculada",
+          competencia: resultado.competencia || "Não definida"
+        });
+
+        // Atualizar campos do formulário automaticamente
+        if (resultado.tipificacao_principal) {
+          setField('tipoCrime', resultado.tipificacao_principal);
+        }
+
+        toast({
+          title: "Análise concluída!",
+          description: "Crimes identificados e tipificação aplicada automaticamente.",
+        });
+      }
+    } catch (error: any) {
+      console.error('Erro na análise automática:', error);
+      toast({
+        title: "Erro na análise",
+        description: error.message || "Erro ao analisar os fatos automaticamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAnalisandoFatos(false);
+    }
+  };
+
+  // Função para aplicar análise automaticamente
+  const aplicarAnalise = () => {
+    if (analiseFatos) {
+      // Aplicar crimes identificados
+      if (analiseFatos.crimes.length > 0) {
+        setField('crimesSelecionados', analiseFatos.crimes);
+      }
+
+      // Aplicar tipificação principal
+      if (analiseFatos.tipificacao) {
+        setField('tipoCrime', analiseFatos.tipificacao);
+      }
+
+      toast({
+        title: "Análise aplicada!",
+        description: "Os dados foram aplicados automaticamente ao formulário.",
+      });
+    }
+  };
+
   // Lista de crimes agrupados por categoria
   const crimes = {
     "Crimes contra a Pessoa": [
@@ -200,7 +306,7 @@ export function ProcessBasicDataForm({
                 onChange={(e) => setField('numeroProcesso', e.target.value)}
                 disabled={isEditMode}
                 className={`mt-1 bg-white/20 border-white/30 text-white placeholder:text-white/70 ${isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                placeholder="Digite o número do processo"
+                placeholder={isEditMode ? "Número do processo (não pode ser alterado)" : "Digite qualquer número de processo"}
               />
             </div>
             
@@ -410,6 +516,73 @@ export function ProcessBasicDataForm({
             className="bg-white/20 border-white/30 text-white placeholder:text-white/70 min-h-[200px] resize-none"
             placeholder="Descreva detalhadamente os fatos ocorridos..."
           />
+          <div className="mt-4 flex justify-end">
+            <Button
+              onClick={analisarFatosAutomaticamente}
+              disabled={isAnalisandoFatos || !formData.descricaoFatos || formData.descricaoFatos.trim().length < 10 || !formData.dataFato}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isAnalisandoFatos ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Analisando...
+                </>
+              ) : (
+                <>
+                  <Brain className="mr-2 h-4 w-4" />
+                  Analisar Fatos
+                </>
+              )}
+            </Button>
+            {analiseFatos && (
+              <Button
+                onClick={aplicarAnalise}
+                disabled={!analiseFatos || !formData.descricaoFatos}
+                className="ml-2 bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Aplicar Análise
+              </Button>
+            )}
+          </div>
+
+          {/* Resultados da Análise Automática */}
+          {analiseFatos && (
+            <div className="mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="h-5 w-5 text-green-400" />
+                <h4 className="text-green-300 font-semibold">Análise Automática Concluída</h4>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <h5 className="text-green-200 font-medium mb-2">Tipificação Principal:</h5>
+                  <p className="text-white bg-green-500/20 p-2 rounded">{analiseFatos.tipificacao}</p>
+                </div>
+                
+                <div>
+                  <h5 className="text-green-200 font-medium mb-2">Prescrição Penal:</h5>
+                  <p className="text-white bg-green-500/20 p-2 rounded">{analiseFatos.prescricao}</p>
+                </div>
+                
+                <div>
+                  <h5 className="text-green-200 font-medium mb-2">Competência:</h5>
+                  <p className="text-white bg-green-500/20 p-2 rounded">{analiseFatos.competencia}</p>
+                </div>
+                
+                <div>
+                  <h5 className="text-green-200 font-medium mb-2">Crimes Identificados:</h5>
+                  <div className="flex flex-wrap gap-1">
+                    {analiseFatos.crimes.map((crime, index) => (
+                      <Badge key={index} className="bg-green-600 text-white text-xs">
+                        {crime}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -424,26 +597,73 @@ export function ProcessBasicDataForm({
           </div>
           <div className="space-y-4">
             <div>
-              <Label className="text-white text-sm font-medium">Selecione o crime (opcional)</Label>
-              <Select
-                value={formData.tipoCrime}
-                onValueChange={value => setField('tipoCrime', value)}
-              >
-                <SelectTrigger className="mt-1 bg-white/20 border-white/30 text-white">
-                  <SelectValue placeholder="Selecione um crime" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(crimes).map(([categoria, lista]) => (
-                    <React.Fragment key={categoria}>
-                      <div className="px-2 py-1 text-xs text-gray-400 uppercase tracking-wide select-none">{categoria}</div>
-                      {lista.map(crime => (
-                        <SelectItem key={crime} value={crime}>{crime}</SelectItem>
-                      ))}
-                      <div className="my-1" />
-                    </React.Fragment>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-white text-sm font-medium">Selecione os crimes (múltipla seleção)</Label>
+              <div className="mt-2 max-h-64 overflow-y-auto bg-white/10 rounded-lg border border-white/20 p-3">
+                {Object.entries(crimes).map(([categoria, lista]) => (
+                  <div key={categoria} className="mb-4">
+                    <div className="px-2 py-1 text-xs text-blue-300 uppercase tracking-wide font-medium border-b border-white/20 mb-2">
+                      {categoria}
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {lista.map(crime => {
+                        const isSelected = formData.crimesSelecionados?.includes(crime) || false;
+                        return (
+                          <div key={crime} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`crime-${crime}`}
+                              checked={isSelected}
+                              onCheckedChange={(checked) => {
+                                const crimesAtuais = formData.crimesSelecionados || [];
+                                if (checked) {
+                                  // Adicionar crime
+                                  setField('crimesSelecionados', [...crimesAtuais, crime]);
+                                } else {
+                                  // Remover crime
+                                  setField('crimesSelecionados', crimesAtuais.filter(c => c !== crime));
+                                }
+                              }}
+                              className="text-blue-400"
+                            />
+                            <Label 
+                              htmlFor={`crime-${crime}`} 
+                              className="text-white text-sm cursor-pointer hover:text-blue-200 transition-colors"
+                            >
+                              {crime}
+                            </Label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Mostrar crimes selecionados */}
+              {formData.crimesSelecionados && formData.crimesSelecionados.length > 0 && (
+                <div className="mt-4">
+                  <Label className="text-white text-sm font-medium">Crimes Selecionados:</Label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {formData.crimesSelecionados.map((crime, index) => (
+                      <Badge 
+                        key={index} 
+                        variant="secondary" 
+                        className="bg-blue-600/20 text-blue-200 border-blue-400/30"
+                      >
+                        {crime}
+                        <button
+                          onClick={() => {
+                            const crimesAtuais = formData.crimesSelecionados || [];
+                            setField('crimesSelecionados', crimesAtuais.filter(c => c !== crime));
+                          }}
+                          className="ml-2 text-blue-300 hover:text-red-300 transition-colors"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

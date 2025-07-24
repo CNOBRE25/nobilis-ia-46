@@ -17,6 +17,7 @@ interface StatisticsPageProps {
 
 const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
   const [selectedTab, setSelectedTab] = useState("geral");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   const { 
     stats, 
@@ -35,7 +36,6 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
   const {
     tiposCrime,
     transgressoes,
-    sexoVitima,
     unidadesInvestigado,
     crimesPorMes,
     loading: crimeLoading,
@@ -46,6 +46,9 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
 
   // Função de atualização controlada
   const handleRefresh = async () => {
+    if (isRefreshing) return; // Evitar múltiplos cliques
+    
+    setIsRefreshing(true);
     try {
       await Promise.all([refreshStats(), refreshCrimeStats()]);
       toast({
@@ -58,6 +61,8 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
         description: "Não foi possível atualizar as estatísticas.",
         variant: "destructive",
       });
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -75,7 +80,7 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
       
       return () => clearTimeout(timer);
     }
-  }, [onProcessSaved, refreshStats, toast]);
+  }, [onProcessSaved]); // Removido refreshStats e toast das dependências
 
   const getPriorityBadge = (prioridade: string) => {
     switch (prioridade) {
@@ -118,13 +123,13 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
             )}
             <Button
               onClick={handleRefresh}
-              disabled={loading}
+              disabled={loading || isRefreshing}
               variant="outline"
               size="sm"
               className="text-white border-white flex items-center gap-2"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Atualizar
+              <RefreshCw className={`h-4 w-4 ${loading || isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Atualizando...' : 'Atualizar'}
             </Button>
             <Button onClick={onClose} variant="outline" className="text-white border-white">
               Fechar

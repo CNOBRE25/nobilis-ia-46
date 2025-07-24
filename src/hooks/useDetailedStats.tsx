@@ -100,7 +100,7 @@ export function useDetailedStats() {
 
       // Buscar todos os processos
       const { data: processos, error: processosError } = await supabase
-        .from('processos' as any)
+        .from('processos')
         .select('*')
         .order('data_recebimento', { ascending: false });
 
@@ -110,20 +110,18 @@ export function useDetailedStats() {
         return;
       }
 
-      const processosList = (processos as any[]) || [];
+      const processosList = processos || [];
 
-      // Gerar hash dos dados atuais
-      const currentDataHash = generateDataHash(processosList);
-      
-      // Verificar se os dados realmente mudaram
-      if (dataHashRef.current === currentDataHash && !forceUpdate) {
-        console.log('Dados inalterados, mantendo cache...');
+      // Gerar hash dos dados para verificar se mudaram
+      const newDataHash = generateDataHash(processosList);
+      if (newDataHash === dataHashRef.current && !forceUpdate) {
+        console.log('Dados não mudaram, ignorando atualização...');
         setLoading(false);
+        isUpdatingRef.current = false;
         return;
       }
 
-      // Atualizar hash apenas se os dados mudaram
-      dataHashRef.current = currentDataHash;
+      dataHashRef.current = newDataHash;
 
       // Calcular estatísticas básicas
       const totalProcessos = processosList.length;
@@ -290,12 +288,19 @@ export function useDetailedStats() {
   // Buscar estatísticas na montagem do componente
   useEffect(() => {
     fetchDetailedStats(true); // Força primeira carga
-  }, [fetchDetailedStats]);
+  }, []); // Removido fetchDetailedStats das dependências
 
   // Função para atualizar estatísticas com debounce
   const [debouncedRefreshStats] = useDebouncedAsync(() => fetchDetailedStats(true), 500);
 
-  // Cleanup do timer no unmount removido (agora é responsabilidade do hook utilitário)
+  // Cleanup do timer no unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   return {
     stats,

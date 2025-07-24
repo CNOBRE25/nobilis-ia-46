@@ -150,7 +150,7 @@ export const ProcessDetailsForm: React.FC<ProcessDetailsFormProps> = ({
       <div className="flex justify-end pt-4 border-t border-white/20">
         <Button
           onClick={handleSaveDetalhes}
-          disabled={isSavingDetalhes || (!savedProcessId && !editProcess?.id)}
+          disabled={isSavingDetalhes}
           className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
         >
           {isSavingDetalhes ? (

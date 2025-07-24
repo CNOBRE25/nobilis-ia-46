@@ -2,15 +2,33 @@ require('dotenv').config({ path: '.env.local' });
 console.log('DEBUG OPENAI_API_KEY:', process.env.OPENAI_API_KEY);
 const express = require('express');
 const cors = require('cors');
-const fetch = require('node-fetch');
-require('dotenv').config({ path: '.env.local' });
+
+// Importar fetch corretamente para Node.js
+let fetch;
+try {
+  // Tentar usar fetch nativo (Node.js 18+)
+  fetch = global.fetch;
+} catch (error) {
+  // Fallback para node-fetch
+  fetch = require('node-fetch');
+}
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3003', 'http://localhost:3004', 'http://localhost:3005', 'http://localhost:3006', 'http://localhost:3023'],
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003',
+    'http://localhost:3004',
+    'http://localhost:3005',
+    'http://localhost:3006',
+    'http://localhost:3023',
+    'http://localhost:5177' // <--- ADICIONE ESTA LINHA
+  ],
   credentials: true
 }));
 app.use(express.json());
@@ -23,6 +41,15 @@ const limiter = rateLimit({
   message: 'Muitas requisições, tente novamente mais tarde.'
 });
 app.use('/api/openai', limiter);
+
+// Rota de health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    openai_configured: !!process.env.OPENAI_API_KEY
+  });
+});
 
 // Rota para análise de tipificação penal
 app.post('/api/openai/interpretar-tipificacao', async (req, res) => {
@@ -38,6 +65,8 @@ app.post('/api/openai/interpretar-tipificacao', async (req, res) => {
       return res.status(500).json({ error: 'Chave da API não configurada no servidor' });
     }
 
+    console.log('🔍 Fazendo requisição para OpenAI...');
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -76,9 +105,11 @@ Seja preciso, técnico e fundamentado na legislação brasileira.`
       }),
     });
 
+    console.log('📡 Status da resposta OpenAI:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Erro na API OpenAI:', errorText);
+      console.error('❌ Erro na API OpenAI:', errorText);
       return res.status(response.status).json({ 
         error: 'Erro na API da OpenAI',
         details: errorText 
@@ -92,12 +123,14 @@ Seja preciso, técnico e fundamentado na legislação brasileira.`
       return res.status(500).json({ error: 'Resposta vazia da API' });
     }
 
+    console.log('✅ Resposta recebida da OpenAI');
+
     // Tentar fazer parse do JSON
     try {
       const parsedResponse = JSON.parse(content);
       res.json(parsedResponse);
     } catch (parseError) {
-      console.error('Erro ao fazer parse da resposta:', parseError);
+      console.error('❌ Erro ao fazer parse da resposta:', parseError);
       // Fallback: retornar resposta como texto
       res.json({
         tipificacao_principal: "Erro no processamento",
@@ -112,7 +145,7 @@ Seja preciso, técnico e fundamentado na legislação brasileira.`
     }
 
   } catch (error) {
-    console.error('Erro no servidor:', error);
+    console.error('❌ Erro no servidor:', error);
     res.status(500).json({ 
       error: 'Erro interno do servidor',
       details: error.message 
@@ -134,6 +167,8 @@ app.post('/api/openai/gerar-relatorio', async (req, res) => {
       return res.status(500).json({ error: 'Chave da API não configurada no servidor' });
     }
 
+    console.log('🔍 Gerando relatório com IA...');
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -145,35 +180,9 @@ app.post('/api/openai/gerar-relatorio', async (req, res) => {
         messages: [
           {
             role: 'system',
-            content: `Você é um perito jurídico especializado em elaborar relatórios de investigação fundamentados. Elabore um relatório técnico-jurídico completo e estruturado.
-
-FORMATO DO RELATÓRIO:
-
-1. PRELIMINARES
-   - Identificação do processo
-   - Competência jurisdicional
-   - Base legal
-
-2. DOS FATOS
-   - Narrativa cronológica dos fatos
-   - Elementos probatórios disponíveis
-
-3. DAS DILIGÊNCIAS
-   - Diligências realizadas
-   - Testemunhas ouvidas
-   - Perícias realizadas
-
-4. DA FUNDAMENTAÇÃO JURÍDICA
-   - Tipificação penal principal
-   - Fundamentação legal detalhada
-   - Jurisprudência aplicável
-   - Elementos do tipo penal
-
-5. DAS CONCLUSÕES
-   - Síntese conclusiva
-   - Recomendações
-
-Seja técnico, preciso e fundamentado na legislação brasileira.`
+            content: `Você é um perito jurídico especializado em elaborar relatórios de investigação fundamentados. Analise TODOS os campos do processo abaixo e elabore um relatório técnico-jurídico completo, estruturado e fundamentado, considerando cada informação fornecida. Use linguagem formal, técnica e cite a legislação e jurisprudência aplicáveis.\n\nIMPORTANTE: Considere cada campo do JSON como relevante para a análise.\n\n` +
+              Object.entries(dadosProcesso).map(([k, v]) => `- ${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`).join('\n') +
+              `\n\nFORMATO DO RELATÓRIO:\n\n1. PRELIMINARES\n   - Identificação do processo\n   - Competência jurisdicional\n   - Base legal\n\n2. DOS FATOS\n   - Narrativa cronológica dos fatos\n   - Elementos probatórios disponíveis\n\n3. DAS DILIGÊNCIAS\n   - Diligências realizadas\n   - Testemunhas ouvidas\n   - Perícias realizadas\n\n4. DA FUNDAMENTAÇÃO JURÍDICA\n   - Tipificação penal principal\n   - Fundamentação legal detalhada\n   - Jurisprudência aplicável\n   - Elementos do tipo penal\n\n5. DAS CONCLUSÕES\n   - Síntese conclusiva\n   - Recomendações\n\nSeja técnico, preciso e fundamentado na legislação brasileira.`
           },
           {
             role: 'user',
@@ -185,9 +194,11 @@ Seja técnico, preciso e fundamentado na legislação brasileira.`
       }),
     });
 
+    console.log('📡 Status da resposta OpenAI:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Erro na API OpenAI:', errorText);
+      console.error('❌ Erro na API OpenAI:', errorText);
       return res.status(response.status).json({ 
         error: 'Erro na API da OpenAI',
         details: errorText 
@@ -201,10 +212,15 @@ Seja técnico, preciso e fundamentado na legislação brasileira.`
       return res.status(500).json({ error: 'Resposta vazia da API' });
     }
 
-    res.json({ relatorio: content });
+    console.log('✅ Relatório gerado com sucesso');
+
+    res.json({ 
+      relatorio: content,
+      timestamp: new Date().toISOString()
+    });
 
   } catch (error) {
-    console.error('Erro no servidor:', error);
+    console.error('❌ Erro no servidor:', error);
     res.status(500).json({ 
       error: 'Erro interno do servidor',
       details: error.message 
@@ -212,19 +228,18 @@ Seja técnico, preciso e fundamentado na legislação brasileira.`
   }
 });
 
-// Rota de teste
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'Servidor backend funcionando',
-    timestamp: new Date().toISOString()
-  });
-});
-
+// Iniciar servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor backend rodando na porta ${PORT}`);
-  console.log(`📡 Endpoints disponíveis:`);
-  console.log(`   - POST /api/openai/interpretar-tipificacao`);
-  console.log(`   - POST /api/openai/gerar-relatorio`);
-  console.log(`   - GET /api/health`);
+  console.log('📡 Endpoints disponíveis:');
+  console.log('   - POST /api/openai/interpretar-tipificacao');
+  console.log('   - POST /api/openai/gerar-relatorio');
+  console.log('   - GET /api/health');
+  
+  if (!process.env.OPENAI_API_KEY) {
+    console.log('⚠️  ATENÇÃO: OPENAI_API_KEY não configurada!');
+    console.log('💡 Configure a variável OPENAI_API_KEY no arquivo .env.local');
+  } else {
+    console.log('✅ OPENAI_API_KEY configurada');
+  }
 }); 

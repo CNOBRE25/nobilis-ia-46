@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCrimeStats } from "../hooks/useCrimeStats";
 import NovoProcessoForm from "./NovoProcessoForm";
+import { openaiService } from "@/services/openaiService";
 
 // Importar DILIGENCIAS do NovoProcessoForm
 const DILIGENCIAS = [
@@ -71,6 +72,14 @@ interface Process {
   relatorio_final?: any;
   data_relatorio_final?: string;
   relatorio_gerado_por?: string;
+  // Campos adicionais para IA
+  numero_despacho?: string;
+  data_despacho?: string;
+  origem_processo?: string;
+  status_funcional?: string;
+  tipo_crime?: string;
+  crimes_selecionados?: any[];
+  transgressao?: string;
 }
 
 interface ProcessListProps {
@@ -78,7 +87,7 @@ interface ProcessListProps {
   onClose: () => void;
 }
 
-const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProcessoLabel, handleEditProcess, handleDeleteProcess, handleViewProcess, calculateDaysInProcess }: any) => (
+const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProcessoLabel, handleEditProcess, handleDeleteProcess, handleViewProcess, handleGerarRelatorioIA, calculateDaysInProcess, isGeneratingReport, generatingReportFor }: any) => (
   <Card key={process.id} className="bg-white/10 backdrop-blur-sm border-white/20">
     <CardContent className="p-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -122,6 +131,11 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
               <strong>Desfecho:</strong> {process.desfecho_final}
             </p>
           )}
+          {process.relatorio_final && (
+            <p className="text-purple-300">
+              <strong>Relatório IA:</strong> Gerado em {process.data_relatorio_final ? new Date(process.data_relatorio_final).toLocaleDateString('pt-BR') : 'Data não informada'}
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
           {type === 'tramitacao' ? (
@@ -129,6 +143,18 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
               <Button onClick={() => handleEditProcess(process)} className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Edit className="h-4 w-4 mr-2" />
                 Editar
+              </Button>
+              <Button 
+                onClick={() => handleGerarRelatorioIA(process)} 
+                disabled={isGeneratingReport}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {isGeneratingReport && generatingReportFor === process.id ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Brain className="h-4 w-4 mr-2" />
+                )}
+                {isGeneratingReport && generatingReportFor === process.id ? "Gerando..." : "Relatório IA"}
               </Button>
               <Button onClick={() => handleDeleteProcess(process)} className="bg-red-600 hover:bg-red-700 text-white">
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -168,6 +194,8 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [viewingProcess, setViewingProcess] = useState<Process | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [generatingReportFor, setGeneratingReportFor] = useState<string | null>(null);
   const { refreshStats: refreshCrimeStats } = useCrimeStats();
 
   // Carregar processos do banco de dados e configurar sincronização em tempo real
@@ -365,7 +393,10 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
       origemProcesso: process.origem_processo || "",
       statusFuncional: process.status_funcional || "",
       descricaoFatos: process.descricao_fatos || "",
-      tipificacaoCriminal: process.tipo_crime || "",
+      tipoCrime: process.tipo_crime || "", // Corrigido: tipificacaoCriminal -> tipoCrime
+      crimesSelecionados: process.crimes_selecionados || [], // Adicionado campo crimesSelecionados
+      transgressao: process.transgressao || "", // Adicionado campo transgressao
+      modusOperandi: process.modus_operandi || "", // Adicionado campo modus_operandi
       diligenciasRealizadas: process.diligencias_realizadas || {},
       nomeInvestigado: process.nome_investigado || "",
       cargoInvestigado: process.cargo_investigado || "",
@@ -611,6 +642,80 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     return diffDays;
   };
 
+  const handleGerarRelatorioIA = async (process: Process) => {
+    setIsGeneratingReport(true);
+    setGeneratingReportFor(process.id);
+    
+    try {
+      // Mapear dados do processo para o formato esperado pela IA
+      const dadosProcesso = {
+        numeroProcesso: process.numero_processo || "",
+        tipoProcesso: process.tipo_processo || "",
+        prioridade: process.prioridade || "",
+        numeroDespacho: process.numero_despacho || "",
+        dataDespacho: process.data_despacho || "",
+        dataRecebimento: process.data_recebimento || "",
+        dataFato: process.data_fato || "",
+        origemProcesso: process.origem_processo || "",
+        statusFuncional: process.status_funcional || "",
+        descricaoFatos: process.descricao_fatos || "",
+        tipoCrime: process.tipo_crime || "",
+        crimesSelecionados: process.crimes_selecionados || [],
+        transgressao: process.transgressao || "",
+        modusOperandi: process.modus_operandi || "",
+        diligenciasRealizadas: process.diligencias_realizadas || {},
+        nomeInvestigado: process.nome_investigado || "",
+        cargoInvestigado: process.cargo_investigado || "",
+        unidadeInvestigado: process.unidade_investigado || "",
+        matriculaInvestigado: process.matricula_investigado || "",
+        dataAdmissao: process.data_admissao || "",
+        vitima: process.vitima || "",
+        numeroSigpad: process.numero_sigpad || "",
+        desfechoFinal: process.desfecho_final || "",
+        sugestoes: process.sugestoes || "",
+        relatorioFinal: process.relatorio_final || "",
+        id: process.id
+      };
+
+      // Gerar relatório com IA
+      const relatorioIA = await openaiService.gerarRelatorioJuridico(dadosProcesso);
+      
+      // Salvar relatório no banco
+      const { error } = await supabase
+        .from("processos")
+        .update({
+          relatorio_final: relatorioIA,
+          data_relatorio_final: new Date().toISOString(),
+          relatorio_gerado_por: user?.email || 'Sistema'
+        })
+        .eq("id", process.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Relatório gerado com sucesso!",
+        description: `Relatório IA foi gerado e salvo para o processo ${process.numero_processo}.`,
+      });
+
+      // Atualizar o processo na lista local
+      setProcesses(prev => prev.map(p => 
+        p.id === process.id 
+          ? { ...p, relatorio_final: relatorioIA, data_relatorio_final: new Date().toISOString() }
+          : p
+      ));
+
+    } catch (err: any) {
+      console.error('Erro ao gerar relatório IA:', err);
+      toast({
+        title: "Erro ao gerar relatório",
+        description: err.message || "Erro desconhecido ao gerar relatório IA.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingReport(false);
+      setGeneratingReportFor(null);
+    }
+  };
 
 
   const memoizedGetPriorityBadge = useCallback(getPriorityBadge, []);
@@ -618,6 +723,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
   const memoizedEditProcess = useCallback(handleEditProcess, []);
   const memoizedDeleteProcess = useCallback(handleDeleteProcess, []);
   const memoizedViewProcess = useCallback(handleViewProcess, []);
+  const memoizedGerarRelatorioIA = useCallback(handleGerarRelatorioIA, []);
   const memoizedCalculateDaysInProcess = useCallback(calculateDaysInProcess, []);
 
   if (loading) {
@@ -669,7 +775,10 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
                 handleEditProcess={memoizedEditProcess}
                 handleDeleteProcess={memoizedDeleteProcess}
                 handleViewProcess={memoizedViewProcess}
+                handleGerarRelatorioIA={memoizedGerarRelatorioIA}
                 calculateDaysInProcess={memoizedCalculateDaysInProcess}
+                isGeneratingReport={isGeneratingReport}
+                generatingReportFor={generatingReportFor}
               />
             ))}
 

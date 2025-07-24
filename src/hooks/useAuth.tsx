@@ -523,53 +523,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: { message: 'Password does not meet requirements' } as AuthError };
       }
 
-      // Check if user is using mock authentication (custom auth)
-      const isCustomAuth = user?.email === 'crn.nobre@gmail.com' || 
-                          user?.email === 'admin@nobilis-ia.com' || 
-                          user?.email === 'advogado@nobilis-ia.com' ||
-                          session?.access_token?.includes('mock');
+      // Sempre usar Supabase Auth para todos os usuários
+      const { error } = await supabase.auth.updateUser({ password });
 
-      if (isCustomAuth) {
-        // For custom auth users, simulate password update
-        // In a real implementation, you would update the custom users table
-        await logSecurityEvent('PASSWORD_UPDATED', user?.id, {
-          updated_at: new Date().toISOString(),
-          auth_method: 'custom'
+      if (error) {
+        toast({
+          title: "Erro",
+          description: error.message,
+          variant: "destructive",
         });
-
+        await logSecurityEvent('PASSWORD_UPDATE_FAILED', user?.id, {
+          error: error.message
+        });
+        return { error };
+      } else {
         toast({
           title: "Senha atualizada!",
           description: "Sua senha foi alterada com sucesso.",
         });
-
+        await logSecurityEvent('PASSWORD_UPDATED', user?.id, {
+          updated_at: new Date().toISOString()
+        });
         return { error: undefined };
-      } else {
-        // Skip server-side validation for now to avoid RPC issues
-        // The local validation is sufficient for password strength checking
-
-        // Try to update password via Supabase Auth
-        const { error } = await supabase.auth.updateUser({ password });
-
-        if (error) {
-          toast({
-            title: "Erro",
-            description: error.message,
-            variant: "destructive",
-          });
-          await logSecurityEvent('PASSWORD_UPDATE_FAILED', user?.id, {
-            error: error.message
-          });
-          return { error };
-        } else {
-          toast({
-            title: "Senha atualizada!",
-            description: "Sua senha foi alterada com sucesso.",
-          });
-          await logSecurityEvent('PASSWORD_UPDATED', user?.id, {
-            updated_at: new Date().toISOString()
-          });
-          return { error: undefined };
-        }
       }
     } catch (error) {
       if (import.meta.env.DEV) {
