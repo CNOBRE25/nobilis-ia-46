@@ -134,9 +134,9 @@ Responda em JSON com a seguinte estrutura:
 // Endpoint para gerar relatório
 app.post('/api/openai/gerar-relatorio', async (req, res) => {
   try {
-    const dados = req.body;
+    const dadosProcesso = req.body.dadosProcesso || req.body;
     
-    if (!dados.descricao) {
+    if (!dadosProcesso.descricao && !dadosProcesso.descricaoFatos && !dadosProcesso.descricao_fatos) {
       return res.status(400).json({ error: 'Descrição é obrigatória' });
     }
 
@@ -146,34 +146,8 @@ app.post('/api/openai/gerar-relatorio', async (req, res) => {
       return res.status(500).json({ error: 'Chave da API não configurada no servidor' });
     }
 
-    const prompt = `Você é um ANALISTA JURÍDICO MILITAR ESPECIALIZADO.
-
-Gere um RELATÓRIO JURÍDICO COMPLETO baseado nos seguintes dados:
-
-NOME: ${dados.nome || 'Não informado'}
-CARGO: ${dados.cargo || 'Não informado'}
-UNIDADE: ${dados.unidade || 'Não informado'}
-DATA DO FATO: ${dados.data_fato || 'Não informado'}
-TIPO DE INVESTIGADO: ${dados.tipo_investigado || 'Não informado'}
-DESCRIÇÃO: ${dados.descricao}
-NÚMERO SIGPAD: ${dados.numero_sigpad || 'Não informado'}
-NÚMERO DESPACHO: ${dados.numero_despacho || 'Não informado'}
-
-O relatório deve incluir:
-1. RESUMO EXECUTIVO
-2. ANÁLISE JURÍDICA DETALHADA
-3. TIPIFICAÇÕES PENAIS APLICÁVEIS
-4. RECOMENDAÇÕES
-5. CONCLUSÕES
-
-Responda em JSON com a seguinte estrutura:
-{
-  "resumo": "Resumo executivo do caso",
-  "analise": "Análise jurídica detalhada",
-  "tipificacoes": "Tipificações penais aplicáveis",
-  "recomendacoes": "Recomendações para o caso",
-  "conclusoes": "Conclusões finais"
-}`;
+    // Novo prompt detalhado
+    const prompt = `Você é um ANALISTA JURÍDICO MILITAR ESPECIALIZADO.\n\nAnalise o(s) seguinte(s) processo(s) e gere um RELATÓRIO JURÍDICO COMPLETO, considerando:\n\n1. O status do serviço do(s) acusado(s) no momento do fato (em serviço, de folga, policial civil, policial penal, etc).\n2. O contexto do fato e a função/cargo de cada investigado.\n3. A legislação pertinente (CPM, CP, Estatuto, Código Disciplinar, etc), conforme o status do serviço e o tipo de agente.\n4. Identifique todos os crimes e/ou transgressões disciplinares atribuíveis, com a devida tipificação legal.\n5. Calcule a prescrição penal e administrativa de cada crime/transgressão, com base na data do fato.\n6. Indique a competência (Justiça Militar Estadual/Federal ou Justiça Comum) para cada conduta.\n7. Estruture a resposta em JSON, incluindo para cada investigado:\n   - Nome\n   - Cargo/função\n   - Status do serviço no momento do fato\n   - Crimes/transgressões identificados (com artigo e lei)\n   - Fundamentação jurídica\n   - Data da prescrição penal\n   - Data da prescrição administrativa\n   - Competência\n   - Observações relevantes\n\nDADOS DO PROCESSO:\n${JSON.stringify(dadosProcesso, null, 2)}\n\nResponda em JSON com a seguinte estrutura:\n{\n  "investigados": [\n    {\n      "nome": "",\n      "cargo": "",\n      "status_servico": "",\n      "crimes": [\n        {\n          "descricao": "",\n          "artigo": "",\n          "lei": "",\n          "fundamentacao": "",\n          "prescricao_penal": "",\n          "prescricao_administrativa": "",\n          "competencia": "",\n          "observacoes": ""\n        }\n      ]\n    }\n  ],\n  "analise_geral": "",\n  "recomendacoes": "",\n  "conclusoes": ""\n}`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -194,7 +168,7 @@ Responda em JSON com a seguinte estrutura:
           }
         ],
         temperature: 0.3,
-        max_tokens: 3000
+        max_tokens: 3500
       })
     });
 
@@ -212,11 +186,9 @@ Responda em JSON com a seguinte estrutura:
     } catch (parseError) {
       // Se não conseguir fazer parse, retornar como texto
       res.json({
-        resumo: 'Relatório gerado',
-        analise: content,
-        tipificacoes: 'Verificar análise completa',
-        recomendacoes: 'Verificar análise completa',
-        conclusoes: 'Verificar análise completa'
+        analise_geral: 'Relatório gerado',
+        detalhes: content,
+        observacoes: 'Resposta não estruturada - verificar análise completa'
       });
     }
 
