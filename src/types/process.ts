@@ -26,4 +26,10 @@ export interface Investigado {
   matricula: string;
   dataAdmissao: Date | null;
   // Adicione outros campos relevantes se necessário
+}
+
+export interface Vitima {
+  id: number;
+  nome: string;
+  // Adicione outros campos relevantes se necessário
 } 

@@ -126,7 +126,7 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
               </span>
             )}
           </div>
-          {type === 'arquivados' && process.desfecho_final && (
+          {process.desfecho_final && (
             <p className="text-green-300">
               <strong>Desfecho:</strong> {process.desfecho_final}
             </p>
@@ -170,6 +170,22 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
                 <Eye className="h-4 w-4 mr-2" />
                 Consultar
               </Button>
+              <Button onClick={() => {
+                // Abrir diálogo de exclusão para processos finalizados
+                if (typeof window !== 'undefined' && window.setShowDeleteDialog) {
+                  window.setShowDeleteDialog(true);
+                  window.setProcessToDelete(process);
+                } else if (typeof setShowDeleteDialog === 'function' && typeof setProcessToDelete === 'function') {
+                  setShowDeleteDialog(true);
+                  setProcessToDelete(process);
+                } else {
+                  // fallback para prop drilling
+                  handleDeleteProcess(process);
+                }
+              }} className="bg-red-600 hover:bg-red-700 text-white">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir
+              </Button>
             </>
           ) : null}
         </div>
@@ -203,93 +219,98 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     console.log('useEffect triggered - type:', type);
     loadProcesses();
     
-    // Configurar sincronização em tempo real
-    const channel = supabase
-      .channel('processos-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'processos'
-        },
-        (payload) => {
-          console.log('Mudança detectada em tempo real:', payload);
-          
-          // Atualizar a lista baseado no tipo de mudança
-          if (payload.eventType === 'INSERT') {
-            // Novo processo adicionado
-            const newProcess = payload.new as Process;
-            const shouldInclude = type === 'tramitacao' 
-              ? newProcess.status === 'tramitacao'
-              : newProcess.status === 'concluido' || newProcess.status === 'arquivado';
+    // Só configurar sincronização em tempo real para tipos específicos
+    if (type === 'tramitacao' || type === 'arquivados') {
+      // Configurar sincronização em tempo real
+      const channel = supabase
+        .channel('processos-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'processos'
+          },
+          (payload) => {
+            console.log('Mudança detectada em tempo real:', payload);
             
-            if (shouldInclude) {
-              setProcesses(prev => [newProcess, ...prev]);
+            // Atualizar a lista baseado no tipo de mudança
+            if (payload.eventType === 'INSERT') {
+              // Novo processo adicionado
+              const newProcess = payload.new as Process;
+              const shouldInclude = type === 'tramitacao' 
+                ? newProcess.status === 'tramitacao'
+                : newProcess.status === 'concluido' || newProcess.status === 'arquivado';
+              
+              if (shouldInclude) {
+                setProcesses(prev => [newProcess, ...prev]);
+                toast({
+                  title: "Novo Processo",
+                  description: `Processo ${newProcess.numero_processo} foi adicionado.`,
+                });
+              }
+            } else if (payload.eventType === 'UPDATE') {
+              // Processo atualizado
+              const updatedProcess = payload.new as Process;
+              const oldProcess = payload.old as Process;
+              
+              console.log('UPDATE detectado:', {
+                oldStatus: oldProcess.status,
+                newStatus: updatedProcess.status,
+                processId: updatedProcess.id,
+                currentType: type
+              });
+              
+              setProcesses(prev => {
+                // Se o status mudou, remover da lista atual se necessário
+                if (oldProcess.status !== updatedProcess.status) {
+                  console.log('Status mudou, removendo processo da lista atual');
+                  const filtered = prev.filter(p => p.id !== updatedProcess.id);
+                  // Se o novo status corresponde ao tipo atual, adicionar
+                  const shouldInclude = type === 'tramitacao' 
+                    ? updatedProcess.status === 'tramitacao'
+                    : updatedProcess.status === 'concluido' || updatedProcess.status === 'arquivado';
+                  
+                  console.log('Deve incluir na lista atual?', shouldInclude);
+                  
+                  if (shouldInclude) {
+                    console.log('Adicionando processo atualizado à lista');
+                    return [updatedProcess, ...filtered];
+                  }
+                  console.log('Processo não deve estar na lista atual');
+                  return filtered;
+                }
+                // Se apenas dados foram atualizados, atualizar o processo
+                console.log('Apenas dados atualizados, mantendo processo na lista');
+                return prev.map(p => p.id === updatedProcess.id ? updatedProcess : p);
+              });
+              
               toast({
-                title: "Novo Processo",
-                description: `Processo ${newProcess.numero_processo} foi adicionado.`,
+                title: "Processo Atualizado",
+                description: `Processo ${updatedProcess.numero_processo} foi atualizado.`,
+              });
+            } else if (payload.eventType === 'DELETE') {
+              // Processo excluído
+              const deletedProcess = payload.old as Process;
+              setProcesses(prev => prev.filter(p => p.id !== deletedProcess.id));
+              
+              toast({
+                title: "Processo Excluído",
+                description: `Processo ${deletedProcess.numero_processo} foi excluído.`,
               });
             }
-          } else if (payload.eventType === 'UPDATE') {
-            // Processo atualizado
-            const updatedProcess = payload.new as Process;
-            const oldProcess = payload.old as Process;
-            
-            console.log('UPDATE detectado:', {
-              oldStatus: oldProcess.status,
-              newStatus: updatedProcess.status,
-              processId: updatedProcess.id,
-              currentType: type
-            });
-            
-            setProcesses(prev => {
-              // Se o status mudou, remover da lista atual se necessário
-              if (oldProcess.status !== updatedProcess.status) {
-                console.log('Status mudou, removendo processo da lista atual');
-                const filtered = prev.filter(p => p.id !== updatedProcess.id);
-                // Se o novo status corresponde ao tipo atual, adicionar
-                const shouldInclude = type === 'tramitacao' 
-                  ? updatedProcess.status === 'tramitacao'
-                  : updatedProcess.status === 'concluido' || updatedProcess.status === 'arquivado';
-                
-                console.log('Deve incluir na lista atual?', shouldInclude);
-                
-                if (shouldInclude) {
-                  console.log('Adicionando processo atualizado à lista');
-                  return [updatedProcess, ...filtered];
-                }
-                console.log('Processo não deve estar na lista atual');
-                return filtered;
-              }
-              // Se apenas dados foram atualizados, atualizar o processo
-              console.log('Apenas dados atualizados, mantendo processo na lista');
-              return prev.map(p => p.id === updatedProcess.id ? updatedProcess : p);
-            });
-            
-            toast({
-              title: "Processo Atualizado",
-              description: `Processo ${updatedProcess.numero_processo} foi atualizado.`,
-            });
-          } else if (payload.eventType === 'DELETE') {
-            // Processo excluído
-            const deletedProcess = payload.old as Process;
-            setProcesses(prev => prev.filter(p => p.id !== deletedProcess.id));
-            
-            toast({
-              title: "Processo Excluído",
-              description: `Processo ${deletedProcess.numero_processo} foi excluído.`,
-            });
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
 
-    // Cleanup da subscription
-    return () => {
-      console.log('Desconectando do canal de tempo real');
-      supabase.removeChannel(channel);
-    };
+      // Cleanup da subscription
+      return () => {
+        console.log('Desconectando do canal de tempo real');
+        supabase.removeChannel(channel);
+      };
+    }
+    // Para outros tipos, não configurar canal
+    return undefined;
   }, [type, toast]);
 
   const loadProcesses = async () => {
@@ -649,32 +670,11 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     try {
       // Mapear dados do processo para o formato esperado pela IA
       const dadosProcesso = {
-        numeroProcesso: process.numero_processo || "",
-        tipoProcesso: process.tipo_processo || "",
-        prioridade: process.prioridade || "",
-        numeroDespacho: process.numero_despacho || "",
-        dataDespacho: process.data_despacho || "",
-        dataRecebimento: process.data_recebimento || "",
-        dataFato: process.data_fato || "",
-        origemProcesso: process.origem_processo || "",
-        statusFuncional: process.status_funcional || "",
-        descricaoFatos: process.descricao_fatos || "",
-        tipoCrime: process.tipo_crime || "",
-        crimesSelecionados: process.crimes_selecionados || [],
-        transgressao: process.transgressao || "",
-        modusOperandi: process.modus_operandi || "",
-        diligenciasRealizadas: process.diligencias_realizadas || {},
-        nomeInvestigado: process.nome_investigado || "",
-        cargoInvestigado: process.cargo_investigado || "",
-        unidadeInvestigado: process.unidade_investigado || "",
-        matriculaInvestigado: process.matricula_investigado || "",
-        dataAdmissao: process.data_admissao || "",
-        vitima: process.vitima || "",
-        numeroSigpad: process.numero_sigpad || "",
-        desfechoFinal: process.desfecho_final || "",
-        sugestoes: process.sugestoes || "",
-        relatorioFinal: process.relatorio_final || "",
-        id: process.id
+        ...process,
+        descricao: process.descricao_fatos || process.descricaoFatos || '',
+        tipo_serviço: process.statusFuncional || process.status_funcional || 'Não se aplica',
+        descricao_fato: process.descricao_fatos || process.descricaoFatos || process.descricao || '',
+        data_fato: process.dataFato || process.data_fato || '',
       };
 
       // Gerar relatório com IA
@@ -738,7 +738,14 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
   }
 
   return (
-    <>
+    <div className="w-full">
+      {(type === 'tramitacao' || type === 'arquivados') && (
+        <div className="flex justify-end mb-4">
+          <Button onClick={onClose} variant="outline" className="text-white border-white">
+            Voltar ao Dashboard
+          </Button>
+        </div>
+      )}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 z-50 overflow-auto">
         <div className="container mx-auto p-6">
           <div className="flex justify-between items-center mb-6">
@@ -750,9 +757,6 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span>Sincronizado em tempo real</span>
               </div>
-              <Button onClick={onClose} variant="outline" className="text-white border-white">
-                Fechar
-              </Button>
             </div>
           </div>
 
@@ -1104,7 +1108,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 });
 

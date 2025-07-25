@@ -13,151 +13,77 @@ export interface RelatorioIA {
 }
 
 // Configuração do Backend
-const BACKEND_URL = import.meta.env.PROD 
-  ? 'https://nobilis-ia-46.vercel.app' 
-  : 'http://localhost:3002';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || (
+  import.meta.env.PROD 
+    ? 'https://nobilis-ia-46.vercel.app' 
+    : 'http://localhost:3002'
+);
 
 // Debug: Verificar se o backend está disponível
 console.log('🔍 Debug - Backend URL:', BACKEND_URL);
 
-const PROMPT_TEMPLATE = `
-Você é um ANALISTA JURÍDICO MILITAR ESPECIALIZADO na elaboração de RELATÓRIOS DE INVESTIGAÇÃO PRELIMINAR (IP) da Polícia Militar de Pernambuco, com expertise em:
+const RELATORIO_FINAL_PROMPT = ({
+  numeroProcesso = '',
+  numeroDespacho = '',
+  dataDespacho = '',
+  origemProcesso = '',
+  dataFato = '',
+  vitimas = [],
+  investigados = [],
+  descricaoFatos = '',
+  statusFuncional = '',
+  diligenciasRealizadas = {},
+  numeroSigpad = '',
+  documentos = [],
+}) => `
+Você é um ANALISTA JURÍDICO MILITAR ESPECIALIZADO. Gere um RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR fundamentado, estruturado conforme o modelo abaixo, usando todos os dados fornecidos do processo:
 
-• Código Penal Militar (Decreto-Lei nº 1.001/69)
-• Regulamento Disciplinar da PM-PE (Decreto nº 11.817/86)
-• Código Penal Comum (Lei nº 2.848/40) e legislação correlata
-• Código de Processo Penal Militar (Decreto-Lei nº 1.002/69)
-• Estatuto dos Militares Estaduais (Lei nº 6.880/80)
-• Cálculos de prescrição penal e disciplinar
-• Jurisprudência dos Tribunais Superiores (STF, STJ, STM)
-
-DADOS FORNECIDOS:
-Nome: {nome}
-Cargo/Patente: {cargo}
-Unidade: {unidade}
-Data do Fato: {data_fato}
-Tipo de Procedimento: {tipo_investigado}
-Descrição dos Fatos: {descricao}
-SIGPAD: {numero_sigpad}
-Despacho: {numero_despacho}
-Data Despacho: {data_despacho}
-Origem: {origem}
-Vítima: {vitima}
-Matrícula: {matricula}
-Admissão: {data_admissao}
-
-ELABORE UM RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR COMPLETO, FUNDAMENTADO E ESTRUTURADO:
-
-## CABECALHO
 RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR
-SIGPAD nº: {numero_sigpad}
-Despacho de Instauração nº: {numero_despacho}
-Data do Despacho: {data_despacho}
-Origem: {origem}
-Data do Fato: {data_fato}
-Vítima: {vitima}
-Investigado: {nome}
-Matrícula: {matricula}
-Admissão: {data_admissao}
-Lotação Atual: {unidade}
+PROCESSO nº: ${numeroProcesso}
+Despacho de Instauração nº: ${numeroDespacho}
+Data do Despacho: ${dataDespacho}
+Origem: ${origemProcesso}
+Data do Fato: ${dataFato}
+Vítima(s): ${(Array.isArray(vitimas) && vitimas.length > 0) ? vitimas.map(v => v.nome).join(', ') : 'Não informado'}
+Investigado(s): ${(Array.isArray(investigados) && investigados.length > 0) ? investigados.map(i => i.nome).join(', ') : 'Não informado'}
+Matrícula(s): ${(Array.isArray(investigados) && investigados.length > 0) ? investigados.map(i => i.matricula).join(', ') : 'Não informado'}
+Admissão(ões): ${(Array.isArray(investigados) && investigados.length > 0) ? investigados.map(i => i.dataAdmissao || 'Não informado').join(', ') : 'Não informado'}
+Lotação(ões) Atual(is): ${(Array.isArray(investigados) && investigados.length > 0) ? investigados.map(i => i.unidade).join(', ') : 'Não informado'}
 
-## I – DAS PRELIMINARES
+I – DAS PRELIMINARES
+[Análise pela IA]:
+Elabore um resumo objetivo dos fatos noticiados, identifique possíveis crimes ou transgressões disciplinares atribuídos aos investigados, com tipificação legal, considerando o status funcional do(s) agente(s) no momento do fato. aplique a legislação adequada (CPM, CP, Estatuto, Código Disciplinar, etc.), analise a natureza da infração e, com base na data do fato, realize o cálculo da prescrição penal ou administrativa, indicando se o fato se encontra prescrito ou se a apuração deve prosseguir.
 
-1.1. **Fatos Noticiados:**
-[Resumo objetivo e técnico dos fatos, identificando os elementos essenciais: quem, o quê, quando, onde, como e por quê]
+II – DOS FATOS
+A presente investigação preliminar foi instaurada para apurar os fatos noticiados por meio de ${origemProcesso || '[NFND / comunicação inicial]'}, que relata que, no dia ${dataFato || '[DATA DO FATO]'}, o(s) policial(is) militar(es) ${investigados && investigados.length > 0 ? investigados.map(i => i.nome).join(', ') : '[NOME / IDENTIFICAÇÃO]'}, lotado(s) no(a) ${investigados && investigados.length > 0 ? investigados.map(i => i.unidade).join(', ') : '[UNIDADE]'}, teria(m) ${descricaoFatos || '[DESCRIÇÃO RESUMIDA DOS FATOS]'}.
 
-1.2. **Análise Jurídica Preliminar:**
-[Identificação das possíveis tipificações penais e/ou disciplinares aplicáveis, com citação específica dos artigos e fundamentação técnica]
+III – DAS DILIGÊNCIAS
+Foram iniciadas diligências para esclarecimento dos fatos, conforme segue:
+${Object.keys(diligenciasRealizadas || {}).length > 0 ? Object.entries(diligenciasRealizadas).filter(([_, v]) => (v as any)?.realizada).map(([k, v]) => `- ${k}${(v as any).observacao ? ': ' + (v as any).observacao : ''}`).join('\n') : '[Lista automatizada pela IA com base nas diligências realizadas]'}
 
-1.3. **Cálculo de Prescrição:**
-[Análise da prescrição penal e administrativa com base na data do fato, citando os artigos aplicáveis e realizando o cálculo preciso]
+Documentos providenciados:
+- Ficha Funcional do(s) investigado(s)
+- Extrato do SIGPAD
+${documentos && documentos.length > 0 ? documentos.map(d => `- ${d}`).join('\n') : ''}
 
-1.4. **Competência Jurisdicional:**
-[Definição da competência (Justiça Militar Estadual, Justiça Comum, ou ambas) com fundamentação legal]
+[Resumo analítico pela IA]:
+Com base nas diligências realizadas, exponha sinteticamente os elementos apurados em cada documento ou etapa da investigação.
 
-## II – DOS FATOS
+IV – DA FUNDAMENTAÇÃO
+[Elaboração pela IA com base nos dados e desfecho sugerido]:
+Consolide os elementos fáticos e jurídicos da investigação, oferecendo uma análise técnica fundamentada, com respaldo na legislação vigente, doutrina e jurisprudência nacional, destacando o nexo de causalidade, a existência (ou não) de autoria e materialidade, e a adequação típica, conforme o enquadramento legal aplicável (CP, CPM, CPP, Código Disciplinar, Estatuto da Corporação, etc.).
 
-2.1. **Narrativa dos Fatos:**
-A presente investigação preliminar foi instaurada com a finalidade de apurar os fatos noticiados por meio da {origem}, que relata que, no dia {data_fato}, o policial militar {nome}, lotado no(a) {unidade}, teria {descricao}.
+V – DA CONCLUSÃO
+[Decisão orientada pela IA com justificativa]:
+Considerando os elementos colhidos na presente investigação, conclua, justificadamente, por uma das seguintes providências:
+- Instauração de SAD (Sindicato Administrativo Disciplinar)
+- Instauração de IPM (Inquérito Policial Militar)
+- Instauração de PADS (Processo Administrativo Disciplinar Sumaríssimo)
+- Redistribuição para outra unidade
+- Arquivamento, por ausência de elementos suficientes ou prescrição
+A conclusão deve vir acompanhada da justificativa legal e técnica, considerando o grau de relevância dos fatos, a existência de indícios mínimos de autoria e materialidade, e os critérios de oportunidade e conveniência da administração pública.
 
-[Desenvolver narrativa detalhada, cronológica e objetiva dos fatos, destacando elementos relevantes para a análise jurídica]
-
-2.2. **Elementos de Prova Identificados:**
-[Listar e analisar os elementos probatórios disponíveis ou que poderiam ser colhidos]
-
-2.3. **Contexto Funcional:**
-[Analisar se o fato ocorreu em serviço, de folga, ou em situação híbrida, e suas implicações jurídicas]
-
-## III – DAS DILIGÊNCIAS
-
-3.1. **Diligências Realizadas:**
-• Colheita de depoimentos
-• Requisição de documentos
-• Análise de registros funcionais
-• Verificação de antecedentes
-• [Outras diligências específicas ao caso]
-
-3.2. **Documentos Colhidos:**
-• Ficha Funcional do investigado
-• Extrato do SIGPAD
-• Registros de ocorrência
-• [Documentos específicos do caso]
-
-3.3. **Resumo Analítico das Diligências:**
-[Exposição sintética dos elementos apurados e sua relevância para a conclusão]
-
-## IV – DA FUNDAMENTAÇÃO
-
-4.1. **Análise Fática:**
-[Consolidação dos elementos fáticos coletados, estabelecendo o nexo causal e a materialidade dos fatos]
-
-4.2. **Análise Jurídica:**
-[Fundamentação técnica com base na legislação vigente, doutrina e jurisprudência, analisando:
-• Adequação típica
-• Elementos subjetivos
-• Causas de exclusão de ilicitude
-• Causas de exclusão de culpabilidade]
-
-4.3. **Aplicação da Legislação:**
-[Citação e aplicação específica dos artigos do CPM, CP, Código Disciplinar, Estatuto, conforme o caso]
-
-4.4. **Jurisprudência Aplicável:**
-[Citação de precedentes relevantes dos Tribunais Superiores, quando aplicável]
-
-## V – DA CONCLUSÃO
-
-5.1. **Síntese dos Elementos:**
-[Resumo dos principais elementos fáticos e jurídicos identificados]
-
-5.2. **Recomendação Técnica:**
-[Conclusão fundamentada, recomendando uma das seguintes providências:
-• Instauração de SAD (Sindicato Administrativo Disciplinar)
-• Instauração de IPM (Inquérito Policial Militar)
-• Instauração de PADS (Processo Administrativo Disciplinar Sumaríssimo)
-• Redistribuição para outra unidade
-• Arquivamento por ausência de elementos suficientes
-• Arquivamento por prescrição]
-
-5.3. **Justificativa Legal:**
-[Fundamentação técnica da recomendação, considerando:
-• Grau de relevância dos fatos
-• Existência de indícios mínimos de autoria e materialidade
-• Critérios de oportunidade e conveniência da administração pública
-• Interesse público na apuração]
-
-RECIFE, [Data atual]
-
-INSTRUÇÕES TÉCNICAS OBRIGATÓRIAS:
-• Use APENAS legislação vigente e atualizada
-• Calcule datas de prescrição com precisão matemática
-• Cite artigos específicos com numeração correta
-• Seja técnico, objetivo e fundamentado
-• Considere jurisprudência relevante dos Tribunais Superiores
-• Aplique corretamente as competências jurisdicionais
-• Mantenha linguagem jurídica formal e técnica
-• Estruture o relatório de forma lógica e coesa
-• Evite redundâncias e seja conciso
-• Priorize a clareza e objetividade na exposição
+RECIFE, [DATA DA ASSINATURA ELETRÔNICA]
 `;
 
 const parsearRelatorio = (response: string): RelatorioIA => {
@@ -202,27 +128,38 @@ export const openaiService = {
   async gerarRelatorioJuridico(dados: RelatorioDados): Promise<RelatorioIA> {
     try {
       console.log('🔍 Iniciando geração de relatório via backend...');
-      
+      // Montar prompt detalhado com todos os dados do processo
+      const prompt = RELATORIO_FINAL_PROMPT({
+        numeroProcesso: dados.numeroProcesso || dados.numero_processo || '',
+        numeroDespacho: dados.numeroDespacho || dados.numero_despacho || '',
+        dataDespacho: dados.dataDespacho || dados.data_despacho || '',
+        origemProcesso: dados.origemProcesso || dados.origem_processo || '',
+        dataFato: dados.dataFato || dados.data_fato || '',
+        vitimas: dados.vitimas || [],
+        investigados: dados.investigados || [],
+        descricaoFatos: dados.descricaoFatos || dados.descricao_fatos || dados.descricao || '',
+        statusFuncional: dados.statusFuncional || dados.status_funcional || '',
+        diligenciasRealizadas: dados.diligenciasRealizadas || dados.diligencias_realizadas || {},
+        numeroSigpad: dados.numeroSigpad || dados.numero_sigpad || '',
+        documentos: dados.documentos || [],
+      });
       const response = await fetch(`${BACKEND_URL}/api/openai/gerar-relatorio`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          dadosProcesso: dados
-        }),
+        body: JSON.stringify({ dadosProcesso: dados }), // <-- CORRETO!
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         console.error('❌ Erro no backend:', errorData);
         throw new Error(`Erro no backend: ${errorData.error || response.statusText}`);
       }
-
       const data = await response.json();
       console.log('✅ Relatório recebido do backend');
-      
-      return parsearRelatorio(data.relatorio);
+      return parsearRelatorio(
+        typeof data === 'string' ? data : (data.relatorio || data.analise || JSON.stringify(data))
+      );
     } catch (error) {
       console.error('❌ Erro ao gerar relatório:', error);
       throw error;

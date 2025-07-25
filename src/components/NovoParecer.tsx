@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,15 +24,18 @@ import {
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import ReactSelect from 'react-select';
+import crimesData from '../../public/crimes_brasil.json';
 
 interface NovoParecerProps {
   user: any;
   onClose: () => void;
   onSave: (parecer: any) => void;
   numeroProcesso?: string;
+  parecer?: any; // Adicionado para edição
 }
 
-const NovoParecer = ({ user, onClose, onSave, numeroProcesso }: NovoParecerProps) => {
+const NovoParecer = ({ user, onClose, onSave, numeroProcesso, parecer }: NovoParecerProps) => {
   const [formData, setFormData] = useState({
     numero_processo: numeroProcesso || "",
     servidores: [
@@ -50,7 +53,8 @@ const NovoParecer = ({ user, onClose, onSave, numeroProcesso }: NovoParecerProps
     urgencia: "media",
     complexidade: "media",
     tipo_crime: "",
-    legislacao_aplicavel: ""
+    legislacao_aplicavel: "",
+    crimesSelecionados: [] as string[]
   });
 
   const [activeTab, setActiveTab] = useState("dados");
@@ -58,6 +62,13 @@ const NovoParecer = ({ user, onClose, onSave, numeroProcesso }: NovoParecerProps
   const [parecerGerado, setParecerGerado] = useState("");
   const [prescricaoInfo, setPrescricaoInfo] = useState(null);
   const { toast } = useToast();
+
+  // Ao abrir para edição, carregar analise_fatos:
+  useEffect(() => {
+    if (parecer && parecer.analise_fatos) {
+      setParecerGerado(parecer.analise_fatos);
+    }
+  }, [parecer]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
@@ -154,65 +165,28 @@ const NovoParecer = ({ user, onClose, onSave, numeroProcesso }: NovoParecerProps
   };
 
   const gerarParecer = async () => {
-    if (!formData.questao_principal || !formData.caso_descricao) {
+    setIsGenerating(true);
+    try {
+      // Montar objeto conforme novo padrão do backend
+      const dadosParecer = {
+        ...formData,
+        tipo_serviço: formData.statusFuncional || formData.status_funcional || 'Não se aplica',
+        descricao_fato: formData.caso_descricao || formData.descricaoFatos || formData.descricao_fato || formData.descricao || '',
+        data_fato: formData.dataFato || formData.data_fato || '',
+      };
+      // Se houver integração IA, chamar aqui:
+      // const parecerIA = await openaiService.gerarParecerJuridico(dadosParecer);
+      // setParecerGerado(parecerIA);
+      // ... restante do código ...
+    } catch (error) {
       toast({
-        title: "Dados insuficientes",
-        description: "Preencha a questão principal e descrição do caso.",
+        title: "Erro ao gerar parecer",
+        description: "Não foi possível gerar o parecer jurídico via IA.",
         variant: "destructive",
       });
-      return;
-    }
-
-    setIsGenerating(true);
-
-    // Simulação da geração com ChatGPT 4-o mini
-    setTimeout(() => {
-      const servidoresText = formData.servidores.map((s, i) => 
-        `${i + 1}. ${s.nome} (${s.matricula}) - ${s.categoria_funcional === 'militar_estadual' ? 'Militar Estadual' : s.categoria_funcional === 'bombeiro_militar' ? 'Bombeiro Militar' : s.categoria_funcional === 'policial_civil' ? 'Policial Civil' : 'Servidor Civil'} ${s.situacao_servico === 'em_servico' ? 'em serviço' : 'de folga'}`
-      ).join('\n');
-
-      const parecer = `
-PARECER JURÍDICO N° ${user?.orgao || 'Sistema'}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}/2024
-
-I. RELATÓRIO
-
-Trata-se de consulta sobre ${formData.questao_principal.toLowerCase()}, envolvendo ${formData.servidores.length} servidor(es):
-
-${servidoresText}
-
-${formData.caso_descricao}
-
-II. FUNDAMENTAÇÃO JURÍDICA
-
-${prescricaoInfo ? `Aplicável a ${prescricaoInfo.legislacao}` : 'Aplicável o Código Penal Brasileiro'}, considerando:
-
-1. A natureza ${formData.servidores.some(s => s.categoria_funcional.includes('militar')) ? 'militar' : 'civil'} da infração;
-2. A situação funcional dos servidores envolvidos;
-3. O prazo prescricional de ${prescricaoInfo?.prazo || 20} anos.
-
-III. CONCLUSÃO
-
-Com base na análise dos fatos e da legislação aplicável, opina-se que:
-
-- A prescrição ocorrerá em ${prescricaoInfo ? format(prescricaoInfo.dataPrescricao, "dd/MM/yyyy", { locale: pt }) : 'data a ser calculada'};
-- ${prescricaoInfo?.fundamentacao || 'Fundamentação baseada na legislação aplicável'};
-- Recomenda-se acompanhamento do prazo prescricional.
-
-Este é o parecer.
-
-Data: ${format(new Date(), "dd/MM/yyyy", { locale: pt })}
-Gerado por: NOBILIS-IA v1.0 (ChatGPT 4-o Mini)
-      `;
-
-      setParecerGerado(parecer.trim());
-      setActiveTab("parecer");
+    } finally {
       setIsGenerating(false);
-      
-      toast({
-        title: "Parecer gerado com sucesso!",
-        description: "O parecer foi gerado pela IA e está pronto para revisão.",
-      });
-    }, 3000);
+    }
   };
 
   const salvarParecer = () => {
@@ -231,10 +205,17 @@ Gerado por: NOBILIS-IA v1.0 (ChatGPT 4-o Mini)
       complexidade: formData.complexidade,
       tipo_crime: formData.tipo_crime,
       legislacao_aplicavel: formData.legislacao_aplicavel,
+      analise_fatos: parecerGerado,
     };
 
     onSave(novoParecer);
   };
+
+  // Transformar crimesData em opções para React Select
+  const groupedOptions = Object.entries(crimesData).map(([categoria, lista]) => ({
+    label: categoria,
+    options: lista.map(crime => ({ value: crime, label: crime }))
+  }));
 
   return (
     <div className="space-y-6">
@@ -563,6 +544,44 @@ Gerado por: NOBILIS-IA v1.0 (ChatGPT 4-o Mini)
                       <SelectItem value="administrativo">Administrativo</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Campo de busca/autocomplete para crimes */}
+                <div>
+                  <Label className="text-gray-800 text-sm font-medium">Buscar e selecionar crimes (múltipla seleção)</Label>
+                  <ReactSelect
+                    isMulti
+                    options={groupedOptions}
+                    value={groupedOptions.flatMap(g => g.options).filter(opt => formData.crimesSelecionados?.includes(opt.value))}
+                    onChange={selected => handleInputChange('crimesSelecionados', selected.map(opt => opt.value))}
+                    placeholder="Digite para buscar e selecione os crimes..."
+                    classNamePrefix="react-select"
+                    styles={{
+                      control: (base) => ({ ...base, backgroundColor: '#f1f5f9', borderColor: '#64748b', color: '#0f172a' }),
+                      menu: (base) => ({ ...base, backgroundColor: '#f1f5f9', color: '#0f172a' }),
+                      multiValue: (base) => ({ ...base, backgroundColor: '#2563eb', color: 'white' }),
+                      multiValueLabel: (base) => ({ ...base, color: 'white' }),
+                      option: (base, state) => ({ ...base, backgroundColor: state.isFocused ? '#2563eb' : '#f1f5f9', color: '#0f172a' }),
+                    }}
+                    theme={theme => ({
+                      ...theme,
+                      borderRadius: 6,
+                      colors: {
+                        ...theme.colors,
+                        primary25: '#2563eb',
+                        primary: '#2563eb',
+                        neutral0: '#f1f5f9',
+                        neutral80: '#0f172a',
+                      },
+                    })}
+                  />
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.crimesSelecionados && formData.crimesSelecionados.map((crime: string) => (
+                      <Badge key={crime} className="bg-blue-700 text-white cursor-pointer" onClick={() => handleInputChange('crimesSelecionados', formData.crimesSelecionados.filter((c: string) => c !== crime))}>
+                        {crime} ✕
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
 
                 <div>

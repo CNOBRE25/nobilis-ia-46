@@ -14,6 +14,9 @@ import { cn } from "@/lib/utils";
 import React, { useState } from "react";
 import { openaiService } from "@/services/openaiService";
 import { useToast } from "@/hooks/use-toast";
+import ReactSelect from 'react-select';
+import crimesData from '../../public/crimes_brasil.json';
+import { useEffect } from "react";
 
 interface ProcessBasicDataFormProps {
   formData: any;
@@ -25,6 +28,7 @@ interface ProcessBasicDataFormProps {
   iaPrescricao: string | null;
   isInterpretandoIA: boolean;
   interpretarTipificacaoIA: () => void;
+  editProcess: any; // Adicionado para edição
 }
 
 export function ProcessBasicDataForm({
@@ -36,7 +40,8 @@ export function ProcessBasicDataForm({
   iaTipificacao,
   iaPrescricao,
   isInterpretandoIA,
-  interpretarTipificacaoIA
+  interpretarTipificacaoIA,
+  editProcess
 }: ProcessBasicDataFormProps) {
   const { toast } = useToast();
   const [isAnalisandoFatos, setIsAnalisandoFatos] = useState(false);
@@ -80,13 +85,18 @@ export function ProcessBasicDataForm({
         nomeInvestigado: formData.nomeInvestigado || "Não informado",
         cargoInvestigado: formData.cargoInvestigado || "Não informado",
         unidadeInvestigado: formData.unidadeInvestigado || "Não informado",
-        vitima: formData.vitima || "Não informado"
+        vitima: formData.vitima || "Não informado",
+        tipo_serviço: formData.statusFuncional || formData.status_funcional || 'Não se aplica',
+        descricao_fato: formData.descricaoFatos || '',
+        data_fato: formData.dataFato instanceof Date 
+          ? formData.dataFato.toISOString().split('T')[0]
+          : formData.dataFato,
       };
 
       // Chamar IA para análise
       const resultado = await openaiService.interpretarTipificacao({
-        texto: formData.descricaoFatos,
-        dataFato: formData.dataFato instanceof Date ? formData.dataFato : new Date(formData.dataFato)
+        texto: dadosAnalise.descricao_fato,
+        dataFato: dadosAnalise.data_fato
       });
 
       // Processar resultado
@@ -289,6 +299,23 @@ export function ProcessBasicDataForm({
       "Traição em tempo de guerra"
     ]
   };
+
+  // Transformar crimesData em opções para React Select
+  const crimeOptions = Object.entries(crimesData).flatMap(([categoria, lista]) =>
+    lista.map(crime => ({ value: crime, label: crime, categoria }))
+  );
+  const groupedOptions = Object.entries(crimesData).map(([categoria, lista]) => ({
+    label: categoria,
+    options: lista.map(crime => ({ value: crime, label: crime }))
+  }));
+
+  useEffect(() => {
+    if (editProcess && editProcess.analise_fatos) {
+      try {
+        setAnaliseFatos(JSON.parse(editProcess.analise_fatos));
+      } catch {}
+    }
+  }, [editProcess]);
 
   return (
     <div className="space-y-6">
@@ -597,73 +624,33 @@ export function ProcessBasicDataForm({
           </div>
           <div className="space-y-4">
             <div>
-              <Label className="text-white text-sm font-medium">Selecione os crimes (múltipla seleção)</Label>
-              <div className="mt-2 max-h-64 overflow-y-auto bg-white/10 rounded-lg border border-white/20 p-3">
-                {Object.entries(crimes).map(([categoria, lista]) => (
-                  <div key={categoria} className="mb-4">
-                    <div className="px-2 py-1 text-xs text-blue-300 uppercase tracking-wide font-medium border-b border-white/20 mb-2">
-                      {categoria}
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                      {lista.map(crime => {
-                        const isSelected = formData.crimesSelecionados?.includes(crime) || false;
-                        return (
-                          <div key={crime} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`crime-${crime}`}
-                              checked={isSelected}
-                              onCheckedChange={(checked) => {
-                                const crimesAtuais = formData.crimesSelecionados || [];
-                                if (checked) {
-                                  // Adicionar crime
-                                  setField('crimesSelecionados', [...crimesAtuais, crime]);
-                                } else {
-                                  // Remover crime
-                                  setField('crimesSelecionados', crimesAtuais.filter(c => c !== crime));
-                                }
-                              }}
-                              className="text-blue-400"
-                            />
-                            <Label 
-                              htmlFor={`crime-${crime}`} 
-                              className="text-white text-sm cursor-pointer hover:text-blue-200 transition-colors"
-                            >
-                              {crime}
-                            </Label>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Mostrar crimes selecionados */}
-              {formData.crimesSelecionados && formData.crimesSelecionados.length > 0 && (
-                <div className="mt-4">
-                  <Label className="text-white text-sm font-medium">Crimes Selecionados:</Label>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {formData.crimesSelecionados.map((crime, index) => (
-                      <Badge 
-                        key={index} 
-                        variant="secondary" 
-                        className="bg-blue-600/20 text-blue-200 border-blue-400/30"
-                      >
-                        {crime}
-                        <button
-                          onClick={() => {
-                            const crimesAtuais = formData.crimesSelecionados || [];
-                            setField('crimesSelecionados', crimesAtuais.filter(c => c !== crime));
-                          }}
-                          className="ml-2 text-blue-300 hover:text-red-300 transition-colors"
-                        >
-                          ×
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <Label className="text-white text-sm font-medium">Buscar e selecionar crimes (múltipla seleção)</Label>
+              <ReactSelect
+                isMulti
+                options={groupedOptions}
+                value={groupedOptions.flatMap(g => g.options).filter(opt => formData.crimesSelecionados?.includes(opt.value))}
+                onChange={selected => setField('crimesSelecionados', selected.map(opt => opt.value))}
+                placeholder="Digite para buscar e selecione os crimes..."
+                classNamePrefix="react-select"
+                styles={{
+                  control: (base) => ({ ...base, backgroundColor: '#1e293b', borderColor: '#64748b', color: 'white' }),
+                  menu: (base) => ({ ...base, backgroundColor: '#1e293b', color: 'white' }),
+                  multiValue: (base) => ({ ...base, backgroundColor: '#2563eb', color: 'white' }),
+                  multiValueLabel: (base) => ({ ...base, color: 'white' }),
+                  option: (base, state) => ({ ...base, backgroundColor: state.isFocused ? '#2563eb' : '#1e293b', color: 'white' }),
+                }}
+                theme={theme => ({
+                  ...theme,
+                  borderRadius: 6,
+                  colors: {
+                    ...theme.colors,
+                    primary25: '#2563eb',
+                    primary: '#2563eb',
+                    neutral0: '#1e293b',
+                    neutral80: 'white',
+                  },
+                })}
+              />
             </div>
           </div>
         </CardContent>

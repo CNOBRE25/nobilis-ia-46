@@ -196,19 +196,15 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8 bg-card border border-border">
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-card border border-border">
             <TabsTrigger value="dashboard" className="flex items-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <BarChart3 className="h-4 w-4 mr-2" />
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="pareceres" className="flex items-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            {/* <TabsTrigger value="pareceres" className="flex items-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <FileText className="h-4 w-4 mr-2" />
               Pareceres
-            </TabsTrigger>
-            <TabsTrigger value="legislacao" className="flex items-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Legislação
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger value="relatorio-ia" className="flex items-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Brain className="h-4 w-4 mr-2" />
               Gerar Relatório Inteligente
@@ -219,13 +215,9 @@ const Index = () => {
             <Dashboard user={profile} />
           </TabsContent>
 
-          <TabsContent value="pareceres">
+          {/* <TabsContent value="pareceres">
             <PareceresSection user={profile} />
-          </TabsContent>
-
-          <TabsContent value="legislacao">
-            <LegislacaoSection />
-          </TabsContent>
+          </TabsContent> */}
 
           <TabsContent value="relatorio-ia">
             <Suspense fallback={<div className="text-white">Carregando...</div>}>

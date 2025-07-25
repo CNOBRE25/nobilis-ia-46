@@ -135,19 +135,59 @@ Responda em JSON com a seguinte estrutura:
 app.post('/api/openai/gerar-relatorio', async (req, res) => {
   try {
     const dadosProcesso = req.body.dadosProcesso || req.body;
-    
-    if (!dadosProcesso.descricao && !dadosProcesso.descricaoFatos && !dadosProcesso.descricao_fatos) {
-      return res.status(400).json({ error: 'Descrição é obrigatória' });
+
+    // Extrair campos principais do input_schema
+    const tipo_servico = dadosProcesso.tipo_servico || dadosProcesso.statusFuncional || dadosProcesso.status_funcional || 'Não se aplica';
+    const descricao_fato = dadosProcesso.descricaoFatos || dadosProcesso.descricao_fato || dadosProcesso.descricao_fato || dadosProcesso.descricao || '';
+    const data_fato = dadosProcesso.dataFato || dadosProcesso.data_fato || '';
+
+    if (!descricao_fato) {
+      return res.status(400).json({ error: 'Descrição do fato é obrigatória' });
     }
 
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    
     if (!OPENAI_API_KEY) {
       return res.status(500).json({ error: 'Chave da API não configurada no servidor' });
     }
 
-    // Novo prompt detalhado
-    const prompt = `Você é um ANALISTA JURÍDICO MILITAR ESPECIALIZADO.\n\nAnalise o(s) seguinte(s) processo(s) e gere um RELATÓRIO JURÍDICO COMPLETO, considerando:\n\n1. O status do serviço do(s) acusado(s) no momento do fato (em serviço, de folga, policial civil, policial penal, etc).\n2. O contexto do fato e a função/cargo de cada investigado.\n3. A legislação pertinente (CPM, CP, Estatuto, Código Disciplinar, etc), conforme o status do serviço e o tipo de agente.\n4. Identifique todos os crimes e/ou transgressões disciplinares atribuíveis, com a devida tipificação legal.\n5. Calcule a prescrição penal e administrativa de cada crime/transgressão, com base na data do fato.\n6. Indique a competência (Justiça Militar Estadual/Federal ou Justiça Comum) para cada conduta.\n7. Estruture a resposta em JSON, incluindo para cada investigado:\n   - Nome\n   - Cargo/função\n   - Status do serviço no momento do fato\n   - Crimes/transgressões identificados (com artigo e lei)\n   - Fundamentação jurídica\n   - Data da prescrição penal\n   - Data da prescrição administrativa\n   - Competência\n   - Observações relevantes\n\nDADOS DO PROCESSO:\n${JSON.stringify(dadosProcesso, null, 2)}\n\nResponda em JSON com a seguinte estrutura:\n{\n  "investigados": [\n    {\n      "nome": "",\n      "cargo": "",\n      "status_servico": "",\n      "crimes": [\n        {\n          "descricao": "",\n          "artigo": "",\n          "lei": "",\n          "fundamentacao": "",\n          "prescricao_penal": "",\n          "prescricao_administrativa": "",\n          "competencia": "",\n          "observacoes": ""\n        }\n      ]\n    }\n  ],\n  "analise_geral": "",\n  "recomendacoes": "",\n  "conclusoes": ""\n}`;
+    // Novo modelo: system prompt com template preenchido, user prompt com dados fornecidos
+    const system_prompt = `Você é um jurista especialista em Direito brasileiro, com domínio avançado em Direito Penal Militar, Direito Penal Comum, Direito Civil, Direito Administrativo e Processo Disciplinar Militar.
+
+A partir dos dados fornecidos, você deverá elaborar um RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR, de forma estruturada, técnica e fundamentada, conforme o seguinte modelo:
+
+RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR
+
+PROCESSO nº ${dadosProcesso.numeroProcesso || dadosProcesso.numero_processo || ''}
+Despacho de Instauração nº ${dadosProcesso.numeroDespacho || dadosProcesso.numero_despacho || ''}
+Data do Despacho: ${dadosProcesso.dataDespacho || dadosProcesso.data_despacho || ''}
+Origem: ${dadosProcesso.origemProcesso || dadosProcesso.origem_processo || ''}
+Data do Fato: ${dadosProcesso.dataFato || dadosProcesso.data_fato || ''}
+Vítima: ${(Array.isArray(dadosProcesso.vitimas) && dadosProcesso.vitimas.length > 0) ? dadosProcesso.vitimas.map(v => v.nome).join(', ') : (dadosProcesso.vitima || 'Não informado')}
+Investigado: ${(Array.isArray(dadosProcesso.investigados) && dadosProcesso.investigados.length > 0) ? dadosProcesso.investigados.map(i => i.nome).join(', ') : (dadosProcesso.investigado || 'Não informado')}
+Matrícula: ${(Array.isArray(dadosProcesso.investigados) && dadosProcesso.investigados.length > 0) ? dadosProcesso.investigados.map(i => i.matricula).join(', ') : (dadosProcesso.matricula || 'Não informado')}
+Admissão: ${(Array.isArray(dadosProcesso.investigados) && dadosProcesso.investigados.length > 0) ? dadosProcesso.investigados.map(i => i.dataAdmissao || 'Não informado').join(', ') : (dadosProcesso.admissao || 'Não informado')}
+Lotação Atual: ${(Array.isArray(dadosProcesso.investigados) && dadosProcesso.investigados.length > 0) ? dadosProcesso.investigados.map(i => i.unidade).join(', ') : (dadosProcesso.lotacao_atual || 'Não informado')}
+
+I – DAS PRELIMINARES  
+[Aqui você deverá analisar os fatos, identificar possíveis crimes ou transgressões com tipificação legal aplicável – CPM, CP, Código Disciplinar, etc. – e calcular a prescrição com base na data do fato.]
+
+II – DOS FATOS  
+[Gerar narrativa automática a partir da descrição do fato informada, contextualizando local, data, agente, unidade, etc.]
+
+III – DAS DILIGÊNCIAS  
+[Listar diligências fictícias ou sugeridas com base na investigação: coleta de documentos, fichas, depoimentos, etc.]
+
+IV – DA FUNDAMENTAÇÃO  
+[Análise técnica: autoria, materialidade, nexo de causalidade, aplicação da legislação, doutrina e jurisprudência.]
+
+V – DA CONCLUSÃO  
+[Sugerir medida: Instauração de IPM, SAD, arquivamento, etc., com justificativa legal.]
+
+RECIFE, ${(new Date()).toLocaleDateString('pt-BR')}
+`;
+
+    // Prompt do usuário: apenas os dados fornecidos
+    const user_prompt = `Dados fornecidos:\n\nPROCESSO nº: ${dadosProcesso.numeroProcesso || dadosProcesso.numero_processo || ''}\nDespacho de Instauração nº: ${dadosProcesso.numeroDespacho || dadosProcesso.numero_despacho || ''}\nData do Despacho: ${dadosProcesso.dataDespacho || dadosProcesso.data_despacho || ''}\nOrigem: ${dadosProcesso.origemProcesso || dadosProcesso.origem_processo || ''}\nData do Fato: ${dadosProcesso.dataFato || dadosProcesso.data_fato || ''}\nVítima: ${(Array.isArray(dadosProcesso.vitimas) && dadosProcesso.vitimas.length > 0) ? dadosProcesso.vitimas.map(v => v.nome).join(', ') : (dadosProcesso.vitima || 'Não informado')}\nInvestigado: ${(Array.isArray(dadosProcesso.investigados) && dadosProcesso.investigados.length > 0) ? dadosProcesso.investigados.map(i => i.nome).join(', ') : (dadosProcesso.investigado || 'Não informado')}\nMatrícula: ${(Array.isArray(dadosProcesso.investigados) && dadosProcesso.investigados.length > 0) ? dadosProcesso.investigados.map(i => i.matricula).join(', ') : (dadosProcesso.matricula || 'Não informado')}\nAdmissão: ${(Array.isArray(dadosProcesso.investigados) && dadosProcesso.investigados.length > 0) ? dadosProcesso.investigados.map(i => i.dataAdmissao || 'Não informado').join(', ') : (dadosProcesso.admissao || 'Não informado')}\nLotação Atual: ${(Array.isArray(dadosProcesso.investigados) && dadosProcesso.investigados.length > 0) ? dadosProcesso.investigados.map(i => i.unidade).join(', ') : (dadosProcesso.lotacao_atual || 'Não informado')}\nMeio de origem: ${dadosProcesso.meio_origem || ''}\nDescrição resumida dos fatos: ${dadosProcesso.descricaoFatos || dadosProcesso.descricao_fato || dadosProcesso.descricao || ''}\nData atual: ${(new Date()).toLocaleDateString('pt-BR')}\n`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -156,18 +196,21 @@ app.post('/api/openai/gerar-relatorio', async (req, res) => {
         'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
-            content: 'Você é um especialista em Direito Penal Militar. Responda sempre em JSON válido.'
+            content: system_prompt
           },
           {
             role: 'user',
-            content: prompt
+            content: user_prompt
           }
         ],
-        temperature: 0.3,
+        temperature: 0.2,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0,
         max_tokens: 3500
       })
     });
@@ -186,8 +229,7 @@ app.post('/api/openai/gerar-relatorio', async (req, res) => {
     } catch (parseError) {
       // Se não conseguir fazer parse, retornar como texto
       res.json({
-        analise_geral: 'Relatório gerado',
-        detalhes: content,
+        resultado: content,
         observacoes: 'Resposta não estruturada - verificar análise completa'
       });
     }

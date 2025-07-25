@@ -18,17 +18,20 @@ const PORT = process.env.PORT || 3002;
 
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:3002',
-    'http://localhost:3003',
-    'http://localhost:3004',
-    'http://localhost:3005',
-    'http://localhost:3006',
-    'http://localhost:3023',
-    'http://localhost:5177' // <--- ADICIONE ESTA LINHA
-  ],
+  origin: (origin, callback) => {
+    // Permite qualquer localhost (desenvolvimento)
+    if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
+      callback(null, true);
+    }
+    // Permite o domínio de produção
+    else if (origin === 'https://nobilis-ia.com.br' || origin === 'http://nobilis-ia.com.br') {
+      callback(null, true);
+    }
+    // Bloqueia outros domínios
+    else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -78,22 +81,7 @@ app.post('/api/openai/interpretar-tipificacao', async (req, res) => {
         messages: [
           {
             role: 'system',
-            content: `Você é um especialista em direito penal brasileiro. Analise a descrição do crime fornecida e forneça uma análise jurídica estruturada e detalhada.
-
-RESPONDA APENAS NO SEGUINTE FORMATO JSON (sem texto adicional):
-
-{
-  "tipificacao_principal": "Artigo e inciso do Código Penal",
-  "fundamentacao": "Explicação detalhada da fundamentação legal",
-  "tipificacoes_alternativas": ["Artigo alternativo 1", "Artigo alternativo 2"],
-  "tipificacoes_disciplinares": ["Infração disciplinar 1", "Infração disciplinar 2"],
-  "competencia": "Competência jurisdicional (Justiça Comum, Militar, etc.)",
-  "prescricao_penal": "Data de prescrição penal (DD/MM/AAAA)",
-  "prescricao_administrativa": "Data de prescrição administrativa (DD/MM/AAAA)",
-  "observacoes": "Observações adicionais relevantes"
-}
-
-Seja preciso, técnico e fundamentado na legislação brasileira.`
+            content: `Você é um especialista em direito penal brasileiro. Analise a descrição do crime fornecida e forneça uma análise jurídica estruturada e detalhada.\n\nREGRAS PARA APLICAÇÃO DA LEGISLAÇÃO:\n- Se o status funcional for \"militar de serviço\", aplique o Código Penal Militar (CPM).\n- Se o status funcional for \"militar de folga\", aplique o Código Penal Brasileiro (CP).\n- Se o status funcional for \"policial civil\", aplique o Estatuto da Polícia Civil e legislação correlata.\n- Se o status funcional for \"policial penal\", aplique a Lei de Execução Penal e legislação específica.\n- Sempre fundamente a escolha da legislação no relatório.\n\nEXEMPLO DE ANÁLISE:\nDescrição do crime: O policial militar, durante o serviço, foi flagrado subtraindo um objeto da sala de evidências.\nStatus funcional: militar de serviço\nResposta esperada:\n{\n  \"tipificacao_principal\": \"Art. 303 do Código Penal Militar\",\n  \"fundamentacao\": \"O fato ocorreu durante o serviço, aplicando-se o CPM. O artigo 303 trata do crime de furto praticado por militar em serviço...\",\n  ...\n}\n\nRESPONDA APENAS NO SEGUINTE FORMATO JSON (sem texto adicional):\n{\n  \"tipificacao_principal\": \"Artigo e inciso do Código Penal\",\n  \"fundamentacao\": \"Explicação detalhada da fundamentação legal e da escolha da legislação\",\n  ...\n}\n\nSeja preciso, técnico e fundamente sua resposta na legislação brasileira.`
           },
           {
             role: 'user',

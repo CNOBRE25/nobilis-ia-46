@@ -126,3 +126,6 @@ CREATE TRIGGER validate_pareceres_servidores
   BEFORE INSERT OR UPDATE ON pareceres 
   FOR EACH ROW 
   EXECUTE FUNCTION validate_servidores_structure(); 
+
+ALTER TABLE public.pareceres
+  ADD COLUMN IF NOT EXISTS analise_fatos TEXT; 

@@ -13,6 +13,7 @@ import { openaiService } from "@/services/openaiService";
 import { checkProcessNumberExists } from "@/utils/processNumberGenerator";
 import { Investigado, Vitima } from "@/types/process";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
 
 // Estrutura inicial dos dados do formulário
 const initialForm = {
@@ -399,12 +400,93 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
     }
   };
 
+  // Handler para salvar investigados e vítimas
+  const handleSaveInvestigadosVitimas = async () => {
+    setIsLoading(true);
+    try {
+      const updateData = {
+        investigados: JSON.stringify(investigados),
+        vitimas: JSON.stringify(vitimas),
+      };
+
+      let error;
+      if (isEditMode && processo?.id) {
+        // MODO EDIÇÃO: Usar ID do processo
+        const result = await supabase.from("processos").update(updateData).eq("id", processo.id);
+        error = result.error;
+      } else {
+        // MODO NOVO: Usar número do processo
+        const result = await supabase.from("processos").update(updateData).eq("numero_processo", form.numeroProcesso);
+        error = result.error;
+      }
+
+      if (error) throw error;
+      
+      toast({
+        title: "Investigados e Vítimas salvos!",
+        description: `Dados de investigados e vítimas do processo ${form.numeroProcesso} salvos.`
+      });
+      setAba("relatorio-ia");
+    } catch (err: any) {
+      toast({
+        title: "Erro ao salvar investigados e vítimas",
+        description: err.message || "Erro desconhecido ao salvar os dados.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handler para salvar relatório IA
+  const handleSaveRelatorioIA = async () => {
+    setIsLoading(true);
+    try {
+      const updateData = {
+        relatorio_final: form.relatorioFinal,
+      };
+
+      let error;
+      if (isEditMode && processo?.id) {
+        // MODO EDIÇÃO: Usar ID do processo
+        const result = await supabase.from("processos").update(updateData).eq("id", processo.id);
+        error = result.error;
+      } else {
+        // MODO NOVO: Usar número do processo
+        const result = await supabase.from("processos").update(updateData).eq("numero_processo", form.numeroProcesso);
+        error = result.error;
+      }
+
+      if (error) throw error;
+      
+      toast({
+        title: "Relatório IA salvo!",
+        description: `Relatório IA do processo ${form.numeroProcesso} salvo com sucesso.`
+      });
+    } catch (err: any) {
+      toast({
+        title: "Erro ao salvar relatório IA",
+        description: err.message || "Erro desconhecido ao salvar o relatório.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Handler para gerar relatório IA
   const handleGerarRelatorioIA = async () => {
     setIsGeneratingReport(true);
     try {
-      // Enviar TODOS os campos do formulário para a IA, incluindo investigados e vitimas
-      const dadosRelatorio = { ...form, descricao: form.descricaoFatos || form.descricao_fatos || '', investigados, vitimas };
+      // Montar objeto conforme novo padrão do backend
+      const dadosRelatorio = {
+        ...form,
+        investigados: Array.isArray(investigados) ? investigados : [],
+        vitimas: Array.isArray(vitimas) ? vitimas : [],
+        tipo_serviço: form.statusFuncional || form.status_funcional || 'Não se aplica',
+        descricao_fato: form.descricaoFatos || form.descricao_fato || form.descricao || '',
+        data_fato: form.dataFato || form.data_fato || '',
+      };
       // Chamar IA
       const relatorioIA = await openaiService.gerarRelatorioJuridico(dadosRelatorio);
       setField("relatorioFinal", relatorioIA);
@@ -444,7 +526,17 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 p-4 overflow-auto">
       <Card className="w-full max-w-6xl h-full max-h-[95vh] flex flex-col bg-white/10 backdrop-blur-sm border-white/20 shadow-2xl">
         <CardHeader>
-          <CardTitle className="text-white text-3xl font-bold tracking-wide">{isEditMode ? "Editar Processo" : "Novo Processo"}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white text-3xl font-bold tracking-wide">{isEditMode ? "Editar Processo" : "Novo Processo"}</CardTitle>
+            <Button 
+              onClick={onProcessCreated} 
+              variant="outline" 
+              className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar para Dashboard
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="flex-1 overflow-y-auto">
           <Tabs value={aba} onValueChange={setAba} className="w-full">
@@ -471,6 +563,12 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
                     interpretarTipificacaoIA={() => {}}
                   />
                 </div>
+                <div className="flex justify-end mt-4">
+                  <Button onClick={handleSaveBasic} disabled={isLoading} className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 font-semibold rounded-lg">
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {isEditMode ? "Salvar Dados Básicos" : "Salvar Dados Básicos"}
+                  </Button>
+                </div>
               </div>
             </TabsContent>
 
@@ -486,6 +584,12 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
                     savedProcessId={isEditMode ? processo?.id : null}
                     editProcess={isEditMode ? processo : null}
                   />
+                </div>
+                <div className="flex justify-end mt-4">
+                  <Button onClick={handleSaveDetalhes} disabled={isSavingDetalhes} className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 font-semibold rounded-lg">
+                    {isSavingDetalhes ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {isEditMode ? "Salvar Detalhes" : "Salvar Detalhes"}
+                  </Button>
                 </div>
               </div>
             </TabsContent>
@@ -687,6 +791,12 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
                   ))}
                   <Button type="button" onClick={addVitima} className="bg-green-700 hover:bg-green-800 text-white mt-2 w-full">Adicionar Vítima</Button>
                 </div>
+                <div className="flex justify-end mt-4">
+                  <Button onClick={handleSaveInvestigadosVitimas} disabled={isLoading} className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 font-semibold rounded-lg">
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Salvar Investigado/Vítima
+                  </Button>
+                </div>
               </div>
             </TabsContent>
 
@@ -701,6 +811,10 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
                   disabled
                 />
                 <div className="flex gap-4 mt-6">
+                  <Button onClick={handleSaveRelatorioIA} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 font-semibold rounded-lg">
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Salvar Relatório
+                  </Button>
                   <Button onClick={handleGerarRelatorioIA} disabled={isGeneratingReport || !form.numeroProcesso} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 font-semibold rounded-lg">
                     {isGeneratingReport ? "Gerando..." : "Gerar Relatório com IA"}
                   </Button>

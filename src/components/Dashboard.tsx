@@ -103,202 +103,9 @@ const Dashboard = ({ user }: DashboardProps) => {
   return (
     <div className="min-h-screen ai-gradient">
       <div className="space-y-6 p-6">
-        {/* Cards de Estatísticas - Design Suave */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold text-card-foreground">Estatísticas do Sistema</h2>
-            {lastUpdateTime && !loading && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>Última atualização: {lastUpdateTime.toLocaleTimeString('pt-BR')}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {error && (
-              <div className="text-sm text-red-500 flex items-center gap-1">
-                <AlertTriangle className="h-4 w-4" />
-                Erro ao carregar
-              </div>
-            )}
-            <Button
-              onClick={handleRefresh}
-              disabled={loading}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Atualizar
-            </Button>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="ai-card group hover:ai-glow-soft transition-all duration-500 rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-card-foreground">Total de Processos</CardTitle>
-              <div className="relative">
-                <FileText className="h-5 w-5 text-primary group-hover:scale-105 transition-transform" />
-                <div className="absolute inset-0 bg-primary/10 rounded-full blur-sm group-hover:bg-primary/20 transition-all"></div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-card-foreground mb-1">
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Carregando...</span>
-                  </div>
-                ) : (
-                  stats.totalProcessos
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Activity className="h-3 w-3 text-primary" />
-                <p className="text-xs text-muted-foreground">Sistema operacional</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="ai-card group hover:ai-glow-soft transition-all duration-500 rounded-xl cursor-pointer"
-            onClick={() => setActiveModal('processos-tramitacao')}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-card-foreground">Em Tramitação</CardTitle>
-              <div className="relative">
-                <Clock className="h-5 w-5 text-[hsl(var(--ai-yellow))] group-hover:scale-105 transition-transform" />
-                <div className="absolute inset-0 bg-[hsl(var(--ai-yellow))]/10 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-yellow))]/20 transition-all"></div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-card-foreground mb-1">
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Carregando...</span>
-                  </div>
-                ) : (
-                  stats.processosAtivos
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="h-3 w-3 text-[hsl(var(--ai-yellow))]" />
-                <p className="text-xs text-muted-foreground">Clique para ver processos ativos</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="ai-card group hover:ai-glow-soft transition-all duration-500 rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-card-foreground">Finalizados</CardTitle>
-              <div className="relative">
-                <Archive className="h-5 w-5 text-[hsl(var(--ai-green))] group-hover:scale-105 transition-transform" />
-                <div className="absolute inset-0 bg-[hsl(var(--ai-green))]/10 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-green))]/20 transition-all"></div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-card-foreground mb-1">
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Carregando...</span>
-                  </div>
-                ) : (
-                  stats.processosFinalizados
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Archive className="h-3 w-3 text-[hsl(var(--ai-green))]" />
-                <p className="text-xs text-muted-foreground">Concluídos e arquivados</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="ai-card group hover:ai-glow-soft transition-all duration-500 rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-card-foreground">Urgentes</CardTitle>
-              <div className="relative">
-                <AlertTriangle className="h-5 w-5 text-[hsl(var(--ai-red))] group-hover:scale-105 transition-transform" />
-                <div className="absolute inset-0 bg-[hsl(var(--ai-red))]/10 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-red))]/20 transition-all"></div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-card-foreground mb-1">
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Carregando...</span>
-                  </div>
-                ) : (
-                  stats.processosUrgentes
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="h-3 w-3 text-[hsl(var(--ai-red))]" />
-                <p className="text-xs text-muted-foreground">Prioridade máxima</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Cards de Métricas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="ai-card group hover:ai-glow-soft transition-all duration-500 rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-card-foreground">Tempo Médio de Resolução</CardTitle>
-              <div className="relative">
-                <Clock className="h-5 w-5 text-[hsl(var(--ai-purple))] group-hover:scale-105 transition-transform" />
-                <div className="absolute inset-0 bg-[hsl(var(--ai-purple))]/10 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-purple))]/20 transition-all"></div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-card-foreground mb-1">
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Carregando...</span>
-                  </div>
-                ) : (
-                  `${stats.tempoMedioResolucao} dias`
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Cpu className="h-3 w-3 text-[hsl(var(--ai-purple))]" />
-                <p className="text-xs text-muted-foreground">Média dos processos concluídos</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="ai-card group hover:ai-glow-soft transition-all duration-500 rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-card-foreground">Taxa de Eficiência</CardTitle>
-              <div className="relative">
-                <TrendingUp className="h-5 w-5 text-[hsl(var(--ai-green))] group-hover:scale-105 transition-transform" />
-                <div className="absolute inset-0 bg-[hsl(var(--ai-green))]/10 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-green))]/20 transition-all"></div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-card-foreground mb-1">
-                {loading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Carregando...</span>
-                  </div>
-                ) : (
-                  `${stats.taxaEficiencia}%`
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="h-3 w-3 text-[hsl(var(--ai-green))]" />
-                <p className="text-xs text-muted-foreground">Processos concluídos / total</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Botões de Ação */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Remover cards de estatísticas e análises detalhadas */}
+        {/* Remover botões de Pareceres, Legislação, Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Button
             onClick={() => setActiveModal('cadastrar-processo')}
             className="ai-button group h-auto p-6 flex flex-col items-center gap-3 transition-all duration-500"
@@ -309,10 +116,8 @@ const Dashboard = ({ user }: DashboardProps) => {
             </div>
             <div className="text-center">
               <div className="font-semibold">Cadastrar Processo</div>
-              <div className="text-xs opacity-80"></div>
             </div>
           </Button>
-
           <Button
             onClick={() => setActiveModal('processos-tramitacao')}
             className="ai-button group h-auto p-6 flex flex-col items-center gap-3 transition-all duration-500"
@@ -326,7 +131,6 @@ const Dashboard = ({ user }: DashboardProps) => {
               <div className="text-xs opacity-80">Processos ativos</div>
             </div>
           </Button>
-
           <Button
             onClick={() => setActiveModal('processos-arquivados')}
             className="ai-button group h-auto p-6 flex flex-col items-center gap-3 transition-all duration-500"
@@ -340,24 +144,6 @@ const Dashboard = ({ user }: DashboardProps) => {
               <div className="text-xs opacity-80">Concluídos e arquivados</div>
             </div>
           </Button>
-
-          <Button
-            onClick={() => setActiveModal('estatisticas')}
-            className="ai-button group h-auto p-6 flex flex-col items-center gap-3 transition-all duration-500"
-          >
-            <div className="relative">
-              <BarChart3 className="h-8 w-8 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 bg-[hsl(var(--ai-yellow))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-yellow))]/30 transition-all"></div>
-            </div>
-            <div className="text-center">
-              <div className="font-semibold">Estatísticas</div>
-              <div className="text-xs opacity-80">Análise detalhada</div>
-            </div>
-          </Button>
-        </div>
-
-        {/* Botões Adicionais */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Button
             onClick={() => setActiveModal('relatorio-ia')}
             className="ai-button group h-auto p-6 flex flex-col items-center gap-3 transition-all duration-500"
@@ -371,7 +157,6 @@ const Dashboard = ({ user }: DashboardProps) => {
               <div className="text-xs opacity-80">Análise inteligente</div>
             </div>
           </Button>
-
           {isAdmin && (
             <Button
               onClick={() => setActiveModal('admin-panel')}
@@ -387,7 +172,6 @@ const Dashboard = ({ user }: DashboardProps) => {
               </div>
             </Button>
           )}
-
           {isAdmin && (
             <Button
               onClick={() => setActiveModal('database-diff')}
@@ -404,7 +188,6 @@ const Dashboard = ({ user }: DashboardProps) => {
             </Button>
           )}
         </div>
-
         {/* Modal */}
         {activeModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">

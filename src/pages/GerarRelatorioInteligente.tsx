@@ -63,7 +63,7 @@ const GerarRelatorioInteligente = () => {
         cargo: dados.cargo_investigado || "[●]",
         unidade: dados.unidade_investigado || "[●]",
         data_fato: dados.data_fato || "[●]",
-        descricao: dados.descricao_fatos || "[●]",
+        descricao: dados.descricao_fatos || dados.descricaoFatos || "[●]",
         numero_sigpad: dados.numero_sigpad || "[●]",
         numero_despacho: dados.numero_despacho || "[●]",
         data_despacho: dados.data_despacho || "[●]",
