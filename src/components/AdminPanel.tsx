@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, X, Users, RotateCcw, Trash2, UserPlus, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { UnifiedStatsPanel } from "./UnifiedStatsPanel";
+
 import { supabase } from "../integrations/supabase/client";
 
 interface AdminPanelProps {
@@ -37,7 +37,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
 
   const [solicitacoesReversao, setSolicitacoesReversao] = useState([]);
 
-  const [usuariosAtivos] = useState([]);
+
 
 
 
@@ -198,7 +198,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-white">Painel Administrativo</h1>
           <Button onClick={onClose} variant="outline" className="text-white border-white">
-            Fechar
+            Voltar para Dashboard
           </Button>
         </div>
 
@@ -377,7 +377,11 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
 
           <TabsContent value="estatisticas" className="space-y-4">
             <div className="bg-white/10 backdrop-blur-sm border-white/20 rounded-lg p-6">
-              <UnifiedStatsPanel />
+              <div className="w-full p-8">
+          <div className="text-center text-muted-foreground py-12">
+            Nenhuma estatística disponível no momento.
+          </div>
+        </div>
             </div>
           </TabsContent>
         </Tabs>

@@ -7,18 +7,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, UserPlus, Trash2, Save, Loader2, Brain } from "lucide-react";
 import { format } from "date-fns";
-import { Investigado } from "@/types/process";
+import { Investigado, Process } from "@/types/process";
+import { InvestigadosSectionProps } from "@/types/components";
 import { cn } from "@/lib/utils";
 
-interface InvestigadosSectionProps {
-  investigados: Investigado[];
-  addInvestigado: (investigado: Investigado) => void;
-  updateInvestigado: (id: number, field: string, value: any) => void;
-  isSavingInvestigados: boolean;
-  handleSaveInvestigados: () => void;
-  savedProcessId: string | null;
-  editProcess?: any;
-}
+
 
 const InvestigadoCard = React.memo(({ investigado, index, updateInvestigado }: { investigado: Investigado, index: number, updateInvestigado: (id: number, field: string, value: any) => void }) => (
   <Card key={investigado.id} className="bg-white/5 border-white/20">

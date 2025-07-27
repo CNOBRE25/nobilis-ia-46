@@ -12,7 +12,7 @@ interface ProcessStats {
 }
 
 // Função para gerar hash dos dados
-const generateDataHash = (data: any): string => {
+const generateDataHash = <T>(data: T): string => {
   return JSON.stringify(data);
 };
 
@@ -140,6 +140,31 @@ export function useProcessStats() {
   // Buscar estatísticas na montagem do componente
   useEffect(() => {
     fetchStats(true); // Força primeira carga
+
+    // Configurar sincronização em tempo real
+    const channel = supabase
+      .channel('processos-stats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'processos'
+        },
+        (payload) => {
+          console.log('Mudança detectada em tempo real (stats):', payload);
+          
+          // Atualizar estatísticas quando houver qualquer mudança
+          fetchStats(true);
+        }
+      )
+      .subscribe();
+
+    // Cleanup da subscription
+    return () => {
+      console.log('Desconectando do canal de tempo real (stats)');
+      supabase.removeChannel(channel);
+    };
   }, [fetchStats]);
 
   const [debouncedRefreshStats] = useDebouncedAsync(() => fetchStats(true), 500);

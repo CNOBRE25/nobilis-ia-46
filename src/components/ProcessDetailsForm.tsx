@@ -5,15 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Save } from "lucide-react";
 import React from "react";
+import { ProcessFormData, SetFieldFunction } from "@/types/process";
+import { ProcessDetailsFormProps } from "@/types/components";
 
-interface ProcessDetailsFormProps {
-  formData: any;
-  setField: (field: string, value: any) => void;
-  isSavingDetalhes: boolean;
-  handleSaveDetalhes: () => void;
-  savedProcessId: string | null;
-  editProcess: any;
-}
+
 
 const DILIGENCIAS = [
   { id: 'atestado_medico', label: 'Atestado Médico' },
@@ -46,7 +41,7 @@ const DILIGENCIAS = [
   { id: 'videos', label: 'Vídeos' }
 ];
 
-const DiligenciasList = React.memo(({ formData, setField }: { formData: any, setField: (field: string, value: any) => void }) => (
+const DiligenciasList = React.memo(({ formData, setField }: { formData: ProcessFormData, setField: SetFieldFunction }) => (
   <div className="max-h-96 overflow-y-auto p-4 bg-white/10 rounded-lg border border-white/20">
     <div className="space-y-4">
       {DILIGENCIAS.map((diligencia) => (
@@ -106,11 +101,12 @@ export const ProcessDetailsForm: React.FC<ProcessDetailsFormProps> = ({
   savedProcessId,
   editProcess
 }) => {
+
   return (
     <>
       <div>
         <Label className="text-white">Desfecho Final (Sugestão do Encarregado)</Label>
-        <Select value={formData.desfechoFinal} onValueChange={(value) => setField('desfechoFinal', value)}>
+        <Select value={formData.desfechoFinal || ''} onValueChange={(value) => setField('desfechoFinal', value)}>
           <SelectTrigger className="bg-white/20 border-white/30 text-white">
             <SelectValue placeholder="Selecione o desfecho" />
           </SelectTrigger>
@@ -146,26 +142,7 @@ export const ProcessDetailsForm: React.FC<ProcessDetailsFormProps> = ({
         />
       </div>
 
-      {/* Botão de Salvar Detalhes */}
-      <div className="flex justify-end pt-4 border-t border-white/20">
-        <Button
-          onClick={handleSaveDetalhes}
-          disabled={isSavingDetalhes}
-          className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-        >
-          {isSavingDetalhes ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Salvando...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4 mr-2" />
-              Salvar Detalhes
-            </>
-          )}
-        </Button>
-      </div>
+      {/* Removido botão duplicado - o botão está no componente pai */}
     </>
   );
 }; 

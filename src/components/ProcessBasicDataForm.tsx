@@ -8,28 +8,19 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Brain, Loader2, AlertTriangle, CheckCircle } from "lucide-react";
+import { CalendarIcon, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import React, { useState } from "react";
-import { openaiService } from "@/services/openaiService";
+import { ProcessFormData, SetFieldFunction } from "@/types/process";
+import { ProcessBasicDataFormProps } from "@/types/components";
+
 import { useToast } from "@/hooks/use-toast";
 import ReactSelect from 'react-select';
 import crimesData from '../../public/crimes_brasil.json';
 import { useEffect } from "react";
 
-interface ProcessBasicDataFormProps {
-  formData: any;
-  setField: (field: string, value: any) => void;
-  isEditMode: boolean;
-  textoTipificacao: string;
-  setTextoTipificacao: (v: string) => void;
-  iaTipificacao: string | null;
-  iaPrescricao: string | null;
-  isInterpretandoIA: boolean;
-  interpretarTipificacaoIA: () => void;
-  editProcess: any; // Adicionado para edição
-}
+
 
 export function ProcessBasicDataForm({
   formData,
@@ -40,115 +31,14 @@ export function ProcessBasicDataForm({
   iaTipificacao,
   iaPrescricao,
   isInterpretandoIA,
-  interpretarTipificacaoIA,
+
   editProcess
 }: ProcessBasicDataFormProps) {
   const { toast } = useToast();
-  const [isAnalisandoFatos, setIsAnalisandoFatos] = useState(false);
-  const [analiseFatos, setAnaliseFatos] = useState<{
-    crimes: string[];
-    tipificacao: string;
-    prescricao: string;
-    competencia: string;
-  } | null>(null);
 
-  // Função para analisar automaticamente os fatos
-  const analisarFatosAutomaticamente = async () => {
-    if (!formData.descricaoFatos || formData.descricaoFatos.trim().length < 10) {
-      toast({
-        title: "Descrição insuficiente",
-        description: "A descrição dos fatos deve ter pelo menos 10 caracteres para análise.",
-        variant: "destructive"
-      });
-      return;
-    }
 
-    if (!formData.dataFato) {
-      toast({
-        title: "Data do fato obrigatória",
-        description: "É necessário informar a data do fato para calcular a prescrição.",
-        variant: "destructive"
-      });
-      return;
-    }
 
-    setIsAnalisandoFatos(true);
-    setAnaliseFatos(null);
 
-    try {
-      // Preparar dados para análise
-      const dadosAnalise = {
-        descricaoFatos: formData.descricaoFatos,
-        dataFato: formData.dataFato instanceof Date 
-          ? formData.dataFato.toISOString().split('T')[0]
-          : formData.dataFato,
-        nomeInvestigado: formData.nomeInvestigado || "Não informado",
-        cargoInvestigado: formData.cargoInvestigado || "Não informado",
-        unidadeInvestigado: formData.unidadeInvestigado || "Não informado",
-        vitima: formData.vitima || "Não informado",
-        tipo_serviço: formData.statusFuncional || formData.status_funcional || 'Não se aplica',
-        descricao_fato: formData.descricaoFatos || '',
-        data_fato: formData.dataFato instanceof Date 
-          ? formData.dataFato.toISOString().split('T')[0]
-          : formData.dataFato,
-      };
-
-      // Chamar IA para análise
-      const resultado = await openaiService.interpretarTipificacao({
-        texto: dadosAnalise.descricao_fato,
-        dataFato: dadosAnalise.data_fato
-      });
-
-      // Processar resultado
-      if (resultado) {
-        setAnaliseFatos({
-          crimes: resultado.tipificacoes_alternativas || [],
-          tipificacao: resultado.tipificacao_principal || "Não identificada",
-          prescricao: resultado.prescricao_penal || "Não calculada",
-          competencia: resultado.competencia || "Não definida"
-        });
-
-        // Atualizar campos do formulário automaticamente
-        if (resultado.tipificacao_principal) {
-          setField('tipoCrime', resultado.tipificacao_principal);
-        }
-
-        toast({
-          title: "Análise concluída!",
-          description: "Crimes identificados e tipificação aplicada automaticamente.",
-        });
-      }
-    } catch (error: any) {
-      console.error('Erro na análise automática:', error);
-      toast({
-        title: "Erro na análise",
-        description: error.message || "Erro ao analisar os fatos automaticamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAnalisandoFatos(false);
-    }
-  };
-
-  // Função para aplicar análise automaticamente
-  const aplicarAnalise = () => {
-    if (analiseFatos) {
-      // Aplicar crimes identificados
-      if (analiseFatos.crimes.length > 0) {
-        setField('crimesSelecionados', analiseFatos.crimes);
-      }
-
-      // Aplicar tipificação principal
-      if (analiseFatos.tipificacao) {
-        setField('tipoCrime', analiseFatos.tipificacao);
-      }
-
-      toast({
-        title: "Análise aplicada!",
-        description: "Os dados foram aplicados automaticamente ao formulário.",
-      });
-    }
-  };
 
   // Lista de crimes agrupados por categoria
   const crimes = {
@@ -543,73 +433,7 @@ export function ProcessBasicDataForm({
             className="bg-white/20 border-white/30 text-white placeholder:text-white/70 min-h-[200px] resize-none"
             placeholder="Descreva detalhadamente os fatos ocorridos..."
           />
-          <div className="mt-4 flex justify-end">
-            <Button
-              onClick={analisarFatosAutomaticamente}
-              disabled={isAnalisandoFatos || !formData.descricaoFatos || formData.descricaoFatos.trim().length < 10 || !formData.dataFato}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {isAnalisandoFatos ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Analisando...
-                </>
-              ) : (
-                <>
-                  <Brain className="mr-2 h-4 w-4" />
-                  Analisar Fatos
-                </>
-              )}
-            </Button>
-            {analiseFatos && (
-              <Button
-                onClick={aplicarAnalise}
-                disabled={!analiseFatos || !formData.descricaoFatos}
-                className="ml-2 bg-green-600 hover:bg-green-700 text-white"
-              >
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Aplicar Análise
-              </Button>
-            )}
-          </div>
 
-          {/* Resultados da Análise Automática */}
-          {analiseFatos && (
-            <div className="mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle className="h-5 w-5 text-green-400" />
-                <h4 className="text-green-300 font-semibold">Análise Automática Concluída</h4>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <h5 className="text-green-200 font-medium mb-2">Tipificação Principal:</h5>
-                  <p className="text-white bg-green-500/20 p-2 rounded">{analiseFatos.tipificacao}</p>
-                </div>
-                
-                <div>
-                  <h5 className="text-green-200 font-medium mb-2">Prescrição Penal:</h5>
-                  <p className="text-white bg-green-500/20 p-2 rounded">{analiseFatos.prescricao}</p>
-                </div>
-                
-                <div>
-                  <h5 className="text-green-200 font-medium mb-2">Competência:</h5>
-                  <p className="text-white bg-green-500/20 p-2 rounded">{analiseFatos.competencia}</p>
-                </div>
-                
-                <div>
-                  <h5 className="text-green-200 font-medium mb-2">Crimes Identificados:</h5>
-                  <div className="flex flex-wrap gap-1">
-                    {analiseFatos.crimes.map((crime, index) => (
-                      <Badge key={index} className="bg-green-600 text-white text-xs">
-                        {crime}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 

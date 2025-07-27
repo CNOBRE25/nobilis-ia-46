@@ -19,7 +19,7 @@ const colors = [
 ];
 
 // Função para gerar hash dos dados
-const generateDataHash = (data: any): string => {
+const generateDataHash = <T>(data: T): string => {
   return JSON.stringify(data);
 };
 

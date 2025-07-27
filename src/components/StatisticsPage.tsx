@@ -97,15 +97,24 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
   };
 
   return (
-    <div className="w-full p-8">
-      <Tabs defaultValue="todos" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 mb-6">
-          <TabsTrigger value="todos" className="text-white">Todos os Processos</TabsTrigger>
+    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 z-50 overflow-auto">
+      <div className="container mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-white">Estatísticas Detalhadas</h1>
+          <Button onClick={onClose} variant="outline" className="text-white border-white">
+            Voltar para Dashboard
+          </Button>
+        </div>
+        
+        <Tabs defaultValue="todos" className="w-full">
+          <TabsList className="grid w-full grid-cols-1 mb-6">
+            <TabsTrigger value="todos" className="text-white">Todos os Processos</TabsTrigger>
           </TabsList>
-        <TabsContent value="todos">
-          <ProcessList type="todos" orderBy="data_recebimento" orderAscending={true} />
+          <TabsContent value="todos">
+            <ProcessList type="todos" orderBy="data_recebimento" orderAscending={true} />
           </TabsContent>
         </Tabs>
+      </div>
     </div>
   );
 };

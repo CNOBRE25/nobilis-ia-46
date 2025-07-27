@@ -28,7 +28,7 @@ import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import ProcessList from "./ProcessList";
 import StatisticsPage from "./StatisticsPage";
 import AdminPanel from "./AdminPanel";
-import AIReportGenerator from "./AIReportGenerator";
+
 import DatabaseDiffChecker from "./DatabaseDiffChecker";
 import { useProcessStats } from "../hooks/useProcessStats";
 import { useToast } from "../hooks/use-toast";
@@ -48,19 +48,10 @@ interface DashboardProps {
   user: User;
 }
 
-const Dashboard = ({ user }: DashboardProps) => {
-  const [activeModal, setActiveModal] = useState<string | null>(null);
+// Componente de Estatísticas em Modal
+const StatisticsModal = ({ onClose }: { onClose: () => void }) => {
   const { stats, loading, error, refreshStats, lastUpdateTime } = useProcessStats();
   const { toast } = useToast();
-
-  const monthlyData = [];
-  const priorityData = [];
-
-  const isAdmin = user?.role === 'admin' || user?.email?.includes('admin');
-
-  const closeModal = () => {
-    setActiveModal(null);
-  };
 
   // Função de atualização controlada
   const handleRefresh = async () => {
@@ -79,20 +70,248 @@ const Dashboard = ({ user }: DashboardProps) => {
     }
   };
 
+  // Dados para o gráfico
+  const chartData = [
+    {
+      name: 'Total',
+      quantidade: stats.totalProcessos,
+      fill: '#3b82f6',
+      color: '#1e40af'
+    },
+    {
+      name: 'Em Tramitação',
+      quantidade: stats.processosAtivos,
+      fill: '#f59e0b',
+      color: '#d97706'
+    },
+    {
+      name: 'Finalizados',
+      quantidade: stats.processosFinalizados,
+      fill: '#10b981',
+      color: '#059669'
+    },
+    {
+      name: 'Urgentes',
+      quantidade: stats.processosUrgentes,
+      fill: '#ef4444',
+      color: '#dc2626'
+    }
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 z-50 overflow-auto">
+      <div className="container mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-white">Estatísticas dos Processos</h1>
+          <Button onClick={onClose} variant="outline" className="text-white border-white">
+            Voltar para Dashboard
+          </Button>
+        </div>
+
+        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-white text-2xl">Visão Geral em Tempo Real</CardTitle>
+                <CardDescription className="text-blue-200">
+                  Análise completa dos processos do sistema
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-green-400 text-sm">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span>Sincronizado em tempo real</span>
+                </div>
+                <Button 
+                  onClick={handleRefresh} 
+                  variant="outline" 
+                  size="sm"
+                  className="text-white border-white hover:bg-white/10"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-white mx-auto mb-4" />
+                  <p className="text-white">Carregando estatísticas...</p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <AlertTriangle className="h-8 w-8 text-red-400 mx-auto mb-4" />
+                  <p className="text-red-200">{error}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Cards de resumo */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card className="bg-blue-500/20 border-blue-500/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-blue-200 text-sm">Total</p>
+                          <p className="text-white text-2xl font-bold">{stats.totalProcessos}</p>
+                        </div>
+                        <FileText className="h-8 w-8 text-blue-400" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-yellow-500/20 border-yellow-500/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-yellow-200 text-sm">Em Tramitação</p>
+                          <p className="text-white text-2xl font-bold">{stats.processosAtivos}</p>
+                        </div>
+                        <Clock className="h-8 w-8 text-yellow-400" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-green-500/20 border-green-500/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-green-200 text-sm">Finalizados</p>
+                          <p className="text-white text-2xl font-bold">{stats.processosFinalizados}</p>
+                        </div>
+                        <CheckCircle className="h-8 w-8 text-green-400" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-red-500/20 border-red-500/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-red-200 text-sm">Urgentes</p>
+                          <p className="text-white text-2xl font-bold">{stats.processosUrgentes}</p>
+                        </div>
+                        <AlertTriangle className="h-8 w-8 text-red-400" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Gráfico de barras */}
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                      <XAxis 
+                        dataKey="name" 
+                        stroke="#ffffff80"
+                        fontSize={12}
+                      />
+                      <YAxis 
+                        stroke="#ffffff80"
+                        fontSize={12}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '8px',
+                          color: '#ffffff'
+                        }}
+                        labelStyle={{ color: '#ffffff' }}
+                      />
+                      <Bar 
+                        dataKey="quantidade" 
+                        radius={[4, 4, 0, 0]}
+                        fill="#3b82f6"
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Informações adicionais */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="bg-white/5 border-white/10">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Activity className="h-5 w-5 text-blue-400" />
+                        <h4 className="text-white font-semibold">Taxa de Eficiência</h4>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Progress 
+                          value={stats.taxaEficiencia} 
+                          className="flex-1"
+                        />
+                        <span className="text-white text-sm font-medium">
+                          {stats.taxaEficiencia.toFixed(1)}%
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-white/5 border-white/10">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Clock className="h-5 w-5 text-green-400" />
+                        <h4 className="text-white font-semibold">Tempo Médio de Resolução</h4>
+                      </div>
+                      <p className="text-white text-lg font-bold">
+                        {stats.tempoMedioResolucao.toFixed(1)} dias
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {lastUpdateTime && (
+                  <div className="text-center text-blue-200 text-sm">
+                    Última atualização: {lastUpdateTime.toLocaleTimeString('pt-BR')}
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+const Dashboard = ({ user }: DashboardProps) => {
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const isAdmin = user?.role === 'admin' || user?.email?.includes('admin');
+
+  const closeModal = () => {
+    setActiveModal(null);
+  };
+
   const renderModal = () => {
     switch (activeModal) {
       case 'cadastrar-processo':
-        return <NovoProcessoForm onProcessCreated={() => { closeModal(); refreshStats(); }} />;
+        return <NovoProcessoForm onProcessCreated={() => { closeModal(); }} />;
       case 'processos-tramitacao':
         return <ProcessList type="tramitacao" onClose={closeModal} />;
       case 'processos-arquivados':
         return <ProcessList type="arquivados" onClose={closeModal} />;
       case 'estatisticas':
-        return <StatisticsPage onClose={closeModal} onProcessSaved={refreshStats} />;
+        return <StatisticsModal onClose={closeModal} />;
       case 'admin-panel':
         return <AdminPanel onClose={closeModal} />;
-      case 'relatorio-ia':
-        return <AIReportGenerator onClose={closeModal} />;
+
       case 'database-diff':
         return <DatabaseDiffChecker />;
       default:
@@ -103,8 +322,7 @@ const Dashboard = ({ user }: DashboardProps) => {
   return (
     <div className="min-h-screen ai-gradient">
       <div className="space-y-6 p-6">
-        {/* Remover cards de estatísticas e análises detalhadas */}
-        {/* Remover botões de Pareceres, Legislação, Estatísticas */}
+        {/* Botões de ação */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Button
             onClick={() => setActiveModal('cadastrar-processo')}
@@ -145,18 +363,19 @@ const Dashboard = ({ user }: DashboardProps) => {
             </div>
           </Button>
           <Button
-            onClick={() => setActiveModal('relatorio-ia')}
+            onClick={() => setActiveModal('estatisticas')}
             className="ai-button group h-auto p-6 flex flex-col items-center gap-3 transition-all duration-500"
           >
             <div className="relative">
-              <Brain className="h-8 w-8 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 bg-[hsl(var(--ai-purple))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-purple))]/30 transition-all"></div>
+              <BarChart3 className="h-8 w-8 group-hover:scale-110 transition-transform" />
+              <div className="absolute inset-0 bg-[hsl(var(--ai-cyan))]/20 rounded-full blur-sm group-hover:bg-[hsl(var(--ai-cyan))]/30 transition-all"></div>
             </div>
             <div className="text-center">
-              <div className="font-semibold">Relatório IA</div>
-              <div className="text-xs opacity-80">Análise inteligente</div>
+              <div className="font-semibold">Estatísticas</div>
+              <div className="text-xs opacity-80">Análise completa</div>
             </div>
           </Button>
+
           {isAdmin && (
             <Button
               onClick={() => setActiveModal('admin-panel')}

@@ -10,15 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Edit, Eye, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, Brain, EyeOff, Trash2, AlertTriangle } from "lucide-react";
+import { Edit, Eye, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, EyeOff, Trash2, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCrimeStats } from "../hooks/useCrimeStats";
+import { ProcessListProps, ProcessCardProps } from "@/types/components";
 import NovoProcessoForm from "./NovoProcessoForm";
-import { openaiService } from "@/services/openaiService";
+
 
 // Importar DILIGENCIAS do NovoProcessoForm
 const DILIGENCIAS = [
@@ -44,50 +45,11 @@ const DILIGENCIAS = [
   { id: "diligencia_20", label: "Outras diligências" }
 ];
 
-interface Process {
-  id: string;
-  numero_processo: string;
-  tipo_processo: string;
-  prioridade: string;
-  data_recebimento: string;
-  data_fato?: string;
-  desfecho_final?: string;
-  status: 'tramitacao' | 'concluido' | 'arquivado' | 'suspenso';
-  nome_investigado?: string;
-  cargo_investigado?: string;
-  unidade_investigado?: string;
-  created_at: string;
-  updated_at: string;
-  // Campos adicionais para edição
-  descricao_fatos?: string;
-  modus_operandi?: string;
-  diligencias_realizadas?: any;
-  redistribuicao?: string;
-  sugestoes?: string;
-  matricula_investigado?: string;
-  data_admissao?: string;
-  numero_sigpad?: string;
-  vitima?: string; // Adicionado para a visualização
-  // Campos do relatório final
-  relatorio_final?: any;
-  data_relatorio_final?: string;
-  relatorio_gerado_por?: string;
-  // Campos adicionais para IA
-  numero_despacho?: string;
-  data_despacho?: string;
-  origem_processo?: string;
-  status_funcional?: string;
-  tipo_crime?: string;
-  crimes_selecionados?: any[];
-  transgressao?: string;
-}
 
-interface ProcessListProps {
-  type: 'tramitacao' | 'arquivados';
-  onClose: () => void;
-}
 
-const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProcessoLabel, handleEditProcess, handleDeleteProcess, handleViewProcess, handleGerarRelatorioIA, calculateDaysInProcess, isGeneratingReport, generatingReportFor }: any) => (
+
+
+const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProcessoLabel, handleEditProcess, handleDeleteProcess, handleViewProcess, calculateDaysInProcess }: ProcessCardProps) => (
   <Card key={process.id} className="bg-white/10 backdrop-blur-sm border-white/20">
     <CardContent className="p-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -125,6 +87,25 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
                 {process.status === 'concluido' ? 'Concluído' : 'Arquivado'}: {new Date(process.updated_at).toLocaleDateString('pt-BR')}
               </span>
             )}
+            {type === 'todos' && (
+              <>
+                {process.status === 'tramitacao' && process.data_recebimento && (
+                  <span className="text-yellow-300">
+                    {calculateDaysInProcess(process.data_recebimento)} dias em tramitação
+                  </span>
+                )}
+                {process.status === 'concluido' && process.updated_at && (
+                  <span className="text-green-300">
+                    Concluído: {new Date(process.updated_at).toLocaleDateString('pt-BR')}
+                  </span>
+                )}
+                {process.status === 'arquivado' && process.updated_at && (
+                  <span className="text-gray-300">
+                    Arquivado: {new Date(process.updated_at).toLocaleDateString('pt-BR')}
+                  </span>
+                )}
+              </>
+            )}
           </div>
           {process.desfecho_final && (
             <p className="text-green-300">
@@ -144,18 +125,7 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
                 <Edit className="h-4 w-4 mr-2" />
                 Editar
               </Button>
-              <Button 
-                onClick={() => handleGerarRelatorioIA(process)} 
-                disabled={isGeneratingReport}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                {isGeneratingReport && generatingReportFor === process.id ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Brain className="h-4 w-4 mr-2" />
-                )}
-                {isGeneratingReport && generatingReportFor === process.id ? "Gerando..." : "Relatório IA"}
-              </Button>
+
               <Button onClick={() => handleDeleteProcess(process)} className="bg-red-600 hover:bg-red-700 text-white">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Excluir
@@ -187,6 +157,27 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
                 Excluir
               </Button>
             </>
+          ) : type === 'todos' ? (
+            <>
+              {process.status === 'tramitacao' ? (
+                <>
+                  <Button onClick={() => handleEditProcess(process)} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+
+                </>
+              ) : (
+                <Button onClick={() => handleViewProcess(process.id)} className="bg-green-600 hover:bg-green-700 text-white">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Consultar
+                </Button>
+              )}
+              <Button onClick={() => handleDeleteProcess(process)} className="bg-red-600 hover:bg-red-700 text-white">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir
+              </Button>
+            </>
           ) : null}
         </div>
       </div>
@@ -210,8 +201,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [viewingProcess, setViewingProcess] = useState<Process | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [generatingReportFor, setGeneratingReportFor] = useState<string | null>(null);
+
   const { refreshStats: refreshCrimeStats } = useCrimeStats();
 
   // Carregar processos do banco de dados e configurar sincronização em tempo real
@@ -219,8 +209,8 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     console.log('useEffect triggered - type:', type);
     loadProcesses();
     
-    // Só configurar sincronização em tempo real para tipos específicos
-    if (type === 'tramitacao' || type === 'arquivados') {
+    // Configurar sincronização em tempo real para todos os tipos
+    if (type === 'tramitacao' || type === 'arquivados' || type === 'todos') {
       // Configurar sincronização em tempo real
       const channel = supabase
         .channel('processos-changes')
@@ -240,7 +230,9 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
               const newProcess = payload.new as Process;
               const shouldInclude = type === 'tramitacao' 
                 ? newProcess.status === 'tramitacao'
-                : newProcess.status === 'concluido' || newProcess.status === 'arquivado';
+                : type === 'arquivados'
+                ? newProcess.status === 'concluido' || newProcess.status === 'arquivado'
+                : true; // type === 'todos' - incluir todos os processos
               
               if (shouldInclude) {
                 setProcesses(prev => [newProcess, ...prev]);
@@ -269,7 +261,9 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
                   // Se o novo status corresponde ao tipo atual, adicionar
                   const shouldInclude = type === 'tramitacao' 
                     ? updatedProcess.status === 'tramitacao'
-                    : updatedProcess.status === 'concluido' || updatedProcess.status === 'arquivado';
+                    : type === 'arquivados'
+                    ? updatedProcess.status === 'concluido' || updatedProcess.status === 'arquivado'
+                    : true; // type === 'todos' - incluir todos os processos
                   
                   console.log('Deve incluir na lista atual?', shouldInclude);
                   
@@ -327,6 +321,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
         // Incluir tanto processos concluídos quanto arquivados
         query = query.in('status', ['concluido', 'arquivado']);
       }
+      // type === 'todos' - não aplicar filtro, buscar todos os processos
       
       const { data, error } = await query.order('created_at', { ascending: false });
 
@@ -339,10 +334,13 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
         let processosFiltrados;
         if (type === 'tramitacao') {
           processosFiltrados = processosLocais.filter((p: any) => p.status === 'tramitacao');
-        } else {
+        } else if (type === 'arquivados') {
           processosFiltrados = processosLocais.filter((p: any) => 
             p.status === 'concluido' || p.status === 'arquivado'
           );
+        } else {
+          // type === 'todos'
+          processosFiltrados = processosLocais;
         }
         setProcesses(processosFiltrados);
         
@@ -366,7 +364,9 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
 
   const filteredProcesses = type === 'tramitacao' 
     ? processes.filter(p => p.status === 'tramitacao')
-    : processes.filter(p => p.status === 'concluido' || p.status === 'arquivado');
+    : type === 'arquivados'
+    ? processes.filter(p => p.status === 'concluido' || p.status === 'arquivado')
+    : processes; // type === 'todos' - mostrar todos os processos
   console.log('Processos filtrados:', filteredProcesses.length, 'de', processes.length, 'total');
   console.log('Tipo atual:', type);
   console.log('Status dos processos filtrados:', filteredProcesses.map(p => ({ id: p.id, numero: p.numero_processo, status: p.status })));
@@ -426,9 +426,15 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
       dataAdmissao: process.data_admissao || "",
       vitima: process.vitima || "",
       numeroSigpad: process.numero_sigpad || "",
+      investigados: process.investigados || [],
+      vitimas: process.vitimas || [],
+      relatorioFinal: process.relatorio_final || "",
       id: process.id
     };
     console.log("[DEBUG] Editando processo:", mapped);
+    console.log("[DEBUG] Investigados:", process.investigados);
+    console.log("[DEBUG] Vítimas:", process.vitimas);
+    console.log("[DEBUG] Relatório Final:", process.relatorio_final);
     setProcessoParaEditar(mapped);
   };
 
@@ -663,59 +669,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     return diffDays;
   };
 
-  const handleGerarRelatorioIA = async (process: Process) => {
-    setIsGeneratingReport(true);
-    setGeneratingReportFor(process.id);
-    
-    try {
-      // Mapear dados do processo para o formato esperado pela IA
-      const dadosProcesso = {
-        ...process,
-        descricao: process.descricao_fatos || process.descricaoFatos || '',
-        tipo_serviço: process.statusFuncional || process.status_funcional || 'Não se aplica',
-        descricao_fato: process.descricao_fatos || process.descricaoFatos || process.descricao || '',
-        data_fato: process.dataFato || process.data_fato || '',
-      };
 
-      // Gerar relatório com IA
-      const relatorioIA = await openaiService.gerarRelatorioJuridico(dadosProcesso);
-      
-      // Salvar relatório no banco
-      const { error } = await supabase
-        .from("processos")
-        .update({
-          relatorio_final: relatorioIA,
-          data_relatorio_final: new Date().toISOString(),
-          relatorio_gerado_por: user?.email || 'Sistema'
-        })
-        .eq("id", process.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Relatório gerado com sucesso!",
-        description: `Relatório IA foi gerado e salvo para o processo ${process.numero_processo}.`,
-      });
-
-      // Atualizar o processo na lista local
-      setProcesses(prev => prev.map(p => 
-        p.id === process.id 
-          ? { ...p, relatorio_final: relatorioIA, data_relatorio_final: new Date().toISOString() }
-          : p
-      ));
-
-    } catch (err: any) {
-      console.error('Erro ao gerar relatório IA:', err);
-      toast({
-        title: "Erro ao gerar relatório",
-        description: err.message || "Erro desconhecido ao gerar relatório IA.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGeneratingReport(false);
-      setGeneratingReportFor(null);
-    }
-  };
 
 
   const memoizedGetPriorityBadge = useCallback(getPriorityBadge, []);
@@ -723,7 +677,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
   const memoizedEditProcess = useCallback(handleEditProcess, []);
   const memoizedDeleteProcess = useCallback(handleDeleteProcess, []);
   const memoizedViewProcess = useCallback(handleViewProcess, []);
-  const memoizedGerarRelatorioIA = useCallback(handleGerarRelatorioIA, []);
+
   const memoizedCalculateDaysInProcess = useCallback(calculateDaysInProcess, []);
 
   if (loading) {
@@ -738,21 +692,19 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
   }
 
   return (
-    <div className="w-full">
-      {(type === 'tramitacao' || type === 'arquivados') && (
-        <div className="flex justify-end mb-4">
-          <Button onClick={onClose} variant="outline" className="text-white border-white">
-            Voltar ao Dashboard
-          </Button>
-        </div>
-      )}
+    <>
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 z-50 overflow-auto">
         <div className="container mx-auto p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-white">
-              {type === 'tramitacao' ? 'Processos em Tramitação' : 'Processos Finalizados'}
+              {type === 'tramitacao' ? 'Processos em Tramitação' : 
+                type === 'arquivados' ? 'Processos Finalizados' : 
+                'Todos os Processos'}
             </h1>
             <div className="flex items-center gap-4">
+              <Button onClick={onClose} variant="outline" className="text-white border-white">
+                Voltar para Dashboard
+              </Button>
               <div className="flex items-center gap-2 text-green-400 text-sm">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span>Sincronizado em tempo real</span>
@@ -779,10 +731,9 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
                 handleEditProcess={memoizedEditProcess}
                 handleDeleteProcess={memoizedDeleteProcess}
                 handleViewProcess={memoizedViewProcess}
-                handleGerarRelatorioIA={memoizedGerarRelatorioIA}
+
                 calculateDaysInProcess={memoizedCalculateDaysInProcess}
-                isGeneratingReport={isGeneratingReport}
-                generatingReportFor={generatingReportFor}
+
               />
             ))}
 
@@ -790,7 +741,9 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
               <Card className="bg-white/10 backdrop-blur-sm border-white/20">
                 <CardContent className="p-8 text-center">
                   <p className="text-white text-lg">
-                    Nenhum processo {type === 'tramitacao' ? 'em tramitação' : 'finalizado'} encontrado.
+                    Nenhum processo {type === 'tramitacao' ? 'em tramitação' : 
+                      type === 'arquivados' ? 'finalizado' : 
+                      ''} encontrado.
                   </p>
                   {error && (
                     <p className="text-red-300 text-sm mt-2">
@@ -1108,7 +1061,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 });
 

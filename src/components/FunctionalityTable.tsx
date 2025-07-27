@@ -97,22 +97,9 @@ const functionalityData: Functionality[] = [
     componentName: "Dashboard",
     filePath: "src/components/Dashboard.tsx"
   },
+
   {
     id: 5,
-    name: "Sistema de Relatórios IA",
-    category: "AI/ML",
-    status: "active",
-    priority: "medium",
-    technologies: ["OpenAI API", "React", "TypeScript"],
-    dependencies: "openai, react, typescript",
-    responsible: "Equipe AI",
-    lastUpdate: "2024-01-08",
-    description: "Geração de relatórios jurídicos usando inteligência artificial",
-    componentName: "AIReportGenerator",
-    filePath: "src/components/AIReportGenerator.tsx"
-  },
-  {
-    id: 6,
     name: "Legislação e Crimes",
     category: "Frontend",
     status: "active",
@@ -126,7 +113,7 @@ const functionalityData: Functionality[] = [
     filePath: "src/components/LegislacaoSection.tsx"
   },
   {
-    id: 7,
+    id: 6,
     name: "Painel Administrativo",
     category: "Frontend",
     status: "active",
@@ -140,7 +127,7 @@ const functionalityData: Functionality[] = [
     filePath: "src/components/AdminPanel.tsx"
   },
   {
-    id: 8,
+    id: 7,
     name: "Banco de Dados Supabase",
     category: "Database",
     status: "active",
@@ -153,7 +140,7 @@ const functionalityData: Functionality[] = [
     tableName: "processos, users, ai_analyses"
   },
   {
-    id: 9,
+    id: 8,
     name: "Sistema de Logs e Auditoria",
     category: "Backend",
     status: "active",
@@ -166,7 +153,7 @@ const functionalityData: Functionality[] = [
     tableName: "audit_logs"
   },
   {
-    id: 10,
+    id: 9,
     name: "Análise Jurídica IA",
     category: "AI/ML",
     status: "active",
@@ -180,7 +167,7 @@ const functionalityData: Functionality[] = [
     filePath: "src/components/RelatorioIA.tsx"
   },
   {
-    id: 11,
+    id: 10,
     name: "Sistema de Notificações",
     category: "Backend",
     status: "development",
@@ -192,7 +179,7 @@ const functionalityData: Functionality[] = [
     description: "Sistema de notificações em tempo real"
   },
   {
-    id: 12,
+    id: 11,
     name: "Integração com APIs Externas",
     category: "API",
     status: "active",

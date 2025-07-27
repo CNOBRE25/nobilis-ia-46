@@ -36,8 +36,29 @@ const RELATORIO_FINAL_PROMPT = ({
   numeroSigpad = '',
   documentos = [],
 }) => `
-Você é um ANALISTA JURÍDICO MILITAR ESPECIALIZADO. Gere um RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR fundamentado, estruturado conforme o modelo abaixo, usando todos os dados fornecidos do processo:
+Você é um ANALISTA JURÍDICO MILITAR ESPECIALIZADO com vasta experiência em direito penal, direito penal militar e direito administrativo disciplinar. 
 
+SUA FUNÇÃO:
+Gerar um RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR fundamentado, estruturado e técnico, usando TODOS os dados fornecidos do processo.
+
+REGRAS FUNDAMENTAIS:
+1. ANALISE cada campo do processo como relevante para a análise
+2. IDENTIFIQUE crimes penais E transgressões disciplinares
+3. FUNDAMENTE cada tipificação na legislação brasileira
+4. CALCULE prescrições considerando a data do fato
+5. DETERMINE a competência jurisdicional
+6. USE linguagem formal, técnica e cite legislação aplicável
+
+LEGISLAÇÃO APLICÁVEL:
+- Código Penal (CP) - Art. 1º a 361
+- Código Penal Militar (CPM) - Decreto-Lei 1.001/1969
+- Lei Maria da Penha (Lei 11.340/2006)
+- Estatuto da Criança e Adolescente (Lei 8.069/1990)
+- Código Disciplinar da PMPE
+- Lei de Drogas (Lei 11.343/2006)
+- Lei de Crimes Hediondos (Lei 8.072/1990)
+
+DADOS DO PROCESSO:
 RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR
 PROCESSO nº: ${numeroProcesso}
 Despacho de Instauração nº: ${numeroDespacho}
@@ -49,15 +70,37 @@ Investigado(s): ${(Array.isArray(investigados) && investigados.length > 0) ? inv
 Matrícula(s): ${(Array.isArray(investigados) && investigados.length > 0) ? investigados.map(i => i.matricula).join(', ') : 'Não informado'}
 Admissão(ões): ${(Array.isArray(investigados) && investigados.length > 0) ? investigados.map(i => i.dataAdmissao || 'Não informado').join(', ') : 'Não informado'}
 Lotação(ões) Atual(is): ${(Array.isArray(investigados) && investigados.length > 0) ? investigados.map(i => i.unidade).join(', ') : 'Não informado'}
+Status Funcional: ${statusFuncional}
+Descrição dos Fatos: ${descricaoFatos}
+Número SIGPAD: ${numeroSigpad}
+Documentos: ${documentos && documentos.length > 0 ? documentos.join(', ') : 'Não informado'}
 
-I – DAS PRELIMINARES
+FORMATO OBRIGATÓRIO DO RELATÓRIO:
+
+## CABECALHO
+RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR
+[Identificação completa do processo conforme dados acima]
+
+## I – DAS PRELIMINARES
 [Análise pela IA]:
-Elabore um resumo objetivo dos fatos noticiados, identifique possíveis crimes ou transgressões disciplinares atribuídos aos investigados, com tipificação legal, considerando o status funcional do(s) agente(s) no momento do fato. aplique a legislação adequada (CPM, CP, Estatuto, Código Disciplinar, etc.), analise a natureza da infração e, com base na data do fato, realize o cálculo da prescrição penal ou administrativa, indicando se o fato se encontra prescrito ou se a apuração deve prosseguir.
+- Resumo objetivo dos fatos noticiados
+- Identificação de possíveis crimes ou transgressões disciplinares atribuídos aos investigados
+- Tipificação legal com fundamentação detalhada
+- Análise da legislação aplicável (CP/CPM) baseada no status funcional
+- Cálculo da prescrição penal e administrativa considerando a data do fato
+- Determinação da competência jurisdicional
+- Indicação se o fato se encontra prescrito ou se a apuração deve prosseguir
 
-II – DOS FATOS
+## II – DOS FATOS
 A presente investigação preliminar foi instaurada para apurar os fatos noticiados por meio de ${origemProcesso || '[NFND / comunicação inicial]'}, que relata que, no dia ${dataFato || '[DATA DO FATO]'}, o(s) policial(is) militar(es) ${investigados && investigados.length > 0 ? investigados.map(i => i.nome).join(', ') : '[NOME / IDENTIFICAÇÃO]'}, lotado(s) no(a) ${investigados && investigados.length > 0 ? investigados.map(i => i.unidade).join(', ') : '[UNIDADE]'}, teria(m) ${descricaoFatos || '[DESCRIÇÃO RESUMIDA DOS FATOS]'}.
 
-III – DAS DILIGÊNCIAS
+[Análise complementar pela IA]:
+- Identificação dos elementos do tipo penal
+- Análise da autoria e materialidade
+- Contextualização temporal e espacial
+- Nexo de causalidade
+
+## III – DAS DILIGÊNCIAS
 Foram iniciadas diligências para esclarecimento dos fatos, conforme segue:
 ${Object.keys(diligenciasRealizadas || {}).length > 0 ? Object.entries(diligenciasRealizadas).filter(([_, v]) => (v as any)?.realizada).map(([k, v]) => `- ${k}${(v as any).observacao ? ': ' + (v as any).observacao : ''}`).join('\n') : '[Lista automatizada pela IA com base nas diligências realizadas]'}
 
@@ -67,13 +110,25 @@ Documentos providenciados:
 ${documentos && documentos.length > 0 ? documentos.map(d => `- ${d}`).join('\n') : ''}
 
 [Resumo analítico pela IA]:
-Com base nas diligências realizadas, exponha sinteticamente os elementos apurados em cada documento ou etapa da investigação.
+- Análise dos elementos probatórios colhidos
+- Identificação de testemunhas e documentos
+- Avaliação da suficiência probatória
+- Exposição sintética dos elementos apurados em cada documento ou etapa da investigação
 
-IV – DA FUNDAMENTAÇÃO
+## IV – DA FUNDAMENTAÇÃO
 [Elaboração pela IA com base nos dados e desfecho sugerido]:
-Consolide os elementos fáticos e jurídicos da investigação, oferecendo uma análise técnica fundamentada, com respaldo na legislação vigente, doutrina e jurisprudência nacional, destacando o nexo de causalidade, a existência (ou não) de autoria e materialidade, e a adequação típica, conforme o enquadramento legal aplicável (CP, CPM, CPP, Código Disciplinar, Estatuto da Corporação, etc.).
+- Tipificação penal principal fundamentada
+- Análise dos elementos do tipo penal
+- Jurisprudência aplicável
+- Nexo de causalidade
+- Adequação típica
+- Fundamentação legal detalhada
+- Consolidação dos elementos fáticos e jurídicos da investigação
+- Análise técnica fundamentada com respaldo na legislação vigente, doutrina e jurisprudência nacional
+- Destaque do nexo de causalidade, existência (ou não) de autoria e materialidade
+- Adequação típica conforme o enquadramento legal aplicável (CP, CPM, CPP, Código Disciplinar, Estatuto da Corporação, etc.)
 
-V – DA CONCLUSÃO
+## V – DA CONCLUSÃO
 [Decisão orientada pela IA com justificativa]:
 Considerando os elementos colhidos na presente investigação, conclua, justificadamente, por uma das seguintes providências:
 - Instauração de SAD (Sindicato Administrativo Disciplinar)
@@ -81,7 +136,21 @@ Considerando os elementos colhidos na presente investigação, conclua, justific
 - Instauração de PADS (Processo Administrativo Disciplinar Sumaríssimo)
 - Redistribuição para outra unidade
 - Arquivamento, por ausência de elementos suficientes ou prescrição
-A conclusão deve vir acompanhada da justificativa legal e técnica, considerando o grau de relevância dos fatos, a existência de indícios mínimos de autoria e materialidade, e os critérios de oportunidade e conveniência da administração pública.
+
+A conclusão deve vir acompanhada da justificativa legal e técnica, considerando:
+- Grau de relevância dos fatos
+- Existência de indícios mínimos de autoria e materialidade
+- Critérios de oportunidade e conveniência da administração pública
+- Síntese conclusiva fundamentada
+- Recomendações específicas
+
+IMPORTANTE:
+- Seja PRECISO e TÉCNICO
+- FUNDAMENTE cada afirmação na legislação
+- ANALISE o contexto completo dos fatos
+- CONSIDERE tanto aspectos penais quanto disciplinares
+- CALCULE prescrições corretamente
+- IDENTIFIQUE a competência jurisdicional adequada
 
 RECIFE, [DATA DA ASSINATURA ELETRÔNICA]
 `;
@@ -166,52 +235,5 @@ export const openaiService = {
     }
   },
 
-  // Novo método: interpretarTipificacao
-  /**
-   * Recebe um texto livre e a data do fato, retorna a tipificação penal sugerida e a data da prescrição.
-   */
-  async interpretarTipificacao({ texto, dataFato }: { texto: string, dataFato: Date }) {
-    try {
-      console.log('🔍 Iniciando análise de tipificação via backend...');
-      
-      const response = await fetch(`${BACKEND_URL}/api/openai/interpretar-tipificacao`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          descricaoCrime: texto,
-          contexto: `Data do fato: ${dataFato instanceof Date ? dataFato.toLocaleDateString('pt-BR') : dataFato}`
-        }),
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('❌ Erro no backend:', errorData);
-        throw new Error(`Erro no backend: ${errorData.error || response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('✅ Resposta recebida do backend');
-      
-      // Converter formato do backend para o formato esperado pelo frontend
-      return {
-        tipificacao_principal: data.tipificacao_principal || 'Não identificado',
-        fundamentacao: data.fundamentacao || '',
-        tipificacoes_alternativas: Array.isArray(data.tipificacoes_alternativas) 
-          ? data.tipificacoes_alternativas 
-          : (data.tipificacoes_alternativas ? [data.tipificacoes_alternativas] : []),
-        tipificacoes_disciplinares: Array.isArray(data.tipificacoes_disciplinares) 
-          ? data.tipificacoes_disciplinares 
-          : (data.tipificacoes_disciplinares ? [data.tipificacoes_disciplinares] : []),
-        prescricao_penal: data.prescricao_penal || '',
-        prescricao_administrativa: data.prescricao_administrativa || '',
-        competencia: data.competencia || '',
-        observacoes: data.observacoes || ''
-      };
-    } catch (error) {
-      console.error('❌ Erro ao interpretar tipificação:', error);
-      throw error;
-    }
-  }
 }; 

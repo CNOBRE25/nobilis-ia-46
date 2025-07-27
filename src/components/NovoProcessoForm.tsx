@@ -11,9 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { openaiService } from "@/services/openaiService";
 import { checkProcessNumberExists } from "@/utils/processNumberGenerator";
-import { Investigado, Vitima } from "@/types/process";
+import { Investigado, Vitima, ProcessFormData, SetFieldFunction } from "@/types/process";
+import { NovoProcessoFormProps } from "@/types/components";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Brain } from "lucide-react";
+import ProcessSelector from "./ProcessSelector";
 
 // Estrutura inicial dos dados do formulário
 const initialForm = {
@@ -94,19 +96,26 @@ function normalize(str: string) {
   return str.normalize("NFD").replace(/[ \u0300-\u036f]/g, "").toUpperCase();
 }
 
-export default function NovoProcessoForm({ onProcessCreated, processo }: { onProcessCreated?: () => void, processo?: any }) {
+export default function NovoProcessoForm({ onProcessCreated, processo }: NovoProcessoFormProps) {
   const { toast } = useToast();
   const isEditMode = !!processo; // Detecta se é modo de edição
   
   console.log("[DEBUG] NovoProcessoForm - processo recebido:", processo);
   console.log("[DEBUG] NovoProcessoForm - isEditMode:", isEditMode);
+  console.log("[DEBUG] NovoProcessoForm - investigados do processo:", processo?.investigados);
+  console.log("[DEBUG] NovoProcessoForm - vitimas do processo:", processo?.vitimas);
   
-  const [form, setForm] = useState(processo ? {
+  const [form, setForm] = useState<ProcessFormData>(processo ? {
     ...initialForm,
     ...processo,
+    // Garantir que o relatório final seja carregado corretamente
+    relatorioFinal: processo.relatorioFinal || processo.relatorio_final || "",
+    // Garantir que o desfecho final seja carregado corretamente
+    desfechoFinal: processo.desfechoFinal || processo.desfecho_final || "",
   } : initialForm);
   
   console.log("[DEBUG] NovoProcessoForm - form inicial:", form);
+  console.log("[DEBUG] NovoProcessoForm - relatorioFinal:", form.relatorioFinal);
   const [aba, setAba] = useState(isEditMode ? "detalhes" : "dados-basicos"); // Se for edição, vai direto para detalhes
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingDetalhes, setIsSavingDetalhes] = useState(false);
@@ -116,8 +125,39 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
   const [isInterpretandoIA, setIsInterpretandoIA] = useState(false);
 
   // Estado para múltiplos investigados e vítimas
-  const [investigados, setInvestigados] = useState<Investigado[]>(processo?.investigados || []);
-  const [vitimas, setVitimas] = useState<Vitima[]>(processo?.vitimas || []);
+  const [investigados, setInvestigados] = useState<Investigado[]>(() => {
+    if (processo?.investigados) {
+      // Se os dados vierem como string JSON, fazer parse
+      if (typeof processo.investigados === 'string') {
+        try {
+          return JSON.parse(processo.investigados);
+        } catch (e) {
+          console.error('Erro ao fazer parse dos investigados:', e);
+          return [];
+        }
+      }
+      // Se já for array, usar diretamente
+      return Array.isArray(processo.investigados) ? processo.investigados : [];
+    }
+    return [];
+  });
+  
+  const [vitimas, setVitimas] = useState<Vitima[]>(() => {
+    if (processo?.vitimas) {
+      // Se os dados vierem como string JSON, fazer parse
+      if (typeof processo.vitimas === 'string') {
+        try {
+          return JSON.parse(processo.vitimas);
+        } catch (e) {
+          console.error('Erro ao fazer parse das vítimas:', e);
+          return [];
+        }
+      }
+      // Se já for array, usar diretamente
+      return Array.isArray(processo.vitimas) ? processo.vitimas : [];
+    }
+    return [];
+  });
   // Estado para busca de cargos de cada investigado
   const [searchCargos, setSearchCargos] = useState<string[]>([]);
   // Estado para busca de unidade de cada investigado
@@ -188,7 +228,7 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
       return prev.filter(inv => inv.id !== id);
     });
   };
-  const updateInvestigado = (id: number, field: keyof Investigado, value: any) => {
+  const updateInvestigado = (id: number, field: keyof Investigado, value: Investigado[keyof Investigado]) => {
     setInvestigados(prev => prev.map(inv => inv.id === id ? { ...inv, [field]: value } : inv));
   };
 
@@ -216,7 +256,7 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
   };
 
   // Handlers de campo
-  const setField = (field: string, value: any) => setForm((prev) => ({ ...prev, [field]: value }));
+  const setField: SetFieldFunction = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
   // Handler para salvar o processo (dados básicos)
   const handleSaveBasic = async () => {
@@ -350,49 +390,68 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
     console.log("[DEBUG] isEditMode:", isEditMode);
     console.log("[DEBUG] processo?.id:", processo?.id);
     console.log("[DEBUG] form.numeroProcesso:", form.numeroProcesso);
+    console.log("[DEBUG] Dados do formulário:", form);
     
     setIsSavingDetalhes(true);
     try {
-      // Atualizar processo usando ID se for edição, ou número do processo se for novo
+      // Preparar dados para atualização
       const updateData = {
-        diligencias_realizadas: form.diligenciasRealizadas,
-        desfecho_final: form.desfechoFinal,
-        sugestoes: form.sugestoes,
+        diligencias_realizadas: form.diligenciasRealizadas || {},
+        desfecho_final: form.desfechoFinal || '',
+        sugestoes: form.sugestoes || '',
+        updated_at: new Date().toISOString()
       };
 
-      console.log("[DEBUG] Dados para atualizar:", updateData);
 
-      let error;
+
+      console.log("[DEBUG] Dados para atualizar:", updateData);
+      console.log("[DEBUG] Desfecho final sendo salvo:", updateData.desfecho_final);
+
+      let result;
       if (isEditMode && processo?.id) {
         // MODO EDIÇÃO: Usar ID do processo
         console.log("[DEBUG] Modo edição - usando ID:", processo.id);
-        const result = await supabase.from("processos").update(updateData).eq("id", processo.id);
-        error = result.error;
-        console.log("[DEBUG] Resultado da atualização:", result);
+        result = await supabase
+          .from("processos")
+          .update(updateData)
+          .eq("id", processo.id)
+          .select();
+        
+        console.log("[DEBUG] Resultado da atualização (edição):", result);
       } else {
         // MODO NOVO: Usar número do processo
         console.log("[DEBUG] Modo novo - usando número:", form.numeroProcesso);
-        const result = await supabase.from("processos").update(updateData).eq("numero_processo", form.numeroProcesso);
-        error = result.error;
-        console.log("[DEBUG] Resultado da atualização:", result);
+        result = await supabase
+          .from("processos")
+          .update(updateData)
+          .eq("numero_processo", form.numeroProcesso)
+          .select();
+        
+        console.log("[DEBUG] Resultado da atualização (novo):", result);
       }
 
-      if (error) {
-        console.error("[DEBUG] Erro na atualização:", error);
-        throw error;
+      if (result.error) {
+        console.error("[DEBUG] Erro na atualização:", result.error);
+        throw result.error;
+      }
+
+      if (result.data && result.data.length > 0) {
+        console.log("[DEBUG] Dados atualizados com sucesso:", result.data[0]);
       }
       
       console.log("[DEBUG] Detalhes salvos com sucesso!");
       toast({
-        title: "Detalhes salvos!",
-        description: `Detalhes do processo ${form.numeroProcesso} salvos.`
+        title: "Detalhes salvos com sucesso!",
+        description: `Detalhes do processo ${form.numeroProcesso} foram salvos no banco de dados.`
       });
-      setAba("relatorio-ia");
+      
+      // Não redirecionar automaticamente, deixar o usuário decidir
+      // setAba("relatorio-ia");
     } catch (err: any) {
       console.error("[DEBUG] Erro ao salvar detalhes:", err);
       toast({
         title: "Erro ao salvar detalhes",
-        description: err.message || "Erro desconhecido.",
+        description: err.message || "Erro desconhecido ao salvar os detalhes.",
         variant: "destructive"
       });
     } finally {
@@ -442,28 +501,39 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
   const handleSaveRelatorioIA = async () => {
     setIsLoading(true);
     try {
+      console.log('💾 Salvando relatório IA...');
+      console.log('📄 Conteúdo do relatório:', form.relatorioFinal);
+      
       const updateData = {
         relatorio_final: form.relatorioFinal,
+        data_relatorio_final: new Date().toISOString(),
+        relatorio_gerado_por: 'Sistema'
       };
 
       let error;
       if (isEditMode && processo?.id) {
-        // MODO EDIÇÃO: Usar ID do processo
+        console.log('💾 Salvando relatório (modo edição) - ID:', processo.id);
         const result = await supabase.from("processos").update(updateData).eq("id", processo.id);
         error = result.error;
       } else {
-        // MODO NOVO: Usar número do processo
+        console.log('💾 Salvando relatório (modo novo) - Número:', form.numeroProcesso);
         const result = await supabase.from("processos").update(updateData).eq("numero_processo", form.numeroProcesso);
         error = result.error;
       }
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao salvar relatório:', error);
+        throw error;
+      }
+      
+      console.log('✅ Relatório salvo com sucesso');
       
       toast({
         title: "Relatório IA salvo!",
         description: `Relatório IA do processo ${form.numeroProcesso} salvo com sucesso.`
       });
     } catch (err: any) {
+      console.error('❌ Erro ao salvar relatório IA:', err);
       toast({
         title: "Erro ao salvar relatório IA",
         description: err.message || "Erro desconhecido ao salvar o relatório.",
@@ -478,42 +548,102 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
   const handleGerarRelatorioIA = async () => {
     setIsGeneratingReport(true);
     try {
+      console.log('🔍 Iniciando geração de relatório IA...');
+      console.log('📊 Dados do formulário:', form);
+      console.log('👥 Investigados:', investigados);
+      console.log('👤 Vítimas:', vitimas);
+
       // Montar objeto conforme novo padrão do backend
       const dadosRelatorio = {
-        ...form,
-        investigados: Array.isArray(investigados) ? investigados : [],
+        numeroProcesso: form.numeroProcesso,
+        numeroDespacho: form.numeroDespacho || '',
+        dataDespacho: form.dataDespacho || '',
+        origemProcesso: form.origemProcesso || '',
+        dataFato: form.dataFato || '',
         vitimas: Array.isArray(vitimas) ? vitimas : [],
-        tipo_serviço: form.statusFuncional || form.status_funcional || 'Não se aplica',
-        descricao_fato: form.descricaoFatos || form.descricao_fato || form.descricao || '',
-        data_fato: form.dataFato || form.data_fato || '',
+        investigados: Array.isArray(investigados) ? investigados : [],
+        descricaoFatos: form.descricaoFatos || '',
+        statusFuncional: form.statusFuncional || '',
+        diligenciasRealizadas: form.diligenciasRealizadas || {},
+        numeroSigpad: form.numeroSigpad || '',
+        documentos: [],
+        tipoCrime: form.tipoCrime || '',
+        crimesSelecionados: form.crimesSelecionados || [],
+        transgressao: form.transgressao || '',
+        modusOperandi: form.modusOperandi || '',
+        redistribuicao: form.redistribuicao || '',
+        sugestoes: form.sugestoes || ''
       };
+
+      console.log('📋 Dados estruturados para IA:', dadosRelatorio);
+
       // Chamar IA
+      console.log('🤖 Chamando serviço OpenAI...');
       const relatorioIA = await openaiService.gerarRelatorioJuridico(dadosRelatorio);
-      setField("relatorioFinal", relatorioIA);
+      
+      console.log('📄 Relatório gerado:', relatorioIA);
+      
+      // Converter o relatório estruturado para texto completo
+      const relatorioTexto = `
+${relatorioIA.cabecalho}
+
+## I – DAS PRELIMINARES
+${relatorioIA.das_preliminares}
+
+## II – DOS FATOS
+${relatorioIA.dos_fatos}
+
+## III – DAS DILIGÊNCIAS
+${relatorioIA.das_diligencias}
+
+## IV – DA FUNDAMENTAÇÃO
+${relatorioIA.da_fundamentacao}
+
+## V – DA CONCLUSÃO
+${relatorioIA.da_conclusao}
+      `.trim();
+      
+      console.log('📝 Relatório convertido para texto:', relatorioTexto);
+      
+      // Atualizar o campo no formulário
+      setField("relatorioFinal", relatorioTexto);
+      
       // Salvar relatório no banco usando ID se for edição, ou número do processo se for novo
       let error;
       if (isEditMode && processo?.id) {
-        // MODO EDIÇÃO: Usar ID do processo
+        console.log('💾 Salvando relatório no banco (modo edição) - ID:', processo.id);
         const result = await supabase.from("processos").update({
-          relatorio_final: relatorioIA
+          relatorio_final: relatorioTexto,
+          data_relatorio_final: new Date().toISOString(),
+          relatorio_gerado_por: 'Sistema'
         }).eq("id", processo.id);
         error = result.error;
       } else {
-        // MODO NOVO: Usar número do processo
+        console.log('💾 Salvando relatório no banco (modo novo) - Número:', form.numeroProcesso);
         const result = await supabase.from("processos").update({
-          relatorio_final: relatorioIA
+          relatorio_final: relatorioTexto,
+          data_relatorio_final: new Date().toISOString(),
+          relatorio_gerado_por: 'Sistema'
         }).eq("numero_processo", form.numeroProcesso);
         error = result.error;
       }
-      if (error) throw error;
+      
+      if (error) {
+        console.error('❌ Erro ao salvar no banco:', error);
+        throw error;
+      }
+      
+      console.log('✅ Relatório salvo com sucesso no banco');
+      
       toast({
-        title: "Relatório gerado!",
+        title: "Relatório gerado com sucesso!",
         description: "Relatório final gerado e salvo com sucesso."
       });
     } catch (err: any) {
+      console.error('❌ Erro ao gerar relatório:', err);
       toast({
         title: "Erro ao gerar relatório",
-        description: err.message || "Erro desconhecido.",
+        description: err.message || "Erro desconhecido ao gerar relatório.",
         variant: "destructive"
       });
     } finally {
@@ -560,7 +690,7 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
                     iaTipificacao={iaTipificacao}
                     iaPrescricao={iaPrescricao}
                     isInterpretandoIA={isInterpretandoIA}
-                    interpretarTipificacaoIA={() => {}}
+
                   />
                 </div>
                 <div className="flex justify-end mt-4">
@@ -802,24 +932,146 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: { onPro
 
             <TabsContent value="relatorio-ia" className="space-y-8 mt-6">
               <div className="bg-white/20 rounded-xl p-6 shadow-md border border-white/30">
-                <h2 className="text-xl font-bold text-blue-200 mb-4">Relatório Final Gerado (IA)</h2>
-                <Textarea
-                  value={form.relatorioFinal}
-                  onChange={e => setField("relatorioFinal", e.target.value)}
-                  className="bg-white/30 border-white/30 text-white min-h-[200px] placeholder:text-blue-200"
-                  placeholder="O relatório gerado pela IA aparecerá aqui..."
-                  disabled
-                />
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-blue-200">Relatório Final Gerado (IA)</h2>
+                  {form.relatorioFinal && (
+                    <div className="flex items-center gap-2 text-green-400">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <span className="text-sm">Relatório disponível</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Seletor de Processo (apenas quando não está editando) */}
+                {!isEditMode && (
+                  <div className="bg-white/10 rounded-lg p-4 border border-white/20 mb-6">
+                    <h3 className="text-lg font-semibold text-white mb-3">Selecionar Processo para Relatório</h3>
+                    <ProcessSelector 
+                      onProcessSelect={(selectedProcess) => {
+                        console.log('Processo selecionado para relatório:', selectedProcess);
+                        // Preencher o formulário com os dados do processo selecionado
+                        setForm(prev => ({
+                          ...prev,
+                          numeroProcesso: selectedProcess.numero_processo,
+                          numeroDespacho: selectedProcess.numero_despacho || '',
+                          dataDespacho: selectedProcess.data_despacho || '',
+                          origemProcesso: selectedProcess.origem_processo || '',
+                          dataFato: selectedProcess.data_fato || '',
+                          descricaoFatos: selectedProcess.descricao_fatos || '',
+                          statusFuncional: selectedProcess.status_funcional || '',
+                          diligenciasRealizadas: selectedProcess.diligencias_realizadas || {},
+                          numeroSigpad: selectedProcess.numero_sigpad || '',
+                          tipoCrime: selectedProcess.tipo_crime || '',
+                          crimesSelecionados: selectedProcess.crimes_selecionados || [],
+                          transgressao: selectedProcess.transgressao || '',
+                          modusOperandi: selectedProcess.modus_operandi || '',
+                          redistribuicao: selectedProcess.redistribuicao || '',
+                          sugestoes: selectedProcess.sugestoes || '',
+                          relatorioFinal: selectedProcess.relatorio_final || ''
+                        }));
+                        
+                        // Preencher investigados e vítimas
+                        if (selectedProcess.investigados) {
+                          setInvestigados(Array.isArray(selectedProcess.investigados) ? selectedProcess.investigados : []);
+                        }
+                        if (selectedProcess.vitimas) {
+                          setVitimas(Array.isArray(selectedProcess.vitimas) ? selectedProcess.vitimas : []);
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {form.relatorioFinal ? (
+                  <div className="space-y-4">
+                    <div className="bg-white/10 rounded-lg p-4 border border-white/20">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-white">Relatório Técnico-Jurídico</h3>
+                        <Button 
+                          onClick={() => {
+                            const blob = new Blob([form.relatorioFinal], { type: 'text/plain' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `relatorio_${form.numeroProcesso}_${new Date().toISOString().split('T')[0]}.txt`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-sm"
+                        >
+                          📄 Download TXT
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={form.relatorioFinal}
+                        onChange={e => setField("relatorioFinal", e.target.value)}
+                        className="bg-white/30 border-white/30 text-white min-h-[300px] placeholder:text-blue-200 font-mono text-sm"
+                        placeholder="O relatório gerado pela IA aparecerá aqui..."
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white/10 rounded-lg p-8 text-center border border-white/20">
+                    <div className="text-blue-200 mb-4">
+                      <Brain className="h-16 w-16 mx-auto mb-4 text-blue-400" />
+                      <h3 className="text-lg font-semibold mb-2">
+                        {isEditMode ? 'Nenhum relatório gerado' : 'Selecione um processo para gerar relatório'}
+                      </h3>
+                      <p className="text-sm">
+                        {isEditMode 
+                          ? 'Clique em "Gerar Relatório com IA" para criar um relatório técnico-jurídico completo.'
+                          : 'Escolha um processo da lista acima e clique em "Gerar Relatório com IA" para criar um relatório técnico-jurídico completo.'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex gap-4 mt-6">
-                  <Button onClick={handleSaveRelatorioIA} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 font-semibold rounded-lg">
+                  <Button 
+                    onClick={handleSaveRelatorioIA} 
+                    disabled={isLoading || !form.relatorioFinal} 
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 font-semibold rounded-lg"
+                  >
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Salvar Relatório
                   </Button>
-                  <Button onClick={handleGerarRelatorioIA} disabled={isGeneratingReport || !form.numeroProcesso} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 font-semibold rounded-lg">
-                    {isGeneratingReport ? "Gerando..." : "Gerar Relatório com IA"}
+                  <Button 
+                    onClick={handleGerarRelatorioIA} 
+                    disabled={isGeneratingReport || !form.numeroProcesso} 
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 font-semibold rounded-lg"
+                  >
+                    {isGeneratingReport ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Gerando Relatório...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="mr-2 h-4 w-4" />
+                        Gerar Relatório com IA
+                      </>
+                    )}
                   </Button>
-                  <Button onClick={onProcessCreated} className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 font-semibold rounded-lg">Concluir</Button>
+                  <Button 
+                    onClick={onProcessCreated} 
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 font-semibold rounded-lg"
+                  >
+                    Concluir
+                  </Button>
                 </div>
+                
+                {isGeneratingReport && (
+                  <div className="mt-4 p-4 bg-blue-500/20 rounded-lg border border-blue-500/30">
+                    <div className="flex items-center gap-2 text-blue-200">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Processando dados e gerando relatório técnico-jurídico...</span>
+                    </div>
+                    <p className="text-sm text-blue-300 mt-2">
+                      Isso pode levar alguns minutos. O relatório será estruturado conforme o modelo padrão.
+                    </p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
