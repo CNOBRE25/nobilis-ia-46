@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 // Nova chave da API (a que está no documento)
-const novaChave = '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';
+const novaChave = 'sk-proj-sua-chave-aqui';
 
 // Conteúdo correto do arquivo - UMA ÚNICA LINHA
 const conteudo = `OPENAI_API_KEY=${novaChave}\nPORT=3002`;
