@@ -138,14 +138,12 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
   }, [type, toast]);
 
   const loadProcesses = async () => {
-    console.log('Iniciando carregamento de processos...');
     setLoading(true);
     setError(null);
 
     try {
       // Determinar o status baseado no tipo
       const statusFilter = type === 'tramitacao' ? 'tramitacao' : 'concluido';
-      console.log('Filtro de status:', statusFilter);
 
       // Carregar processos do Supabase
       const { data, error } = await supabase
@@ -170,20 +168,17 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
           description: "Carregando processos do navegador (modo offline).",
         });
       } else {
-        console.log('Processos carregados com sucesso:', data?.length || 0, 'processos');
         setProcesses(data || []);
       }
     } catch (err) {
       console.error('Erro inesperado ao carregar processos:', err);
       setError('Erro inesperado ao carregar processos');
     } finally {
-      console.log('Finalizando carregamento de processos');
       setLoading(false);
     }
   };
 
   const filteredProcesses = processes.filter(p => p.status === type);
-  console.log('Processos filtrados:', filteredProcesses.length, 'de', processes.length, 'total');
 
   const getPriorityBadge = (prioridade: string) => {
     switch (prioridade) {
