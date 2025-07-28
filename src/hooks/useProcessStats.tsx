@@ -1,10 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
+<<<<<<< HEAD
+=======
+import { useDebouncedAsync } from './useDebouncedAsync';
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
 
 interface ProcessStats {
   totalProcessos: number;
   processosAtivos: number;
+<<<<<<< HEAD
   processosConcluidos: number;
+=======
+  processosFinalizados: number;
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
   processosUrgentes: number;
   tempoMedioResolucao: number;
   taxaEficiencia: number;
@@ -19,7 +27,11 @@ export function useProcessStats() {
   const [stats, setStats] = useState<ProcessStats>({
     totalProcessos: 0,
     processosAtivos: 0,
+<<<<<<< HEAD
     processosConcluidos: 0,
+=======
+    processosFinalizados: 0,
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
     processosUrgentes: 0,
     tempoMedioResolucao: 0,
     taxaEficiencia: 0
@@ -85,12 +97,18 @@ export function useProcessStats() {
       const totalProcessos = processosList.length;
       const processosAtivos = processosList.filter(p => p.status === 'tramitacao').length;
       const processosConcluidos = processosList.filter(p => p.status === 'concluido').length;
+<<<<<<< HEAD
+=======
+      const processosArquivados = processosList.filter(p => p.status === 'arquivado').length;
+      const processosFinalizados = processosConcluidos + processosArquivados;
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
       const processosUrgentes = processosList.filter(p => 
         p.prioridade === 'urgente' || 
         p.prioridade === 'alta' || 
         p.prioridade === 'urgente_maria_penha'
       ).length;
 
+<<<<<<< HEAD
       // Calcular tempo médio de resolução (processos concluídos)
       let tempoMedioResolucao = 0;
       const processosConcluidosComData = processosList.filter(p => 
@@ -99,6 +117,16 @@ export function useProcessStats() {
 
       if (processosConcluidosComData.length > 0) {
         const temposResolucao = processosConcluidosComData.map(p => {
+=======
+      // Calcular tempo médio de resolução (processos finalizados)
+      let tempoMedioResolucao = 0;
+      const processosFinalizadosComData = processosList.filter(p => 
+        (p.status === 'concluido' || p.status === 'arquivado') && p.data_recebimento && p.updated_at
+      );
+
+      if (processosFinalizadosComData.length > 0) {
+        const temposResolucao = processosFinalizadosComData.map(p => {
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
           const dataRecebimento = new Date(p.data_recebimento);
           const updated = new Date(p.updated_at);
           return Math.ceil((updated.getTime() - dataRecebimento.getTime()) / (1000 * 60 * 60 * 24));
@@ -108,13 +136,22 @@ export function useProcessStats() {
         );
       }
 
+<<<<<<< HEAD
       // Calcular taxa de eficiência (processos concluídos / total)
       const taxaEficiencia = totalProcessos > 0 ? Math.round((processosConcluidos / totalProcessos) * 100) : 0;
+=======
+      // Calcular taxa de eficiência (processos finalizados / total)
+      const taxaEficiencia = totalProcessos > 0 ? Math.round((processosFinalizados / totalProcessos) * 100) : 0;
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
 
       const newStats = {
         totalProcessos,
         processosAtivos,
+<<<<<<< HEAD
         processosConcluidos,
+=======
+        processosFinalizados,
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
         processosUrgentes,
         tempoMedioResolucao,
         taxaEficiencia
@@ -139,6 +176,7 @@ export function useProcessStats() {
     fetchStats(true); // Força primeira carga
   }, [fetchStats]);
 
+<<<<<<< HEAD
   // Função para atualizar estatísticas com debounce
   const refreshStats = useCallback(() => {
     // Limpar timer anterior se existir
@@ -160,12 +198,19 @@ export function useProcessStats() {
       }
     };
   }, []);
+=======
+  const [debouncedRefreshStats] = useDebouncedAsync(() => fetchStats(true), 500);
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
 
   return {
     stats,
     loading,
     error,
+<<<<<<< HEAD
     refreshStats,
+=======
+    refreshStats: debouncedRefreshStats,
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
     lastUpdateTime
   };
 } 

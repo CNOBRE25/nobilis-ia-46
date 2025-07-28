@@ -222,6 +222,7 @@ export function UnifiedStatsPanel() {
               </CardContent>
             </Card>
 
+<<<<<<< HEAD
             {/* Distribuição de Vítimas */}
             <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
               <CardHeader>
@@ -271,6 +272,8 @@ export function UnifiedStatsPanel() {
               </CardContent>
             </Card>
 
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
             {/* Top Performers */}
             <Card>
               <CardHeader>
@@ -381,6 +384,7 @@ export function UnifiedStatsPanel() {
               </CardContent>
             </Card>
 
+<<<<<<< HEAD
             {/* Distribuição de Vítimas */}
             <Card>
               <CardHeader>
@@ -430,6 +434,8 @@ export function UnifiedStatsPanel() {
               </CardContent>
             </Card>
 
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
             {/* Unidades Mais Ativas */}
             <Card>
               <CardHeader>
@@ -505,6 +511,7 @@ export function UnifiedStatsPanel() {
                         {summary?.unidades_mais_ativas?.[0]?.unidade || 'N/A'}
                       </span>
                     </div>
+<<<<<<< HEAD
                     <div className="flex items-center justify-between text-sm">
                       <span>Maioria das vítimas:</span>
                       <span className="font-medium">
@@ -513,6 +520,8 @@ export function UnifiedStatsPanel() {
                           : 'N/A'}
                       </span>
                     </div>
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
                   </div>
                 </div>
               </CardContent>
@@ -720,6 +729,7 @@ export function UnifiedStatsPanel() {
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
+<<<<<<< HEAD
                       <span>Vítimas Femininas</span>
                       <span>{userStats.reduce((sum, stat) => sum + stat.vitimas_femininas, 0)}</span>
                     </div>
@@ -742,6 +752,8 @@ export function UnifiedStatsPanel() {
 
                   <div className="pt-2 border-t">
                     <div className="flex items-center justify-between text-sm">
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
                       <span>Tipos de Crime Diferentes</span>
                       <span>{userStats.reduce((sum, stat) => sum + stat.tipos_crime_diferentes, 0)}</span>
                     </div>

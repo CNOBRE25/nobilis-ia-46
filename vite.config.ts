@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -43,3 +44,17 @@ export default defineConfig(({ mode }) => ({
     },
   },
 }));
+=======
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    },
+  },
+}); 
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd

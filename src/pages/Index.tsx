@@ -1,5 +1,9 @@
 
+<<<<<<< HEAD
 import { useState } from "react";
+=======
+import React, { useState, Suspense, lazy } from "react";
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +21,11 @@ import SettingsDialog from "@/components/SettingsDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 
+<<<<<<< HEAD
+=======
+const GerarRelatorioInteligente = lazy(() => import("./GerarRelatorioInteligente"));
+
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
 const Index = () => {
   const { user, signOut, loading } = useAuth();
   const { profile, isAdmin } = useRoles();
@@ -194,7 +203,11 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="dashboard" className="w-full">
+<<<<<<< HEAD
           <TabsList className="grid w-full grid-cols-3 mb-8 bg-card border border-border">
+=======
+          <TabsList className="grid w-full grid-cols-4 mb-8 bg-card border border-border">
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
             <TabsTrigger value="dashboard" className="flex items-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <BarChart3 className="h-4 w-4 mr-2" />
               Dashboard
@@ -207,6 +220,13 @@ const Index = () => {
               <BookOpen className="h-4 w-4 mr-2" />
               Legislação
             </TabsTrigger>
+<<<<<<< HEAD
+=======
+            <TabsTrigger value="relatorio-ia" className="flex items-center data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Brain className="h-4 w-4 mr-2" />
+              Gerar Relatório Inteligente
+            </TabsTrigger>
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -220,6 +240,15 @@ const Index = () => {
           <TabsContent value="legislacao">
             <LegislacaoSection />
           </TabsContent>
+<<<<<<< HEAD
+=======
+
+          <TabsContent value="relatorio-ia">
+            <Suspense fallback={<div className="text-white">Carregando...</div>}>
+              <GerarRelatorioInteligente />
+            </Suspense>
+          </TabsContent>
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
         </Tabs>
       </main>
       
