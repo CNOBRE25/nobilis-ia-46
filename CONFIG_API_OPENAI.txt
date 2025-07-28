@@ -1,0 +1,17 @@
+CONFIGURAÇÃO DA API OPENAI
+
+Para que a IA funcione corretamente, você precisa configurar a API OpenAI:
+
+1. Crie um arquivo .env.local na raiz do projeto
+2. Adicione sua chave da OpenAI:
+
+VITE_OPENAI_API_KEY=sua_chave_openai_aqui
+
+3. Obtenha sua chave em: https://platform.openai.com/api-keys
+
+4. Reinicie o servidor de desenvolvimento após criar o arquivo
+
+Exemplo de arquivo .env.local:
+VITE_OPENAI_API_KEY=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
+
+NOTA: Se a API não estiver configurada, o sistema funcionará em modo de simulação.
