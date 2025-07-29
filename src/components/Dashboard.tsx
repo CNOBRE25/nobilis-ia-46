@@ -291,11 +291,7 @@ const Dashboard = ({ user }: DashboardProps) => {
   const renderModal = () => {
     switch (activeModal) {
       case 'cadastrar-processo':
-<<<<<<< HEAD
         return <NovoProcessoForm onProcessCreated={() => { closeModal(); }} />;
-=======
-        return <ProcessForm onClose={closeModal} onProcessSaved={refreshStats} />;
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
       case 'processos-tramitacao':
         return <ProcessList type="tramitacao" onClose={closeModal} />;
       case 'processos-concluidos':
@@ -315,10 +311,6 @@ const Dashboard = ({ user }: DashboardProps) => {
   return (
     <div className="min-h-screen ai-gradient">
       <div className="space-y-6 p-6">
-<<<<<<< HEAD
-        {/* Botões de ação */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-=======
         {/* Cards de Estatísticas - Design Suave */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
