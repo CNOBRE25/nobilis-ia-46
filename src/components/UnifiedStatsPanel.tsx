@@ -273,7 +273,6 @@ export function UnifiedStatsPanel() {
             </Card>
 
 =======
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
             {/* Top Performers */}
             <Card>
               <CardHeader>
@@ -435,7 +434,6 @@ export function UnifiedStatsPanel() {
             </Card>
 
 =======
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
             {/* Unidades Mais Ativas */}
             <Card>
               <CardHeader>
@@ -521,7 +519,6 @@ export function UnifiedStatsPanel() {
                       </span>
                     </div>
 =======
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
                   </div>
                 </div>
               </CardContent>
@@ -753,7 +750,6 @@ export function UnifiedStatsPanel() {
                   <div className="pt-2 border-t">
                     <div className="flex items-center justify-between text-sm">
 =======
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
                       <span>Tipos de Crime Diferentes</span>
                       <span>{userStats.reduce((sum, stat) => sum + stat.tipos_crime_diferentes, 0)}</span>
                     </div>

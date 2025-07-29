@@ -507,7 +507,6 @@ const Dashboard = ({ user }: DashboardProps) => {
 
         {/* Botões de Ação */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
           <Button
             onClick={() => setActiveModal('cadastrar-processo')}
             className="ai-button group h-auto p-6 flex flex-col items-center gap-3 transition-all duration-500"

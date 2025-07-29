@@ -10,17 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-<<<<<<< HEAD
-import { Edit, Eye, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, EyeOff, Trash2, AlertTriangle } from "lucide-react";
-=======
 import { Edit, Eye, RotateCcw, Calendar as CalendarIcon, Loader2, Save, X, FileText, Users, Brain, EyeOff, Trash2, AlertTriangle } from "lucide-react";
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-<<<<<<< HEAD
 import { useCrimeStats } from "../hooks/useCrimeStats";
 import { ProcessListProps, ProcessCardProps } from "@/types/components";
 import NovoProcessoForm from "./NovoProcessoForm";
@@ -191,42 +186,6 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
 ));
 
 const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
-=======
-import ProcessForm from "./ProcessForm";
-
-interface Process {
-  id: string;
-  numero_processo: string;
-  tipo_processo: string;
-  prioridade: string;
-  data_recebimento: string;
-  data_fato?: string;
-  desfecho_final?: string;
-  status: 'tramitacao' | 'concluido' | 'arquivado' | 'suspenso';
-  nome_investigado?: string;
-  cargo_investigado?: string;
-  unidade_investigado?: string;
-  created_at: string;
-  updated_at: string;
-  // Campos adicionais para edição
-  descricao_fatos?: string;
-  modus_operandi?: string;
-  diligencias_realizadas?: any;
-  redistribuicao?: string;
-  sugestoes?: string;
-  matricula_investigado?: string;
-  data_admissao?: string;
-  vitima?: string;
-  numero_sigpad?: string;
-}
-
-interface ProcessListProps {
-  type: 'tramitacao' | 'concluidos';
-  onClose: () => void;
-}
-
-const ProcessList = ({ type, onClose }: ProcessListProps) => {
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
   const { toast } = useToast();
   const { user } = useAuth();
   const [processes, setProcesses] = useState<Process[]>([]);
@@ -240,91 +199,16 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [processToDelete, setProcessToDelete] = useState<Process | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-<<<<<<< HEAD
   const [viewingProcess, setViewingProcess] = useState<Process | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
 
   const { refreshStats: refreshCrimeStats } = useCrimeStats();
-=======
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
 
   // Carregar processos do banco de dados e configurar sincronização em tempo real
   useEffect(() => {
     console.log('useEffect triggered - type:', type);
     loadProcesses();
     
-<<<<<<< HEAD
-    // Configurar sincronização em tempo real para todos os tipos
-    if (type === 'tramitacao' || type === 'arquivados' || type === 'todos') {
-      // Configurar sincronização em tempo real
-      const channel = supabase
-        .channel('processos-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'processos'
-          },
-          (payload) => {
-            console.log('Mudança detectada em tempo real:', payload);
-            
-            // Atualizar a lista baseado no tipo de mudança
-            if (payload.eventType === 'INSERT') {
-              // Novo processo adicionado
-              const newProcess = payload.new as Process;
-              const shouldInclude = type === 'tramitacao' 
-                ? newProcess.status === 'tramitacao'
-                : type === 'arquivados'
-                ? newProcess.status === 'concluido' || newProcess.status === 'arquivado'
-                : true; // type === 'todos' - incluir todos os processos
-              
-              if (shouldInclude) {
-                setProcesses(prev => [newProcess, ...prev]);
-                toast({
-                  title: "Novo Processo",
-                  description: `Processo ${newProcess.numero_processo} foi adicionado.`,
-                });
-              }
-            } else if (payload.eventType === 'UPDATE') {
-              // Processo atualizado
-              const updatedProcess = payload.new as Process;
-              const oldProcess = payload.old as Process;
-              
-              console.log('UPDATE detectado:', {
-                oldStatus: oldProcess.status,
-                newStatus: updatedProcess.status,
-                processId: updatedProcess.id,
-                currentType: type
-              });
-              
-              setProcesses(prev => {
-                // Se o status mudou, remover da lista atual se necessário
-                if (oldProcess.status !== updatedProcess.status) {
-                  console.log('Status mudou, removendo processo da lista atual');
-                  const filtered = prev.filter(p => p.id !== updatedProcess.id);
-                  // Se o novo status corresponde ao tipo atual, adicionar
-                  const shouldInclude = type === 'tramitacao' 
-                    ? updatedProcess.status === 'tramitacao'
-                    : type === 'arquivados'
-                    ? updatedProcess.status === 'concluido' || updatedProcess.status === 'arquivado'
-                    : true; // type === 'todos' - incluir todos os processos
-                  
-                  console.log('Deve incluir na lista atual?', shouldInclude);
-                  
-                  if (shouldInclude) {
-                    console.log('Adicionando processo atualizado à lista');
-                    return [updatedProcess, ...filtered];
-                  }
-                  console.log('Processo não deve estar na lista atual');
-                  return filtered;
-                }
-                // Se apenas dados foram atualizados, atualizar o processo
-                console.log('Apenas dados atualizados, mantendo processo na lista');
-                return prev.map(p => p.id === updatedProcess.id ? updatedProcess : p);
-              });
-              
-=======
     // Configurar sincronização em tempo real
     const channel = supabase
       .channel('processos-changes')
@@ -344,7 +228,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
             const newProcess = payload.new as Process;
             if (newProcess.status === (type === 'tramitacao' ? 'tramitacao' : 'concluido')) {
               setProcesses(prev => [newProcess, ...prev]);
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
               toast({
                 title: "Processo Atualizado",
                 description: `Processo ${updatedProcess.numero_processo} foi atualizado.`,
@@ -359,8 +242,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
                 description: `Processo ${deletedProcess.numero_processo} foi excluído.`,
               });
             }
-<<<<<<< HEAD
-=======
           } else if (payload.eventType === 'UPDATE') {
             // Processo atualizado
             const updatedProcess = payload.new as Process;
@@ -393,7 +274,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
               title: "Processo Excluído",
               description: `Processo ${deletedProcess.numero_processo} foi excluído.`,
             });
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
           }
         )
         .subscribe();
@@ -413,19 +293,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
     setError(null);
 
     try {
-<<<<<<< HEAD
-      let query = supabase.from('processos').select('*');
-      
-      if (type === 'tramitacao') {
-        query = query.eq('status', 'tramitacao');
-      } else if (type === 'arquivados') {
-        // Incluir tanto processos concluídos quanto arquivados
-        query = query.in('status', ['concluido', 'arquivado']);
-      }
-      // type === 'todos' - não aplicar filtro, buscar todos os processos
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
-=======
       // Determinar o status baseado no tipo
       const statusFilter = type === 'tramitacao' ? 'tramitacao' : 'concluido';
 
@@ -435,7 +302,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
         .select('*')
         .eq('status', statusFilter)
         .order('created_at', { ascending: false });
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
 
       if (error) {
         console.error('Erro ao carregar processos:', error);
@@ -443,23 +309,9 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
         
         // Fallback para localStorage
         const processosLocais = JSON.parse(localStorage.getItem('processos') || '[]');
-<<<<<<< HEAD
-        let processosFiltrados;
-        if (type === 'tramitacao') {
-          processosFiltrados = processosLocais.filter((p: any) => p.status === 'tramitacao');
-        } else if (type === 'arquivados') {
-          processosFiltrados = processosLocais.filter((p: any) => 
-            p.status === 'concluido' || p.status === 'arquivado'
-          );
-        } else {
-          // type === 'todos'
-          processosFiltrados = processosLocais;
-        }
-=======
         const processosFiltrados = processosLocais.filter((p: any) => 
           p.status === statusFilter
         );
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
         setProcesses(processosFiltrados);
         
         toast({
@@ -477,19 +329,7 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
     }
   };
 
-<<<<<<< HEAD
-  const filteredProcesses = type === 'tramitacao' 
-    ? processes.filter(p => p.status === 'tramitacao')
-    : type === 'arquivados'
-    ? processes.filter(p => p.status === 'concluido' || p.status === 'arquivado')
-    : processes; // type === 'todos' - mostrar todos os processos
-  console.log('Processos filtrados:', filteredProcesses.length, 'de', processes.length, 'total');
-  console.log('Tipo atual:', type);
-  console.log('Status dos processos filtrados:', filteredProcesses.map(p => ({ id: p.id, numero: p.numero_processo, status: p.status })));
-  console.log('Todos os processos:', processes.map(p => ({ id: p.id, numero: p.numero_processo, status: p.status })));
-=======
   const filteredProcesses = processes.filter(p => p.status === type);
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
 
   const getPriorityBadge = (prioridade: string) => {
     switch (prioridade) {
@@ -522,7 +362,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
   };
 
   const handleEditProcess = (process: Process) => {
-<<<<<<< HEAD
     const mapped = {
       numeroProcesso: process.numero_processo || "",
       tipoProcesso: process.tipo_processo || "",
@@ -556,11 +395,9 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
     console.log("[DEBUG] Vítimas:", process.vitimas);
     console.log("[DEBUG] Relatório Final:", process.relatorio_final);
     setProcessoParaEditar(mapped);
-=======
     console.log('Abrindo processo para edição:', process.id);
     setProcessToEdit(process);
     setShowProcessForm(true);
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
   };
 
   const handleSaveEdit = async () => {
@@ -715,20 +552,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
     return diffDays;
   };
 
-<<<<<<< HEAD
-
-
-
-  const memoizedGetPriorityBadge = useCallback(getPriorityBadge, []);
-  const memoizedGetTipoProcessoLabel = useCallback(getTipoProcessoLabel, []);
-  const memoizedEditProcess = useCallback(handleEditProcess, []);
-  const memoizedDeleteProcess = useCallback(handleDeleteProcess, []);
-  const memoizedViewProcess = useCallback(handleViewProcess, []);
-
-  const memoizedCalculateDaysInProcess = useCallback(calculateDaysInProcess, []);
-
-=======
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
   if (loading) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 z-50 flex items-center justify-center">
@@ -746,13 +569,7 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
         <div className="container mx-auto p-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-white">
-<<<<<<< HEAD
-              {type === 'tramitacao' ? 'Processos em Tramitação' : 
-                type === 'arquivados' ? 'Processos Finalizados' : 
-                'Todos os Processos'}
-=======
               {type === 'tramitacao' ? 'Processos em Tramitação' : 'Processos Concluídos'}
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
             </h1>
             <div className="flex items-center gap-4">
               <Button onClick={onClose} variant="outline" className="text-white border-white">
@@ -775,21 +592,6 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
 
           <div className="space-y-4">
             {filteredProcesses.map((process) => (
-<<<<<<< HEAD
-              <ProcessCard
-                key={process.id}
-                process={process}
-                type={type}
-                getPriorityBadge={memoizedGetPriorityBadge}
-                getTipoProcessoLabel={memoizedGetTipoProcessoLabel}
-                handleEditProcess={memoizedEditProcess}
-                handleDeleteProcess={memoizedDeleteProcess}
-                handleViewProcess={memoizedViewProcess}
-
-                calculateDaysInProcess={memoizedCalculateDaysInProcess}
-
-              />
-=======
               <Card key={process.id} className="bg-white/10 backdrop-blur-sm border-white/20">
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -871,20 +673,16 @@ const ProcessList = ({ type, onClose }: ProcessListProps) => {
                   </div>
                 </CardContent>
               </Card>
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
             ))}
 
             {filteredProcesses.length === 0 && (
               <Card className="bg-white/10 backdrop-blur-sm border-white/20">
                 <CardContent className="p-8 text-center">
                   <p className="text-white text-lg">
-<<<<<<< HEAD
                     Nenhum processo {type === 'tramitacao' ? 'em tramitação' : 
                       type === 'arquivados' ? 'finalizado' : 
                       ''} encontrado.
-=======
                     Nenhum processo {type === 'tramitacao' ? 'em tramitação' : 'concluído'} encontrado.
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
                   </p>
                   {error && (
                     <p className="text-red-300 text-sm mt-2">

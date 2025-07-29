@@ -304,7 +304,6 @@ export function useDetailedStats() {
     }, 500);
   }, [fetchDetailedStats]);
 
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
   // Cleanup do timer no unmount
   useEffect(() => {
     return () => {

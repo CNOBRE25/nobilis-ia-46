@@ -54,7 +54,6 @@ Expertise em:
 - Código Penal Comum e legislação correlata
 - Cálculos de prescrição penal e disciplinar
 - Jurisprudência dos Tribunais Superiores
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
 
 REGRAS FUNDAMENTAIS:
 1. ANALISE cada campo do processo como relevante para a análise
@@ -94,7 +93,6 @@ Documentos: ${documentos && documentos.length > 0 ? documentos.join(', ') : 'Nã
 FORMATO OBRIGATÓRIO DO RELATÓRIO:
 =======
 GERE UM RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR SEGUINDO RIGOROSAMENTE A ESTRUTURA OFICIAL:
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
 
 ## CABECALHO
 RELATÓRIO DE INVESTIGAÇÃO PRELIMINAR
@@ -176,7 +174,6 @@ Documentos providenciados:
 
 ## V – DA CONCLUSÃO
 [Conclua justificadamente por uma das seguintes providências:
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
 - Instauração de SAD (Sindicato Administrativo Disciplinar)
 - Instauração de IPM (Inquérito Policial Militar)
 - Instauração de PADS (Processo Administrativo Disciplinar Sumaríssimo)
@@ -212,7 +209,6 @@ INSTRUÇÕES TÉCNICAS:
 - Seja técnico e fundamentado
 - Considere jurisprudência relevante
 - Aplique corretamente as competências (Justiça Militar vs Comum)
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
 `;
 
 const parsearRelatorio = (response: string): RelatorioIA => {
@@ -323,7 +319,6 @@ export const openaiService = {
     if (!OPENAI_API_KEY) {
       console.warn('⚠️ OpenAI API Key não configurada. Usando modo de simulação.');
       return gerarRelatorioSimulado(dados);
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
     }
     
     console.log('✅ API Key encontrada, fazendo requisição para OpenAI...');
@@ -397,5 +392,4 @@ export const openaiService = {
       return gerarRelatorioSimulado(dados);
     }
   }
->>>>>>> 0506c0cd6e367d9eb7d6b8a16548898db0f540e0
 }; 

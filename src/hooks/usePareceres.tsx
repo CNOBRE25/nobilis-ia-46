@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 =======
 import { User } from '@/types/user';
 import { Parecer } from '@/types/parecer';
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
 
 export interface Parecer {
   id: string;
@@ -36,7 +35,6 @@ export interface Parecer {
 export const usePareceres = (user: any) => {
 =======
 export const usePareceres = (user: User) => {
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
   const [pareceres, setPareceres] = useState<Parecer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,7 +66,6 @@ export const usePareceres = (user: User) => {
       setPareceres(data || []);
 =======
       setPareceres((data as Parecer[]) || []);
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
     } catch (error) {
       console.error('Erro ao carregar pareceres:', error);
     } finally {
@@ -89,7 +86,6 @@ export const usePareceres = (user: User) => {
           orgao: user?.orgao
 =======
           orgao: (user as User)?.orgao // ajuste se necessário
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
         }])
         .select()
         .single();
@@ -105,7 +101,6 @@ export const usePareceres = (user: User) => {
 =======
       setPareceres(prev => [data as Parecer, ...prev]);
       return data as Parecer;
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
     } catch (error) {
       console.error('Erro ao salvar parecer:', error);
       throw error;

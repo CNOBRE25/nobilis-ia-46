@@ -7,7 +7,6 @@ interface CrimeStats {
 <<<<<<< HEAD
   sexoVitima: Array<{ name: string; count: number; color: string }>;
 =======
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
   unidadesInvestigado: Array<{ name: string; count: number; color: string }>;
   crimesPorMes: Array<{ mes: string; count: number }>;
   loading: boolean;
@@ -33,7 +32,6 @@ export function useCrimeStats(): CrimeStats {
 <<<<<<< HEAD
   const [sexoVitima, setSexoVitima] = useState<Array<{ name: string; count: number; color: string }>>([]);
 =======
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
   const [unidadesInvestigado, setUnidadesInvestigado] = useState<Array<{ name: string; count: number; color: string }>>([]);
   const [crimesPorMes, setCrimesPorMes] = useState<Array<{ mes: string; count: number }>>([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +144,6 @@ export function useCrimeStats(): CrimeStats {
       setSexoVitima(sexoVitimaData);
 
 =======
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
       // 4. Estatísticas por Unidade do Investigado
       const unidadesCount: { [key: string]: number } = {};
       processosList.forEach(p => {
@@ -218,7 +215,6 @@ export function useCrimeStats(): CrimeStats {
 <<<<<<< HEAD
     sexoVitima,
 =======
->>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
     unidadesInvestigado,
     crimesPorMes,
     loading,
