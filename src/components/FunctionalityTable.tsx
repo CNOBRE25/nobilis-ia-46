@@ -65,8 +65,13 @@ const functionalityData: Functionality[] = [
     lastUpdate: "2024-01-10",
     description: "Sistema completo de criação, edição e gestão de processos jurídicos",
     tableName: "processos",
+<<<<<<< HEAD
+    componentName: "ProcessForm",
+    filePath: "src/components/ProcessForm.tsx"
+=======
     componentName: "ProcessList",
     filePath: "src/components/ProcessList.tsx"
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
   },
   {
     id: 3,
@@ -243,7 +248,11 @@ export const FunctionalityTable = () => {
   }, [searchTerm, statusFilter, categoryFilter, priorityFilter]);
 
   const applyFilters = () => {
+<<<<<<< HEAD
+    let filtered = functionalityData.filter(item => {
+=======
     const filtered = functionalityData.filter(item => {
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
       const matchesSearch = 
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||

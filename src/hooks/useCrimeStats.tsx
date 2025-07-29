@@ -4,6 +4,10 @@ import { supabase } from '../integrations/supabase/client';
 interface CrimeStats {
   tiposCrime: Array<{ name: string; count: number; color: string }>;
   transgressoes: Array<{ name: string; count: number; color: string }>;
+<<<<<<< HEAD
+  sexoVitima: Array<{ name: string; count: number; color: string }>;
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
   unidadesInvestigado: Array<{ name: string; count: number; color: string }>;
   crimesPorMes: Array<{ mes: string; count: number }>;
   loading: boolean;
@@ -26,6 +30,10 @@ const generateDataHash = <T>(data: T): string => {
 export function useCrimeStats(): CrimeStats {
   const [tiposCrime, setTiposCrime] = useState<Array<{ name: string; count: number; color: string }>>([]);
   const [transgressoes, setTransgressoes] = useState<Array<{ name: string; count: number; color: string }>>([]);
+<<<<<<< HEAD
+  const [sexoVitima, setSexoVitima] = useState<Array<{ name: string; count: number; color: string }>>([]);
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
   const [unidadesInvestigado, setUnidadesInvestigado] = useState<Array<{ name: string; count: number; color: string }>>([]);
   const [crimesPorMes, setCrimesPorMes] = useState<Array<{ mes: string; count: number }>>([]);
   const [loading, setLoading] = useState(true);
@@ -119,6 +127,26 @@ export function useCrimeStats(): CrimeStats {
 
       setTransgressoes(transgressoesData);
 
+<<<<<<< HEAD
+      // 3. Estatísticas por Sexo da Vítima
+      const sexoVitimaCount: { [key: string]: number } = {};
+      processosList.forEach(p => {
+        const sexo = p.sexo_vitima || 'Não especificado';
+        sexoVitimaCount[sexo] = (sexoVitimaCount[sexo] || 0) + 1;
+      });
+
+      const sexoVitimaData = Object.entries(sexoVitimaCount)
+        .map(([name, count], index) => ({
+          name: name === 'M' ? 'Masculino' : name === 'F' ? 'Feminino' : name,
+          count,
+          color: name === 'M' ? '#3b82f6' : name === 'F' ? '#ec4899' : '#6b7280'
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      setSexoVitima(sexoVitimaData);
+
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
       // 4. Estatísticas por Unidade do Investigado
       const unidadesCount: { [key: string]: number } = {};
       processosList.forEach(p => {
@@ -187,6 +215,10 @@ export function useCrimeStats(): CrimeStats {
   return {
     tiposCrime,
     transgressoes,
+<<<<<<< HEAD
+    sexoVitima,
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
     unidadesInvestigado,
     crimesPorMes,
     loading,

@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+<<<<<<< HEAD
+=======
 import { User } from '@/types/user';
 import { Parecer } from '@/types/parecer';
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
 
 export interface Parecer {
   id: string;
@@ -29,7 +32,11 @@ export interface Parecer {
   legislacao_aplicavel?: string;
 }
 
+<<<<<<< HEAD
+export const usePareceres = (user: any) => {
+=======
 export const usePareceres = (user: User) => {
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
   const [pareceres, setPareceres] = useState<Parecer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,7 +64,11 @@ export const usePareceres = (user: User) => {
         return;
       }
 
+<<<<<<< HEAD
+      setPareceres(data || []);
+=======
       setPareceres((data as Parecer[]) || []);
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
     } catch (error) {
       console.error('Erro ao carregar pareceres:', error);
     } finally {
@@ -74,7 +85,11 @@ export const usePareceres = (user: User) => {
           ...parecerData,
           data_criacao: new Date().toISOString(),
           usuario_id: user?.id,
+<<<<<<< HEAD
+          orgao: user?.orgao
+=======
           orgao: (user as User)?.orgao // ajuste se necessário
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
         }])
         .select()
         .single();
@@ -84,8 +99,13 @@ export const usePareceres = (user: User) => {
         throw error;
       }
 
+<<<<<<< HEAD
+      setPareceres(prev => [data, ...prev]);
+      return data;
+=======
       setPareceres(prev => [data as Parecer, ...prev]);
       return data as Parecer;
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
     } catch (error) {
       console.error('Erro ao salvar parecer:', error);
       throw error;

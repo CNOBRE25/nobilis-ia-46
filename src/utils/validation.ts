@@ -91,6 +91,8 @@ export const validateCPF = (cpf: string): boolean => {
   return true;
 };
 
+<<<<<<< HEAD
+=======
 export function validateRequiredFields(fields: { nome: string, valor: any }[]): string[] {
   return fields
     .filter(field => {
@@ -102,6 +104,7 @@ export function validateRequiredFields(fields: { nome: string, valor: any }[]): 
     .map(field => field.nome);
 }
 
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
 // Tipos para TypeScript
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;

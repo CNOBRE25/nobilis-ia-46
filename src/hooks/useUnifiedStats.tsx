@@ -20,6 +20,11 @@ interface UnifiedUserStats {
   pareceres_entregues: number;
   total_crimes: number;
   tipos_crime_diferentes: number;
+<<<<<<< HEAD
+  vitimas_femininas: number;
+  vitimas_masculinas: number;
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
   unidades_ativas: number;
   data_coleta: string;
   periodo_referencia: string;
@@ -38,6 +43,14 @@ interface UnifiedStatsSummary {
     quantidade: number;
     percentual: number;
   }>;
+<<<<<<< HEAD
+  distribuicao_vitimas: {
+    femininas: number;
+    masculinas: number;
+    total: number;
+  };
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
   unidades_mais_ativas: Array<{
     unidade: string;
     quantidade: number;
@@ -149,6 +162,10 @@ export function useUnifiedStats() {
           media_eficiencia: Math.round(mediaEficiencia * 100) / 100,
           media_tempo_resolucao: Math.round(mediaTempoResolucao),
           tipos_crime_mais_comuns: crimeData.tipos_crime_mais_comuns,
+<<<<<<< HEAD
+          distribuicao_vitimas: crimeData.distribuicao_vitimas,
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
           unidades_mais_ativas: crimeData.unidades_mais_ativas,
           top_performers: topPerformers,
           stats_por_orgao: statsPorOrgao.sort((a, b) => b.total_processos - a.total_processos)
@@ -215,6 +232,10 @@ export function useUnifiedStats() {
         console.error('Erro ao buscar dados de crimes:', error);
         return {
           tipos_crime_mais_comuns: [],
+<<<<<<< HEAD
+          distribuicao_vitimas: { femininas: 0, masculinas: 0, total: 0 },
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
           unidades_mais_ativas: []
         };
       }
@@ -235,6 +256,14 @@ export function useUnifiedStats() {
         .sort((a, b) => b.quantidade - a.quantidade)
         .slice(0, 10);
 
+<<<<<<< HEAD
+      // Calcular distribuição de vítimas
+      const vitimasFemininas = processos?.filter(p => p.sexo_vitima === 'F').length || 0;
+      const vitimasMasculinas = processos?.filter(p => p.sexo_vitima === 'M').length || 0;
+      const totalVitimas = vitimasFemininas + vitimasMasculinas;
+
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
       // Calcular unidades mais ativas
       const unidades = processos?.reduce((acc, processo) => {
         const unidade = processo.unidade_investigado || 'Não especificada';
@@ -253,12 +282,24 @@ export function useUnifiedStats() {
 
       return {
         tipos_crime_mais_comuns: tiposCrimeArray,
+<<<<<<< HEAD
+        distribuicao_vitimas: {
+          femininas: vitimasFemininas,
+          masculinas: vitimasMasculinas,
+          total: totalVitimas
+        },
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
         unidades_mais_ativas: unidadesArray
       };
     } catch (error) {
       console.error('Erro ao buscar estatísticas de crimes:', error);
       return {
         tipos_crime_mais_comuns: [],
+<<<<<<< HEAD
+        distribuicao_vitimas: { femininas: 0, masculinas: 0, total: 0 },
+=======
+>>>>>>> db1e165157d7892501eb3b9d27658cd6a6100efd
         unidades_mais_ativas: []
       };
     }
