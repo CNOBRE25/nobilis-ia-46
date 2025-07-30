@@ -110,12 +110,8 @@ const StatisticsPage = ({ onClose, onProcessSaved }: StatisticsPageProps) => {
           <TabsList className="grid w-full grid-cols-1 mb-6">
             <TabsTrigger value="todos" className="text-white">Todos os Processos</TabsTrigger>
           </TabsList>
-<<<<<<< HEAD
-          <TabsContent value="todos">
-            <ProcessList type="todos" orderBy="data_recebimento" orderAscending={true} />
-=======
 
-          <TabsContent value="geral" className="space-y-6">
+          <TabsContent value="todos" className="space-y-6">
             {/* Cards de Estatísticas Gerais */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="bg-white/10 backdrop-blur-sm border-white/20">

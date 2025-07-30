@@ -31,7 +31,7 @@ interface DetailedStats {
 }
 
 // Função para gerar hash dos dados
-const generateDataHash = <T>(data: T): string => {
+const generateDataHash = function<T>(data: T): string {
   return JSON.stringify(data);
 };
 
@@ -296,8 +296,6 @@ export function useDetailedStats() {
       clearTimeout(debounceTimerRef.current);
     }
 
-<<<<<<< HEAD
-=======
     // Debounce de 500ms
     debounceTimerRef.current = setTimeout(() => {
       fetchDetailedStats(true); // Força atualização
