@@ -9,7 +9,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: AuthError }>;
-  signUp: (email: string, password: string, userData: any) => Promise<{ error?: AuthError }>;
+  signUp: (email: string, password: string, userData: { nome?: string; cargo?: string; unidade?: string }) => Promise<{ error?: AuthError }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: AuthError }>;
   updatePassword: (password: string) => Promise<{ error?: AuthError }>;
@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logSecurityEvent = async (
     eventType: string, 
     userId?: string, 
-    metadata?: any
+    metadata?: unknown
   ) => {
     // Simplified logging to avoid CSP issues
     if (import.meta.env.DEV) {
@@ -312,7 +312,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, userData: any) => {
+  const signUp = async (email: string, password: string, userData: { nome?: string; cargo?: string; unidade?: string; nome_completo?: string; matricula?: string; cargo_funcao?: string }) => {
     try {
       // Validate password strength locally first
       const localValidation = validatePasswordStrength(password);

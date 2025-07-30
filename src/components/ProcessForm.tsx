@@ -19,11 +19,12 @@ import { openaiService, RelatorioDados, RelatorioIA as RelatorioIAType } from "@
 import RelatorioIA from "./RelatorioIA";
 import { usePareceres } from "@/hooks/usePareceres";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Process } from "@/types/process";
 
 interface ProcessFormProps {
   onClose: () => void;
   onProcessSaved?: () => void;
-  editProcess?: any;
+  editProcess?: Process;
   isEditMode?: boolean;
 }
 
@@ -118,7 +119,7 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
     setInvestigados([...investigados, novoInvestigado]);
   };
 
-  const updateInvestigado = (id: number, field: string, value: any) => {
+  const updateInvestigado = (id: number, field: string, value: string | Date | null) => {
     setInvestigados(investigados.map(inv => 
       inv.id === id ? { ...inv, [field]: value } : inv
     ));
@@ -140,7 +141,7 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
     setVitimas([...vitimas, novaVitima]);
   };
 
-  const updateVitima = (id: number, field: string, value: any) => {
+  const updateVitima = (id: number, field: string, value: string) => {
     setVitimas(vitimas.map(vit => 
       vit.id === id ? { ...vit, [field]: value } : vit
     ));
@@ -350,7 +351,7 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
       if (savedProcessId) {
         // Atualizar processo existente
         const { data: updateData, error: updateError } = await supabase
-          .from('processos' as any)
+          .from('processos')
           .update(processData)
           .eq('id', savedProcessId)
           .select()
@@ -361,7 +362,7 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
       } else {
         // Criar novo processo
         const { data: insertData, error: insertError } = await supabase
-          .from('processos' as any)
+          .from('processos')
           .insert([processData])
           .select()
           .single();
@@ -424,7 +425,7 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
       };
 
       const { data, error } = await supabase
-        .from('processos' as any)
+        .from('processos')
         .update(processData)
         .eq('id', processId)
         .select()
@@ -498,7 +499,7 @@ const ProcessForm = ({ onClose, onProcessSaved, editProcess, isEditMode = false 
       };
 
       const { data, error } = await supabase
-        .from('processos' as any)
+        .from('processos')
         .update(processData)
         .eq('id', processId)
         .select()

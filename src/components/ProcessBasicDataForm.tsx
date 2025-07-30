@@ -203,7 +203,9 @@ export function ProcessBasicDataForm({
     if (editProcess && editProcess.analise_fatos) {
       try {
         setAnaliseFatos(JSON.parse(editProcess.analise_fatos));
-      } catch {}
+      } catch {
+        // Ignorar erro de parsing
+      }
     }
   }, [editProcess]);
 

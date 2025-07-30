@@ -64,7 +64,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
 
       // Buscar usuários pendentes do banco de dados
       const { data, error } = await supabase
-        .from('pending_users' as any)
+        .from('pending_users')
         .select('*')
         .eq('status', 'pending')
         .order('requested_at', { ascending: false });
@@ -97,7 +97,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
     try {
       // Atualizar status para aprovado
       const { error: updateError } = await supabase
-        .from('pending_users' as any)
+        .from('pending_users')
         .update({
           status: 'approved',
           reviewed_at: new Date().toISOString()
@@ -110,7 +110,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
 
       // Ativar o usuário na tabela users
       const { data: pendingUser } = await supabase
-        .from('pending_users' as any)
+        .from('pending_users')
         .select('auth_user_id')
         .eq('id', id)
         .single();
@@ -141,7 +141,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
     try {
       // Atualizar status para rejeitado
       const { error: updateError } = await supabase
-        .from('pending_users' as any)
+        .from('pending_users')
         .update({
           status: 'rejected',
           reviewed_at: new Date().toISOString()
@@ -154,7 +154,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
 
       // Desativar o usuário na tabela users
       const { data: pendingUser } = await supabase
-        .from('pending_users' as any)
+        .from('pending_users')
         .select('auth_user_id')
         .eq('id', id)
         .single();
@@ -190,7 +190,7 @@ const AdminPanel = ({ onClose }: AdminPanelProps) => {
 
   useEffect(() => {
     fetchPendingUsers();
-  }, []);
+  }, [fetchPendingUsers]);
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 z-50 overflow-auto">

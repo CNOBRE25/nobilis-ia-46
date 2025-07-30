@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const TestPasswordValidation = () => {
   const [password, setPassword] = useState('');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
 
   const testPassword = async () => {

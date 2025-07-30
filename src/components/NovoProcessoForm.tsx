@@ -93,7 +93,7 @@ const CARGOS_PERICIA = [
   "PERITO CRIMINAL","MEDICO LEGISTA","AGENTE DE PERICIA CRIMINAL","AGENTE DE MEDICINA LEGAL","AUXILIAR GESTAO PUBLICA","ASSISTENTE GESTAO PUBLICA"
 ];
 function normalize(str: string) {
-  return str.normalize("NFD").replace(/[ \u0300-\u036f]/g, "").toUpperCase();
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
 }
 
 export default function NovoProcessoForm({ onProcessCreated, processo }: NovoProcessoFormProps) {
@@ -374,10 +374,11 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: NovoPro
         setAba("detalhes");
       }
       setIsLoading(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao salvar o processo.";
       toast({
         title: isEditMode ? "Erro ao atualizar processo" : "Erro ao cadastrar processo",
-        description: err.message || "Erro desconhecido ao salvar o processo.",
+        description: errorMessage,
         variant: "destructive"
       });
       setIsLoading(false);
@@ -447,11 +448,12 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: NovoPro
       
       // Não redirecionar automaticamente, deixar o usuário decidir
       // setAba("relatorio-ia");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[DEBUG] Erro ao salvar detalhes:", err);
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao salvar os detalhes.";
       toast({
         title: "Erro ao salvar detalhes",
-        description: err.message || "Erro desconhecido ao salvar os detalhes.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -486,10 +488,11 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: NovoPro
         description: `Dados de investigados e vítimas do processo ${form.numeroProcesso} salvos.`
       });
       setAba("relatorio-ia");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao salvar os dados.";
       toast({
         title: "Erro ao salvar investigados e vítimas",
-        description: err.message || "Erro desconhecido ao salvar os dados.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -532,11 +535,12 @@ export default function NovoProcessoForm({ onProcessCreated, processo }: NovoPro
         title: "Relatório IA salvo!",
         description: `Relatório IA do processo ${form.numeroProcesso} salvo com sucesso.`
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Erro ao salvar relatório IA:', err);
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao salvar o relatório.";
       toast({
         title: "Erro ao salvar relatório IA",
-        description: err.message || "Erro desconhecido ao salvar o relatório.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -639,11 +643,12 @@ ${relatorioIA.da_conclusao}
         title: "Relatório gerado com sucesso!",
         description: "Relatório final gerado e salvo com sucesso."
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Erro ao gerar relatório:', err);
+      const errorMessage = err instanceof Error ? err.message : "Erro desconhecido ao gerar relatório.";
       toast({
         title: "Erro ao gerar relatório",
-        description: err.message || "Erro desconhecido ao gerar relatório.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

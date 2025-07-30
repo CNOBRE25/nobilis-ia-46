@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 
 
-const InvestigadoCard = React.memo(({ investigado, index, updateInvestigado }: { investigado: Investigado, index: number, updateInvestigado: (id: number, field: string, value: any) => void }) => (
+const InvestigadoCard = React.memo(({ investigado, index, updateInvestigado }: { investigado: Investigado, index: number, updateInvestigado: (id: number, field: string, value: string | Date | null) => void }) => (
   <Card key={investigado.id} className="bg-white/5 border-white/20">
     <CardContent className="p-4">
       <div className="flex justify-between items-center mb-4">
@@ -118,7 +118,7 @@ export const InvestigadosSection = React.memo(({
     addInvestigado(novoInvestigado);
   }, [addInvestigado]);
 
-  const memoizedUpdateInvestigado = useCallback(updateInvestigado, []);
+  const memoizedUpdateInvestigado = useCallback(updateInvestigado, [updateInvestigado]);
 
   return (
     <div className="space-y-6 mt-6">

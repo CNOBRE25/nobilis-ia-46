@@ -33,7 +33,7 @@ interface Process {
   // Campos adicionais
   descricao_fatos?: string;
   modus_operandi?: string;
-  diligencias_realizadas?: any;
+  diligencias_realizadas?: unknown;
   redistribuicao?: string;
   sugestoes?: string;
   matricula_investigado?: string;
@@ -41,7 +41,7 @@ interface Process {
   numero_sigpad?: string;
   vitima?: string;
   // Campos do relatório final
-  relatorio_final?: any;
+  relatorio_final?: string;
   data_relatorio_final?: string;
   relatorio_gerado_por?: string;
   // Campos adicionais para IA
@@ -50,11 +50,11 @@ interface Process {
   origem_processo?: string;
   status_funcional?: string;
   tipo_crime?: string;
-  crimes_selecionados?: any[];
+  crimes_selecionados?: string[];
   transgressao?: string;
   // Campos para múltiplos investigados e vítimas
-  investigados?: any[];
-  vitimas?: any[];
+  investigados?: unknown[];
+  vitimas?: unknown[];
 }
 
 interface ProcessSelectorProps {
@@ -167,7 +167,7 @@ const ProcessSelector = ({ onProcessSelect }: ProcessSelectorProps) => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: { [key: string]: { color: string, label: string, icon: any } } = {
+    const statusMap: { [key: string]: { color: string, label: string, icon: React.ComponentType<{ className?: string }> } } = {
       'tramitacao': { color: 'bg-blue-500', label: 'Em Tramitação', icon: Clock },
       'concluido': { color: 'bg-green-500', label: 'Concluído', icon: CheckCircle },
       'arquivado': { color: 'bg-gray-500', label: 'Arquivado', icon: FileText },

@@ -77,8 +77,8 @@ interface LeiMilitar {
 interface LegislacaoMilitarData {
   leis: LeiMilitar[];
   crimes_militares: CrimeMilitar[];
-  regulamentos_pe: any[];
-  jurisprudencia: any[];
+  regulamentos_pe: unknown[];
+  jurisprudencia: unknown[];
 }
 
 const crimesMapping: CrimeMapping[] = [
@@ -744,7 +744,7 @@ const LegislacaoSection = () => {
   // Executa busca militar quando os termos mudam
   useEffect(() => {
     handleSearchMilitar();
-  }, [searchTermMilitar, selectedStatusMilitar, legislacaoMilitar]);
+  }, [searchTermMilitar, selectedStatusMilitar, legislacaoMilitar, handleSearchMilitar]);
 
   // Executa busca unificada quando o termo de busca geral mudar
   useEffect(() => {
@@ -754,7 +754,7 @@ const LegislacaoSection = () => {
       setCrimeResults([]);
       setCrimeResultsMilitares([]);
     }
-  }, [searchTerm, legislacaoMilitar]);
+  }, [searchTerm, legislacaoMilitar, searchAllCrimes]);
 
   const handleSearch = () => {
     let filtered = mockLeis;

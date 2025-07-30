@@ -32,9 +32,10 @@ import AdminPanel from "./AdminPanel";
 import DatabaseDiffChecker from "./DatabaseDiffChecker";
 import { useProcessStats } from "../hooks/useProcessStats";
 import { useToast } from "../hooks/use-toast";
+import { User } from "../types/user";
 
 interface DashboardProps {
-  user: any;
+  user: User;
 }
 
 // Componente de Estatísticas em Modal

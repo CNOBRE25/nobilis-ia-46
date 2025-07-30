@@ -16,9 +16,11 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePareceres } from "@/hooks/usePareceres";
+import { User } from "@/types/user";
+import { Parecer } from "@/types/parecer";
 
 interface PareceresProps {
-  user: any;
+  user: User;
 }
 
 const PareceresSection = ({ user }: PareceresProps) => {
@@ -74,7 +76,7 @@ const PareceresSection = ({ user }: PareceresProps) => {
     setSearchTerm(value);
   };
 
-  const handleGerarPDF = async (parecer: any) => {
+  const handleGerarPDF = async (parecer: Parecer) => {
     try {
       toast({
         title: "PDF Gerado",
@@ -90,7 +92,7 @@ const PareceresSection = ({ user }: PareceresProps) => {
     }
   };
 
-  const handleImprimir = (parecer: any) => {
+  const handleImprimir = (parecer: Parecer) => {
     try {
       toast({
         title: "Impressão",
@@ -209,7 +211,7 @@ const PareceresSection = ({ user }: PareceresProps) => {
                       <div className="text-sm text-gray-600 mb-2">
                         <p className="font-medium mb-1">Servidores:</p>
                         {parecer.servidores && parecer.servidores.length > 0 ? (
-                          parecer.servidores.map((servidor: any, index: number) => (
+                          parecer.servidores.map((servidor: { nome: string; matricula: string; categoria_funcional: string }, index: number) => (
                             <div key={index} className="text-xs bg-gray-50 p-2 rounded mb-1">
                               {servidor.nome} ({servidor.matricula}) - {servidor.categoria_funcional}
                             </div>

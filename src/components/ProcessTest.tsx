@@ -13,7 +13,7 @@ interface TestResult {
   step: string;
   success: boolean;
   error?: string;
-  data?: any;
+  data?: unknown;
 }
 
 export const ProcessTest = () => {
@@ -183,7 +183,7 @@ export const ProcessTest = () => {
         }
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       results.push({
         step: "Erro Geral",
         success: false,

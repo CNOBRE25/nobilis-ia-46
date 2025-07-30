@@ -240,7 +240,7 @@ export const FunctionalityTable = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [searchTerm, statusFilter, categoryFilter, priorityFilter]);
+  }, [searchTerm, statusFilter, categoryFilter, priorityFilter, applyFilters]);
 
   const applyFilters = () => {
     const filtered = functionalityData.filter(item => {
@@ -293,7 +293,7 @@ export const FunctionalityTable = () => {
   };
 
   const getCategoryIcon = (category: string) => {
-    const iconMap: { [key: string]: any } = {
+    const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
       "Security": Shield,
       "Database": Database,
       "Frontend": Code,

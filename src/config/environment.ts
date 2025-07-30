@@ -70,7 +70,7 @@ const loadConfig = (): EnvironmentConfig => {
     app: {
       name: import.meta.env.VITE_APP_NAME || 'NOBILIS-IA',
       version: import.meta.env.VITE_APP_VERSION || '1.0.0',
-      environment: (import.meta.env.VITE_APP_ENVIRONMENT as any) || 'development',
+      environment: (import.meta.env.VITE_APP_ENVIRONMENT as 'development' | 'staging' | 'production') || 'development',
     },
     
     security: {

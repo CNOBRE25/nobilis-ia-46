@@ -8,14 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 
 interface TestResults {
   connection: { success: boolean; error?: string };
-  tables: { success: boolean; error?: string; data?: any };
-  users: { success: boolean; error?: string; data?: any };
-  processos: { success: boolean; error?: string; data?: any };
-  insert: { success: boolean; error?: string; data?: any };
-  select: { success: boolean; error?: string; data?: any };
-  update: { success: boolean; error?: string; data?: any };
+  tables: { success: boolean; error?: string; data?: unknown };
+  users: { success: boolean; error?: string; data?: unknown };
+  processos: { success: boolean; error?: string; data?: unknown };
+  insert: { success: boolean; error?: string; data?: unknown };
+  select: { success: boolean; error?: string; data?: unknown };
+  update: { success: boolean; error?: string; data?: unknown };
   delete: { success: boolean; error?: string };
-  auth: { success: boolean; error?: string; data?: any };
+  auth: { success: boolean; error?: string; data?: unknown };
 }
 
 export const SupabaseTest = () => {
@@ -185,7 +185,7 @@ export const SupabaseTest = () => {
         data: authData
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       results.connection = {
         success: false,
         error: error.message
@@ -281,7 +281,7 @@ export const SupabaseTest = () => {
                 <div className="text-sm text-gray-300 mt-2">
                   {Array.isArray(testResults.tables.data) ? (
                     <div>
-                      {testResults.tables.data.map((check: any, index: number) => (
+                      {testResults.tables.data.map((check: { table: string; exists: boolean }, index: number) => (
                         <div key={index} className="flex justify-between">
                           <span>{check.table}:</span>
                           <span className={check.exists ? "text-green-400" : "text-red-400"}>

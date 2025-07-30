@@ -286,7 +286,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
         
         // Fallback para localStorage
         const processosLocais = JSON.parse(localStorage.getItem('processos') || '[]');
-        const processosFiltrados = processosLocais.filter((p: any) => 
+        const processosFiltrados = processosLocais.filter((p: { status: string }) => 
           p.status === statusFilter
         );
         setProcesses(processosFiltrados);

@@ -26,13 +26,15 @@ import { pt } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import ReactSelect from 'react-select';
 import crimesData from '../../public/crimes_brasil.json';
+import { User } from "@/types/user";
+import { Parecer } from "@/types/parecer";
 
 interface NovoParecerProps {
-  user: any;
+  user: User;
   onClose: () => void;
-  onSave: (parecer: any) => void;
+  onSave: (parecer: Parecer) => void;
   numeroProcesso?: string;
-  parecer?: any; // Adicionado para edição
+  parecer?: Parecer; // Adicionado para edição
 }
 
 const NovoParecer = ({ user, onClose, onSave, numeroProcesso, parecer }: NovoParecerProps) => {
@@ -70,14 +72,14 @@ const NovoParecer = ({ user, onClose, onSave, numeroProcesso, parecer }: NovoPar
     }
   }, [parecer]);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | Date | null | string[]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleServidorChange = (index: number, field: string, value: any) => {
+  const handleServidorChange = (index: number, field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       servidores: prev.servidores.map((servidor, i) => 
