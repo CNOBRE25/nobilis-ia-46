@@ -1,0 +1,10 @@
+[33md4d6d7d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m a
+[33mf9d3f03[m x
+[33mfaee94e[m x
+[33m0506c0c[m fix: resolver conflitos de merge no Index.tsx - Remove todos os conflitos de merge - Mantém funcionalidade original
+[33m971697d[m fix: corrigir vite.config.ts - Remove conflitos de merge - Adiciona suporte para WebSocket do Supabase no CSP
+[33m00363d7[m fix: corrigir problemas da IA - Adiciona função gerarRelatorioSimulado - Adiciona logs detalhados para debug - Corrige conflitos de merge no OPENAI_CONFIG.md - Cria instruções de configuração da API OpenAI
+[33m97ed7a1[m fix: corrigir package.json - Remove conflitos de merge restantes - Corrige sintaxe JSON
+[33ma02e86f[m merge: resolver conflitos de merge - Mantém versão atual dos arquivos principais - Corrige CSP para permitir WebSocket do Supabase - Remove logs de debug excessivos
+[33m93176c6[m fix: corrigir CSP e remover logs de debug - Adiciona wss://*.supabase.co ao CSP para permitir WebSocket - Remove logs de debug excessivos do ProcessList - Corrige erro de conexão com Supabase Realtime
+[33mf07ff53[m fix: remover chaves de API reais por questões de segurança - Substituir chaves reais por placeholders - Manter apenas exemplos seguros nos arquivos

@@ -1,39 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-<<<<<<< HEAD
-=======
 import { User } from '@/types/user';
 import { Parecer } from '@/types/parecer';
 
-export interface Parecer {
-  id: string;
-  numero_protocolo: string;
-  titulo: string;
-  servidores: Array<{
-    nome: string;
-    matricula: string;
-    categoria_funcional: string;
-    situacao_servico: string;
-  }>;
-  status: 'rascunho' | 'revisao' | 'aprovado' | 'entregue' | 'arquivado';
-  urgencia: 'baixa' | 'media' | 'alta';
-  data_criacao: string;
-  data_fato: string;
-  data_prescricao: string;
-  orgao: string;
-  usuario_id: string;
-  conteudo_parecer?: string;
-  questao_principal?: string;
-  caso_descricao?: string;
-  area_direito?: string;
-  complexidade?: string;
-  tipo_crime?: string;
-  legislacao_aplicavel?: string;
-}
-
-<<<<<<< HEAD
-export const usePareceres = (user: any) => {
-=======
 export const usePareceres = (user: User) => {
   const [pareceres, setPareceres] = useState<Parecer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,9 +31,6 @@ export const usePareceres = (user: User) => {
         return;
       }
 
-<<<<<<< HEAD
-      setPareceres(data || []);
-=======
       setPareceres((data as Parecer[]) || []);
     } catch (error) {
       console.error('Erro ao carregar pareceres:', error);
@@ -82,9 +48,6 @@ export const usePareceres = (user: User) => {
           ...parecerData,
           data_criacao: new Date().toISOString(),
           usuario_id: user?.id,
-<<<<<<< HEAD
-          orgao: user?.orgao
-=======
           orgao: (user as User)?.orgao // ajuste se necessário
         }])
         .select()
@@ -95,12 +58,8 @@ export const usePareceres = (user: User) => {
         throw error;
       }
 
-<<<<<<< HEAD
       setPareceres(prev => [data, ...prev]);
       return data;
-=======
-      setPareceres(prev => [data as Parecer, ...prev]);
-      return data as Parecer;
     } catch (error) {
       console.error('Erro ao salvar parecer:', error);
       throw error;

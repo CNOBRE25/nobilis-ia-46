@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCrimeStats } from "../hooks/useCrimeStats";
 import { ProcessListProps, ProcessCardProps } from "@/types/components";
 import NovoProcessoForm from "./NovoProcessoForm";
-
+import ProcessForm from "./ProcessForm";
+import { Process } from "@/types/process";
 
 // Importar DILIGENCIAS do NovoProcessoForm
 const DILIGENCIAS = [
@@ -44,10 +45,6 @@ const DILIGENCIAS = [
   { id: "diligencia_19", label: "Cooperação internacional" },
   { id: "diligencia_20", label: "Outras diligências" }
 ];
-
-
-
-
 
 const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProcessoLabel, handleEditProcess, handleDeleteProcess, handleViewProcess, calculateDaysInProcess }: ProcessCardProps) => (
   <Card key={process.id} className="bg-white/10 backdrop-blur-sm border-white/20">
@@ -140,19 +137,7 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
                 <Eye className="h-4 w-4 mr-2" />
                 Consultar
               </Button>
-              <Button onClick={() => {
-                // Abrir diálogo de exclusão para processos finalizados
-                if (typeof window !== 'undefined' && window.setShowDeleteDialog) {
-                  window.setShowDeleteDialog(true);
-                  window.setProcessToDelete(process);
-                } else if (typeof setShowDeleteDialog === 'function' && typeof setProcessToDelete === 'function') {
-                  setShowDeleteDialog(true);
-                  setProcessToDelete(process);
-                } else {
-                  // fallback para prop drilling
-                  handleDeleteProcess(process);
-                }
-              }} className="bg-red-600 hover:bg-red-700 text-white">
+              <Button onClick={() => handleDeleteProcess(process)} className="bg-red-600 hover:bg-red-700 text-white">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Excluir
               </Button>
@@ -165,7 +150,6 @@ const ProcessCard = React.memo(({ process, type, getPriorityBadge, getTipoProces
                     <Edit className="h-4 w-4 mr-2" />
                     Editar
                   </Button>
-
                 </>
               ) : (
                 <Button onClick={() => handleViewProcess(process.id)} className="bg-green-600 hover:bg-green-700 text-white">
@@ -209,25 +193,50 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     console.log('useEffect triggered - type:', type);
     loadProcesses();
     
-    // Configurar sincronização em tempo real
-    const channel = supabase
-      .channel('processos-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'processos'
-        },
-        (payload) => {
-          console.log('Mudança detectada em tempo real:', payload);
-          
-          // Atualizar a lista baseado no tipo de mudança
-          if (payload.eventType === 'INSERT') {
-            // Novo processo adicionado
-            const newProcess = payload.new as Process;
-            if (newProcess.status === (type === 'tramitacao' ? 'tramitacao' : 'concluido')) {
-              setProcesses(prev => [newProcess, ...prev]);
+    // Configurar sincronização em tempo real apenas para tipos específicos
+    if (type === 'tramitacao' || type === 'concluidos') {
+      const channel = supabase
+        .channel('processos-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'processos'
+          },
+          (payload) => {
+            console.log('Mudança detectada em tempo real:', payload);
+            
+            // Atualizar a lista baseado no tipo de mudança
+            if (payload.eventType === 'INSERT') {
+              // Novo processo adicionado
+              const newProcess = payload.new as Process;
+              if (newProcess.status === (type === 'tramitacao' ? 'tramitacao' : 'concluido')) {
+                setProcesses(prev => [newProcess, ...prev]);
+                toast({
+                  title: "Processo Atualizado",
+                  description: `Processo ${newProcess.numero_processo} foi atualizado.`,
+                });
+              }
+            } else if (payload.eventType === 'UPDATE') {
+              // Processo atualizado
+              const updatedProcess = payload.new as Process;
+              const oldProcess = payload.old as Process;
+              
+              setProcesses(prev => {
+                // Se o status mudou, remover da lista atual se necessário
+                if (oldProcess.status !== updatedProcess.status) {
+                  const filtered = prev.filter(p => p.id !== updatedProcess.id);
+                  // Se o novo status corresponde ao tipo atual, adicionar
+                  if (updatedProcess.status === (type === 'tramitacao' ? 'tramitacao' : 'concluido')) {
+                    return [updatedProcess, ...filtered];
+                  }
+                  return filtered;
+                }
+                // Se apenas dados foram atualizados, atualizar o processo
+                return prev.map(p => p.id === updatedProcess.id ? updatedProcess : p);
+              });
+              
               toast({
                 title: "Processo Atualizado",
                 description: `Processo ${updatedProcess.numero_processo} foi atualizado.`,
@@ -242,38 +251,6 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
                 description: `Processo ${deletedProcess.numero_processo} foi excluído.`,
               });
             }
-          } else if (payload.eventType === 'UPDATE') {
-            // Processo atualizado
-            const updatedProcess = payload.new as Process;
-            const oldProcess = payload.old as Process;
-            
-            setProcesses(prev => {
-              // Se o status mudou, remover da lista atual se necessário
-              if (oldProcess.status !== updatedProcess.status) {
-                const filtered = prev.filter(p => p.id !== updatedProcess.id);
-                // Se o novo status corresponde ao tipo atual, adicionar
-                if (updatedProcess.status === (type === 'tramitacao' ? 'tramitacao' : 'concluido')) {
-                  return [updatedProcess, ...filtered];
-                }
-                return filtered;
-              }
-              // Se apenas dados foram atualizados, atualizar o processo
-              return prev.map(p => p.id === updatedProcess.id ? updatedProcess : p);
-            });
-            
-            toast({
-              title: "Processo Atualizado",
-              description: `Processo ${updatedProcess.numero_processo} foi atualizado.`,
-            });
-          } else if (payload.eventType === 'DELETE') {
-            // Processo excluído
-            const deletedProcess = payload.old as Process;
-            setProcesses(prev => prev.filter(p => p.id !== deletedProcess.id));
-            
-            toast({
-              title: "Processo Excluído",
-              description: `Processo ${deletedProcess.numero_processo} foi excluído.`,
-            });
           }
         )
         .subscribe();
@@ -373,10 +350,10 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
       origemProcesso: process.origem_processo || "",
       statusFuncional: process.status_funcional || "",
       descricaoFatos: process.descricao_fatos || "",
-      tipoCrime: process.tipo_crime || "", // Corrigido: tipificacaoCriminal -> tipoCrime
-      crimesSelecionados: process.crimes_selecionados || [], // Adicionado campo crimesSelecionados
-      transgressao: process.transgressao || "", // Adicionado campo transgressao
-      modusOperandi: process.modus_operandi || "", // Adicionado campo modus_operandi
+      tipoCrime: process.tipo_crime || "",
+      crimesSelecionados: process.crimes_selecionados || [],
+      transgressao: process.transgressao || "",
+      modusOperandi: process.modus_operandi || "",
       diligenciasRealizadas: process.diligencias_realizadas || {},
       nomeInvestigado: process.nome_investigado || "",
       cargoInvestigado: process.cargo_investigado || "",
@@ -394,7 +371,6 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     console.log("[DEBUG] Investigados:", process.investigados);
     console.log("[DEBUG] Vítimas:", process.vitimas);
     console.log("[DEBUG] Relatório Final:", process.relatorio_final);
-    setProcessoParaEditar(mapped);
     console.log('Abrindo processo para edição:', process.id);
     setProcessToEdit(process);
     setShowProcessForm(true);
@@ -504,7 +480,7 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
     
     try {
       const { error } = await supabase
-        .from('processos' as any)
+        .from('processos')
         .delete()
         .eq('id', processToDelete.id);
 
@@ -592,96 +568,23 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
 
           <div className="space-y-4">
             {filteredProcesses.map((process) => (
-              <Card key={process.id} className="bg-white/10 backdrop-blur-sm border-white/20">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-xl font-bold text-white">{process.numero_processo}</h3>
-                        {getPriorityBadge(process.prioridade)}
-                      </div>
-                      <p className="text-blue-200">{getTipoProcessoLabel(process.tipo_processo)}</p>
-                      
-                      {process.nome_investigado && (
-                        <p className="text-blue-200">
-                          <strong>Investigado:</strong> {process.nome_investigado}
-                          {process.cargo_investigado && ` - ${process.cargo_investigado}`}
-                          {process.unidade_investigado && ` (${process.unidade_investigado})`}
-                        </p>
-                      )}
-                      
-                      <div className="flex items-center gap-4 text-sm text-blue-200">
-                        <div className="flex items-center gap-1">
-                          <CalendarIcon className="h-4 w-4" />
-                          <span>Criado: {new Date(process.created_at).toLocaleDateString('pt-BR')}</span>
-                        </div>
-                        {type === 'tramitacao' && process.data_recebimento && (
-                          <span className="text-yellow-300">
-                            {calculateDaysInProcess(process.data_recebimento)} dias em tramitação
-                          </span>
-                        )}
-                        {type === 'concluidos' && process.updated_at && (
-                          <span>
-                            Concluído: {new Date(process.updated_at).toLocaleDateString('pt-BR')}
-                          </span>
-                        )}
-                      </div>
-                      {type === 'concluidos' && process.desfecho_final && (
-                        <p className="text-green-300">
-                          <strong>Desfecho:</strong> {process.desfecho_final}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex gap-2">
-                      {type === 'tramitacao' ? (
-                        <>
-                          <Button
-                            onClick={() => handleEditProcess(process)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Editar
-                          </Button>
-                          <Button
-                            onClick={() => handleDeleteProcess(process)}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            onClick={() => handleViewProcess(process.id)}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Visualizar
-                          </Button>
-                          <Button
-                            onClick={() => handleReopenProcess(process.id)}
-                            className="bg-orange-600 hover:bg-orange-700 text-white"
-                          >
-                            <RotateCcw className="h-4 w-4 mr-2" />
-                            Solicitar Reabertura
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <ProcessCard
+                key={process.id}
+                process={process}
+                type={type}
+                getPriorityBadge={getPriorityBadge}
+                getTipoProcessoLabel={getTipoProcessoLabel}
+                handleEditProcess={handleEditProcess}
+                handleDeleteProcess={handleDeleteProcess}
+                handleViewProcess={handleViewProcess}
+                calculateDaysInProcess={calculateDaysInProcess}
+              />
             ))}
 
             {filteredProcesses.length === 0 && (
               <Card className="bg-white/10 backdrop-blur-sm border-white/20">
                 <CardContent className="p-8 text-center">
                   <p className="text-white text-lg">
-                    Nenhum processo {type === 'tramitacao' ? 'em tramitação' : 
-                      type === 'arquivados' ? 'finalizado' : 
-                      ''} encontrado.
                     Nenhum processo {type === 'tramitacao' ? 'em tramitação' : 'concluído'} encontrado.
                   </p>
                   {error && (
@@ -1054,6 +957,6 @@ const ProcessList = React.memo(({ type, onClose }: ProcessListProps) => {
       )}
     </>
   );
-};
+});
 
 export default ProcessList;

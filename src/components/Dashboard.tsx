@@ -281,11 +281,28 @@ const StatisticsModal = ({ onClose }: { onClose: () => void }) => {
 const Dashboard = ({ user }: DashboardProps) => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const { toast } = useToast();
+  const { stats, loading, error, refreshStats, lastUpdateTime } = useProcessStats();
 
   const isAdmin = user?.role === 'admin' || user?.email?.includes('admin');
 
   const closeModal = () => {
     setActiveModal(null);
+  };
+
+  const handleRefresh = async () => {
+    try {
+      await refreshStats();
+      toast({
+        title: "Estatísticas atualizadas",
+        description: "Os dados foram atualizados com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar as estatísticas.",
+        variant: "destructive",
+      });
+    }
   };
 
   const renderModal = () => {

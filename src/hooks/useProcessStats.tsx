@@ -13,7 +13,7 @@ interface ProcessStats {
 }
 
 // Função para gerar hash dos dados
-const generateDataHash = <T>(data: T): string => {
+const generateDataHash = function<T>(data: T): string {
   return JSON.stringify(data);
 };
 

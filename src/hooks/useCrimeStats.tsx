@@ -4,9 +4,7 @@ import { supabase } from '../integrations/supabase/client';
 interface CrimeStats {
   tiposCrime: Array<{ name: string; count: number; color: string }>;
   transgressoes: Array<{ name: string; count: number; color: string }>;
-<<<<<<< HEAD
   sexoVitima: Array<{ name: string; count: number; color: string }>;
-=======
   unidadesInvestigado: Array<{ name: string; count: number; color: string }>;
   crimesPorMes: Array<{ mes: string; count: number }>;
   loading: boolean;
@@ -22,16 +20,14 @@ const colors = [
 ];
 
 // Função para gerar hash dos dados
-const generateDataHash = <T>(data: T): string => {
+const generateDataHash = function<T>(data: T): string {
   return JSON.stringify(data);
 };
 
 export function useCrimeStats(): CrimeStats {
   const [tiposCrime, setTiposCrime] = useState<Array<{ name: string; count: number; color: string }>>([]);
   const [transgressoes, setTransgressoes] = useState<Array<{ name: string; count: number; color: string }>>([]);
-<<<<<<< HEAD
   const [sexoVitima, setSexoVitima] = useState<Array<{ name: string; count: number; color: string }>>([]);
-=======
   const [unidadesInvestigado, setUnidadesInvestigado] = useState<Array<{ name: string; count: number; color: string }>>([]);
   const [crimesPorMes, setCrimesPorMes] = useState<Array<{ mes: string; count: number }>>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +121,6 @@ export function useCrimeStats(): CrimeStats {
 
       setTransgressoes(transgressoesData);
 
-<<<<<<< HEAD
       // 3. Estatísticas por Sexo da Vítima
       const sexoVitimaCount: { [key: string]: number } = {};
       processosList.forEach(p => {
@@ -143,7 +138,6 @@ export function useCrimeStats(): CrimeStats {
 
       setSexoVitima(sexoVitimaData);
 
-=======
       // 4. Estatísticas por Unidade do Investigado
       const unidadesCount: { [key: string]: number } = {};
       processosList.forEach(p => {
@@ -212,9 +206,7 @@ export function useCrimeStats(): CrimeStats {
   return {
     tiposCrime,
     transgressoes,
-<<<<<<< HEAD
     sexoVitima,
-=======
     unidadesInvestigado,
     crimesPorMes,
     loading,
