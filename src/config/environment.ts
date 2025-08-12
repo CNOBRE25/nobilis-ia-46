@@ -1,116 +1,50 @@
-// Environment configuration for NOBILIS-IA
-// Centralized configuration to handle all environment variables
-
-interface EnvironmentConfig {
-  // Supabase Configuration
+// Configuração do ambiente
+export const config = {
+  // Configuração do Supabase
   supabase: {
-    url: string;
-    anonKey: string;
-  };
+    url: import.meta.env.VITE_SUPABASE_URL,
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  },
   
-  // App Configuration
+  // Configuração do backend local
+  backend: {
+    url: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3002',
+  },
+  
+  // Configuração da OpenAI
+  openai: {
+    apiKey: import.meta.env.OPENAI_API_KEY,
+  },
+  
+  // Configurações da aplicação
   app: {
-    name: string;
-    version: string;
-    environment: 'development' | 'staging' | 'production';
-  };
+    name: import.meta.env.VITE_APP_NAME || 'NOBILIS-IA',
+    version: import.meta.env.VITE_APP_VERSION || '1.0.0',
+    environment: import.meta.env.VITE_APP_ENVIRONMENT || 'development',
+    debugMode: import.meta.env.VITE_DEBUG_MODE === 'true',
+  },
   
-  // Security Configuration
-  security: {
-    enableAuditLogs: boolean;
-    sessionTimeout: number; // in seconds
-    maxLoginAttempts: number;
-    enableRegistration: boolean;
-    enablePasswordReset: boolean;
-  };
+  // Verificar se o Supabase está configurado
+  isSupabaseConfigured: () => {
+    return !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+  },
   
-  // Feature Flags
-  features: {
-    enableDebugMode: boolean;
-    enableAnalytics: boolean;
-    enableAI: boolean;
-  };
-}
-
-// Validate required environment variables
-const validateEnvironmentVariable = (key: string, value: string | undefined, defaultValue?: string): string => {
-  if (!value && !defaultValue) {
-    // Use a safer logging approach for production
-    if (import.meta.env.DEV) {
-      console.warn(`Missing environment variable: ${key}, but continuing with fallback`);
-    }
-    return '';
-  }
-  return value || defaultValue || '';
-};
-
-// Get boolean environment variable with default
-const getBooleanEnv = (key: string, defaultValue: boolean = false): boolean => {
-  const value = import.meta.env[key];
-  if (value === undefined) return defaultValue;
-  return value === 'true' || value === '1';
-};
-
-// Get number environment variable with default
-const getNumberEnv = (key: string, defaultValue: number): number => {
-  const value = import.meta.env[key];
-  if (value === undefined) return defaultValue;
-  const parsed = parseInt(value, 10);
-  return isNaN(parsed) ? defaultValue : parsed;
-};
-
-// Load and validate configuration
-const loadConfig = (): EnvironmentConfig => {
-  const config: EnvironmentConfig = {
-    supabase: {
-      url: validateEnvironmentVariable('VITE_SUPABASE_URL', import.meta.env.VITE_SUPABASE_URL, 'https://ligcnslmsybwzcmjuoli.supabase.co'),
-      anonKey: validateEnvironmentVariable('VITE_SUPABASE_ANON_KEY', import.meta.env.VITE_SUPABASE_ANON_KEY, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpZ2Nuc2xtc3lid3pjbWp1b2xpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjE5MjEsImV4cCI6MjA2NzEzNzkyMX0.FI2kjhF7kzpOcpZR5TrKsra1Dh0nE2dJJDewuI8bJkk'),
-    },
-    
-    app: {
-      name: import.meta.env.VITE_APP_NAME || 'NOBILIS-IA',
-      version: import.meta.env.VITE_APP_VERSION || '1.0.0',
-      environment: (import.meta.env.VITE_APP_ENVIRONMENT as 'development' | 'staging' | 'production') || 'development',
-    },
-    
-    security: {
-      enableAuditLogs: getBooleanEnv('VITE_ENABLE_AUDIT_LOGS', true),
-      sessionTimeout: getNumberEnv('VITE_SESSION_TIMEOUT', 3600), // 1 hour default
-      maxLoginAttempts: getNumberEnv('VITE_MAX_LOGIN_ATTEMPTS', 5),
-      enableRegistration: getBooleanEnv('VITE_ENABLE_REGISTRATION', true),
-      enablePasswordReset: getBooleanEnv('VITE_ENABLE_PASSWORD_RESET', true),
-    },
-    
-    features: {
-      enableDebugMode: getBooleanEnv('VITE_DEBUG_MODE', false),
-      enableAnalytics: getBooleanEnv('VITE_ENABLE_ANALYTICS', false),
-      enableAI: getBooleanEnv('VITE_ENABLE_AI', true),
-    },
-  };
+  // Verificar se o backend local está disponível
+  isBackendAvailable: () => {
+    return import.meta.env.VITE_BACKEND_URL || true; // Assume que está disponível se não especificado
+  },
   
-  // Validate configuration based on environment
-  if (config.app.environment === 'production') {
-    // Production-specific validations - only log in development
-    if (import.meta.env.DEV) {
-      if (config.security.sessionTimeout > 7200) { // Max 2 hours in production
-        console.warn('Session timeout is too long for production environment');
-      }
-      
-      if (config.security.maxLoginAttempts > 10) {
-        console.warn('Max login attempts is too high for production environment');
-      }
-      
-      if (config.features.enableDebugMode) {
-        console.warn('Debug mode should be disabled in production');
-      }
+  // Obter o backend ativo
+  getActiveBackend: () => {
+    if (config.isSupabaseConfigured()) {
+      return 'supabase';
+    } else if (config.isBackendAvailable()) {
+      return 'local';
+    } else {
+      return 'none';
     }
   }
-  
-  return config;
 };
-
-// Export singleton configuration
-export const config = loadConfig();
 
 // Export utility functions
 export const isProduction = () => config.app.environment === 'production';

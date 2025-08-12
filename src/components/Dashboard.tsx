@@ -28,6 +28,7 @@ import ProcessForm from "./ProcessForm";
 import ProcessList from "./ProcessList";
 import StatisticsPage from "./StatisticsPage";
 import AdminPanel from "./AdminPanel";
+import NovoProcessoForm from "./NovoProcessoForm";
 
 import DatabaseDiffChecker from "./DatabaseDiffChecker";
 import { useProcessStats } from "../hooks/useProcessStats";
